@@ -1,0 +1,280 @@
+import * as stylex from '@stylexjs/stylex'
+import { colors, fonts, motion, radii, shadows, space, text, weight, zIndex } from '../../../styles/tokens.stylex'
+
+const NARROW = '@media (max-width: 1100px)'
+
+const slide = stylex.keyframes({ from: { opacity: 0, transform: 'translateX(24px)' } })
+const fade = stylex.keyframes({ from: { opacity: 0 } })
+
+export const styles = stylex.create({
+  detail: {
+    position: 'absolute',
+    inset: 0,
+    display: 'grid',
+    gridTemplateColumns: { default: 'minmax(0, 1fr) 400px', [NARROW]: 'minmax(0, 1fr)' },
+    gridTemplateRows: { default: 'minmax(0, 1fr)', [NARROW]: 'minmax(0, 42vh) minmax(0, 1fr)' },
+    backgroundColor: colors.bg0,
+    animationName: fade,
+    animationDuration: motion.base,
+    animationTimingFunction: motion.easeOut,
+    zIndex: zIndex.detail
+  },
+  hero: {
+    position: 'relative',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: space.s8,
+    paddingInline: space.s8,
+    paddingBottom: space.s8,
+    overflow: 'hidden',
+    minWidth: 0,
+    minHeight: 0
+  },
+  heroImg: {
+    maxWidth: '100%',
+    maxHeight: '100%',
+    objectFit: 'contain',
+    borderRadius: radii.r2,
+    boxShadow: shadows.sheet
+  },
+  heroPaper: { backgroundColor: colors.paper, paddingBlock: space.s2, paddingInline: space.s2 },
+  heroText: {
+    width: '100%',
+    maxWidth: 680,
+    maxHeight: '100%',
+    paddingTop: space.s10,
+    paddingInline: space.s10,
+    paddingBottom: space.s10,
+    borderRadius: radii.r2,
+    backgroundColor: colors.paper,
+    color: colors.ink,
+    boxShadow: shadows.sheet,
+    overflowY: 'auto',
+    fontFamily: fonts.serif,
+    fontSize: 19,
+    lineHeight: 1.5,
+    letterSpacing: '-0.005em'
+  },
+  heroPlain: {
+    fontFamily: fonts.sans,
+    fontSize: text.t15,
+    backgroundColor: colors.bg2,
+    color: colors.fg2,
+    whiteSpace: 'pre-wrap'
+  },
+  mdH: { fontSize: 26, lineHeight: 1.2, marginBottom: space.s4, fontWeight: weight.regular },
+  mdH2: { fontSize: 20, lineHeight: 1.25, marginTop: space.s6, marginBottom: space.s3 },
+  mdP: { marginBottom: space.s3 },
+  mdList: { paddingLeft: space.s5, marginBottom: space.s3, listStyleType: 'disc' },
+  mdLi: { marginBottom: 4 },
+  heroRepo: {
+    width: '100%',
+    maxWidth: 520,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: space.s3,
+    paddingTop: space.s8,
+    paddingInline: space.s8,
+    paddingBottom: space.s8,
+    borderRadius: radii.r2,
+    backgroundColor: colors.bg2,
+    boxShadow: `0 0 0 1px ${colors.hairline} inset`
+  },
+  heroRepoName: {
+    fontSize: text.t28,
+    fontWeight: weight.medium,
+    letterSpacing: '-0.02em',
+    lineHeight: 1.15,
+    overflowWrap: 'anywhere'
+  },
+  heroRepoDesc: { fontSize: text.t15, color: colors.fg2, lineHeight: 1.5 },
+  heroRepoMeta: {
+    display: 'flex',
+    gap: space.s4,
+    fontSize: text.t12,
+    color: colors.fg3,
+    fontVariantNumeric: 'tabular-nums',
+    marginTop: space.s2
+  },
+  heroTile: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: space.s3,
+    color: colors.fg3,
+    textAlign: 'center'
+  },
+  heroGlyph: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 96,
+    height: 120,
+    borderRadius: radii.r2,
+    backgroundColor: colors.bg2,
+    boxShadow: `0 0 0 1px ${colors.hairline} inset`,
+    color: colors.fg4
+  },
+  heroTileExt: { fontSize: text.t13, letterSpacing: '0.06em', textTransform: 'uppercase', color: colors.fg3 },
+  children: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
+    gap: space.s3,
+    width: '100%',
+    maxHeight: '100%',
+    overflowY: 'auto',
+    alignContent: 'start'
+  },
+  child: { display: 'flex', flexDirection: 'column', gap: 6, textAlign: 'left', borderRadius: radii.r1 },
+  childThumb: { aspectRatio: '4 / 3', borderRadius: radii.r1, overflow: 'hidden', backgroundColor: colors.bg2 },
+  childTitle: { fontSize: text.t12, color: colors.fg2 },
+  side: {
+    borderLeftWidth: { default: 1, [NARROW]: 0 },
+    borderLeftStyle: 'solid',
+    borderLeftColor: colors.hairline,
+    borderTopWidth: { default: 0, [NARROW]: 1 },
+    borderTopStyle: 'solid',
+    borderTopColor: colors.hairline,
+    paddingTop: space.s4,
+    paddingInline: space.s6,
+    paddingBottom: space.s8,
+    overflowY: 'auto',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: space.s6,
+    backgroundColor: colors.bg0,
+    animationName: slide,
+    animationDuration: motion.slow,
+    animationTimingFunction: motion.easeOut
+  },
+  top: { display: 'flex', alignItems: 'center', gap: space.s1, color: colors.fg3, fontSize: text.t12, minHeight: 28 },
+  crumb: { flexGrow: 1, paddingLeft: space.s1 },
+  title: {
+    fontSize: text.t20,
+    fontWeight: weight.medium,
+    letterSpacing: '-0.01em',
+    lineHeight: 1.3,
+    color: colors.fg1
+  },
+  meta: {
+    marginTop: space.s2,
+    display: 'flex',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    columnGap: space.s2,
+    rowGap: 2,
+    fontSize: text.t12,
+    color: colors.fg3
+  },
+  metaSep: { width: 3, height: 3, borderRadius: '50%', backgroundColor: colors.fg4 },
+  link: {
+    color: { default: colors.fg3, ':hover': colors.fg1 },
+    textDecorationLine: 'underline',
+    textDecorationColor: colors.hairlineStrong,
+    textUnderlineOffset: 2
+  },
+  status: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: space.s2,
+    marginTop: space.s2,
+    color: colors.fg3,
+    fontSize: text.t12
+  },
+  section: { display: 'flex', flexDirection: 'column', gap: space.s2 },
+  sectionHead: { display: 'flex', alignItems: 'center', gap: space.s2 },
+  edited: { fontSize: text.t11, color: colors.fg4, marginLeft: 'auto' },
+  body: { color: colors.fg2, lineHeight: 1.55, fontSize: text.t13 },
+  muted: { color: colors.fg4 },
+  hint: { color: colors.fg4, fontSize: text.t12, lineHeight: 1.5 },
+  hintLink: {
+    color: { default: colors.fg3, ':hover': colors.fg1 },
+    textDecorationLine: 'underline',
+    textUnderlineOffset: 2
+  },
+  tags: { display: 'flex', flexWrap: 'wrap', columnGap: space.s3, rowGap: 4, fontSize: text.t12, color: colors.fg3 },
+  entity: { color: colors.fg2 },
+  rows: { display: 'flex', flexDirection: 'column', gap: 2 },
+  row: {
+    position: 'relative',
+    display: 'grid',
+    gridTemplateColumns: '40px 1fr 24px',
+    columnGap: space.s3,
+    alignItems: 'center',
+    paddingBlock: 6,
+    paddingInline: 6,
+    marginInline: -6,
+    borderRadius: radii.r1,
+    backgroundColor: { default: 'transparent', ':hover': colors.bgHover },
+    transitionProperty: 'background-color',
+    transitionDuration: motion.fast,
+    transitionTimingFunction: motion.easeOut
+  },
+  rowMain: { display: 'flex', flexDirection: 'column', minWidth: 0, textAlign: 'left', gap: 1 },
+  rowThumb: { width: 40, height: 30, borderRadius: 4, overflow: 'hidden' },
+  rowCover: {
+    width: 40,
+    height: 30,
+    borderRadius: 4,
+    overflow: 'hidden',
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gridTemplateRows: '1fr 1fr',
+    gap: 1,
+    backgroundColor: colors.bg2
+  },
+  rowTitle: { color: colors.fg1, fontSize: text.t13 },
+  rowSub: { fontSize: text.t12, color: colors.fg3, lineHeight: 1.45 },
+  rowLabel: { color: colors.fg2 },
+  quote: { fontStyle: 'italic', color: colors.fg4 },
+  rowRemove: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 24,
+    height: 24,
+    borderRadius: radii.r1,
+    color: { default: colors.fg4, ':hover': colors.fg1 },
+    backgroundColor: { default: 'transparent', ':hover': colors.bgActive },
+    opacity: { default: 0, [stylex.when.ancestor(':hover')]: 1, ':focus-visible': 1 },
+    transitionProperty: 'opacity, color',
+    transitionDuration: motion.fast,
+    transitionTimingFunction: motion.easeOut
+  },
+  actions: { display: 'flex', flexDirection: 'column', gap: 0 },
+  action: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: space.s3,
+    height: 30,
+    paddingInline: 6,
+    marginInline: -6,
+    borderRadius: radii.r1,
+    textAlign: 'left',
+    color: { default: colors.fg2, ':hover': colors.fg1 },
+    backgroundColor: { default: 'transparent', ':hover': colors.bgHover },
+    fontSize: text.t13,
+    opacity: { default: 1, ':disabled': 0.4 },
+    transitionProperty: 'background-color, color',
+    transitionDuration: motion.fast,
+    transitionTimingFunction: motion.easeOut
+  },
+  actionDanger: { color: { default: colors.fg3, ':hover': colors.danger } },
+  actionMeta: { fontSize: text.t11, color: colors.fg4, whiteSpace: 'nowrap' },
+  actionsDivider: { height: 1, backgroundColor: colors.hairline, marginBlock: 6 },
+  footer: {
+    marginTop: 'auto',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: space.s1,
+    paddingTop: space.s4,
+    borderTopWidth: 1,
+    borderTopStyle: 'solid',
+    borderTopColor: colors.hairline,
+    color: colors.fg4,
+    fontSize: text.t12
+  },
+  path: { fontFamily: fonts.mono, fontSize: text.t11, overflowWrap: 'anywhere', color: colors.fg4 }
+})

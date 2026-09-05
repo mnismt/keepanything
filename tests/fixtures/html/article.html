@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Continuous batching for LLM inference | Example Engineering Blog</title>
+<meta name="description" content="How continuous batching raises throughput for large language model serving, with measurements against static batching.">
+<meta property="og:title" content="Continuous batching for LLM inference">
+<meta property="og:description" content="How continuous batching raises throughput for LLM serving.">
+<meta property="og:image" content="/images/batching-hero.png">
+<meta property="og:site_name" content="Example Engineering">
+<meta property="og:type" content="article">
+<meta property="article:published_time" content="2026-03-14T09:30:00Z">
+<meta name="author" content="Ada Example">
+<link rel="canonical" href="https://blog.example.com/posts/continuous-batching/">
+<link rel="icon" href="/favicon-32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","headline":"Continuous batching for LLM inference","datePublished":"2026-03-14T09:30:00Z","author":{"@type":"Person","name":"Ada Example"}}
+</script>
+<script>window.dataLayer = [];</script>
+</head>
+<body>
+<nav><a href="/">Home</a> · <a href="/posts">Posts</a> · <a href="/about">About</a></nav>
+<article>
+<h1>Continuous batching for LLM inference</h1>
+<p class="byline">By Ada Example · 14 March 2026</p>
+<p>Static batching groups requests that arrive within a window and runs them together until every sequence has finished. The problem is that sequences finish at very different times: a short answer is done after twenty tokens while a long one keeps the whole batch alive for hundreds of steps. During that time the finished slots sit idle and the GPU runs well below its capacity.</p>
+<p>Continuous batching, sometimes called iteration-level scheduling, changes the unit of work from a batch to a single decode step. After every step the scheduler looks at the batch again: finished sequences leave, and waiting requests take their place immediately instead of waiting for the next window. The batch is therefore always as full as memory allows.</p>
+<h2>What we measured</h2>
+<p>We replayed two thousand production requests against the same model on one GPU. With static batching we saw a median of 410 tokens per second and a p95 time to first token of 2.9 seconds. Switching to continuous batching raised throughput to 1,480 tokens per second, a 3.6× improvement, and brought p95 time to first token down to 0.7 seconds. Memory use was higher because the scheduler keeps more sequences resident, which is where paged attention becomes important.</p>
+<pre><code>python run_bench.py --scheduler continuous --concurrency 64</code></pre>
+<h2>Where it does not help</h2>
+<p>If every request has the same length, the idle-slot problem disappears and both strategies perform similarly. Very small models are also often bandwidth bound in ways that batching cannot fix. In practice production traffic is bursty and heterogeneous, so continuous batching is the safer default for any serving stack that is not latency bound at batch size one.</p>
+<ul>
+<li>Use continuous batching whenever request lengths vary.</li>
+<li>Pair it with paged KV-cache management to avoid fragmentation.</li>
+<li>Measure p95 time to first token, not just aggregate throughput.</li>
+</ul>
+<p>Further reading: <a href="https://arxiv.org/abs/2309.06180">the PagedAttention paper</a> covers the memory side of the same problem in depth.</p>
+</article>
+<footer><p>© Example Engineering. <a href="/privacy">Privacy</a></p></footer>
+</body>
+</html>

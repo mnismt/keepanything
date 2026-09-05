@@ -1,0 +1,151 @@
+/*
+ * Document-style reset + @font-face for a regular desktop app window. This is the only plain
+ * CSS in the renderer; everything else is StyleX (tokens in tokens.stylex.ts). The few literal
+ * colours below mirror the tokens for surfaces StyleX cannot reach (scrollbars, selection).
+ * Everything sits in `@layer reset`, declared first, so StyleX's own layers always win over it.
+ */
+@layer reset;
+
+/* Instrument Serif (OFL, bundled from assets/fonts; Vite copies the files). Editorial headlines only. */
+@font-face {
+  font-family: 'Instrument Serif';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../../../../assets/fonts/InstrumentSerif-Regular.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Instrument Serif';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../../../../assets/fonts/InstrumentSerif-Italic.ttf') format('truetype');
+}
+
+@layer reset {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html,
+  body,
+  #root {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+  }
+
+  html {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
+    font-size: 13px;
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    color-scheme: light dark;
+  }
+
+  body {
+    background: #141210;
+    color: #efe9e1;
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  @media (prefers-color-scheme: light) {
+    body {
+      background: #f7f4ee;
+      color: #1d1a17;
+    }
+  }
+
+  p,
+  h1,
+  h2,
+  h3,
+  h4 {
+    margin: 0;
+    font-weight: inherit;
+    font-size: inherit;
+  }
+
+  ul,
+  ol {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  img,
+  video {
+    display: block;
+    max-width: 100%;
+    -webkit-user-drag: none;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+    color: inherit;
+    background: none;
+    border: 0;
+    padding: 0;
+    margin: 0;
+  }
+
+  button {
+    cursor: default;
+  }
+
+  :focus {
+    outline: none;
+  }
+
+  :focus-visible {
+    outline: 2px solid #d9a35a;
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: rgba(217, 163, 90, 0.16);
+  }
+
+  @media (prefers-color-scheme: light) {
+    :focus-visible {
+      outline-color: #b8813a;
+    }
+    ::selection {
+      background: rgba(184, 129, 58, 0.16);
+    }
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(128, 128, 128, 0.3);
+    border-radius: 5px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  [inert] {
+    pointer-events: none;
+  }
+}

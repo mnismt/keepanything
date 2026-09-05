@@ -1,0 +1,14 @@
+Cheaper alternatives to Resend for transactional email (pasted from a thread, Aug 2026)
+
+- Amazon SES: cheapest by far per 1,000 emails, but you build the templates/dashboard yourself and
+  reputation warm-up is on you.
+- Postmark: not the cheapest, but the best deliverability story for transactional-only senders;
+  strict about no marketing mail.
+- Mailgun: middle of the road, good EU region support, flexible free tier for developers.
+- SendGrid (Twilio): large free tier, but the dashboard is heavy and support has gotten slower.
+- Brevo (ex-Sendinblue): generous daily free quota, aimed at marketing but works for transactional.
+- Self-hosted: Haraka or Postal if you enjoy managing IP reputation. You do not.
+
+Someone in the thread pointed out that Resend's actual value is the React Email templating +
+the API ergonomics, not the price. If you only need 5-10k emails a month the price difference
+between all of these is lunch money; pick on deliverability and DX.

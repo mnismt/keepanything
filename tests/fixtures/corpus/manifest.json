@@ -1,0 +1,235 @@
+{
+  "version": 1,
+  "description": "Demo corpus for KeepAnything. Paths are relative to this directory. `kind` uses KINDS from src/shared/kinds.ts; `type`/`subtype` use ItemType/ItemSubtype from src/shared/types.ts. `captureOffsetDays` is how many days before 'now' the seeder should stamp captured_at (for time-cued eval queries). All files are freely licensed (arXiv CC BY) or generated for this repo.",
+  "fixtures": [
+    {
+      "id": "pdf-paged-attention",
+      "type": "pdf",
+      "path": "files/pagedattention-vllm-2309.06180.pdf",
+      "kind": "paper",
+      "title": "Efficient Memory Management for Large Language Model Serving with PagedAttention",
+      "topics": ["llm-serving", "kv-cache"],
+      "entities": ["vLLM", "PagedAttention"],
+      "captureOffsetDays": 21,
+      "license": "arXiv 2309.06180, CC BY 4.0"
+    },
+    {
+      "id": "pdf-react",
+      "type": "pdf",
+      "path": "files/react-reasoning-acting-2210.03629.pdf",
+      "kind": "paper",
+      "title": "ReAct: Synergizing Reasoning and Acting in Language Models",
+      "topics": ["llm-agents", "reasoning"],
+      "entities": ["ReAct"],
+      "captureOffsetDays": 20,
+      "license": "arXiv 2210.03629, CC BY 4.0"
+    },
+    {
+      "id": "md-inference-providers",
+      "type": "markdown",
+      "path": "files/notes/inference-providers-notes.md",
+      "kind": "note",
+      "title": "Cheap inference providers — running notes",
+      "topics": ["inference-pricing", "llm-serving"],
+      "entities": ["GMI Cloud", "MiniMax-M3", "Together AI", "Fireworks", "DeepInfra", "Groq"],
+      "captureOffsetDays": 9
+    },
+    {
+      "id": "md-doan-labs-design",
+      "type": "markdown",
+      "path": "files/notes/doan-labs-website-design.md",
+      "kind": "note",
+      "title": "Doan Labs website — design references",
+      "topics": ["web-design", "globe-animation"],
+      "entities": ["Doan Labs", "cobe", "Linear", "Vercel"],
+      "captureOffsetDays": 16
+    },
+    {
+      "id": "md-weekly-review",
+      "type": "markdown",
+      "path": "files/notes/weekly-review-2026-08-28.md",
+      "kind": "note",
+      "title": "Weekly review — week of 24 Aug 2026",
+      "topics": ["weekly-review", "hackathon"],
+      "entities": ["MiniMax Week", "KeepAnything"],
+      "captureOffsetDays": 6
+    },
+    {
+      "id": "txt-resend-alternatives",
+      "type": "text",
+      "path": "files/snippets/resend-alternatives.txt",
+      "kind": "note",
+      "title": "Cheaper alternatives to Resend for transactional email",
+      "topics": ["transactional-email", "saas-pricing"],
+      "entities": ["Resend", "Amazon SES", "Postmark", "Mailgun"],
+      "captureOffsetDays": 12
+    },
+    {
+      "id": "txt-hyperliquid",
+      "type": "text",
+      "path": "files/snippets/hyperliquid-snippet.txt",
+      "kind": "note",
+      "title": "Hyperliquid — notes on on-chain perps",
+      "topics": ["crypto-exchanges", "distributed-systems"],
+      "entities": ["Hyperliquid", "HyperBFT", "dYdX"],
+      "captureOffsetDays": 30
+    },
+    {
+      "id": "png-terminal-tests",
+      "type": "image",
+      "subtype": "screenshot",
+      "path": "files/screenshots/terminal-pnpm-test.png",
+      "kind": "screenshot",
+      "title": "Terminal: pnpm typecheck and vitest run, 58 tests passed",
+      "topics": ["testing", "keepanything-dev"],
+      "entities": ["vitest", "pnpm"],
+      "captureOffsetDays": 2,
+      "generated": "SVG rendered with qlmanage; no real user data"
+    },
+    {
+      "id": "png-pricing-page",
+      "type": "image",
+      "subtype": "screenshot",
+      "path": "files/screenshots/pricing-page-inference.png",
+      "kind": "screenshot",
+      "title": "NimbusServe serverless inference pricing page",
+      "topics": ["inference-pricing", "llm-serving"],
+      "entities": ["NimbusServe", "Llama 3.3 70B", "DeepSeek V3.1", "Qwen3 235B"],
+      "captureOffsetDays": 8,
+      "generated": "Fictional provider; SVG rendered with qlmanage"
+    },
+    {
+      "id": "png-error-dialog",
+      "type": "image",
+      "subtype": "screenshot",
+      "path": "files/screenshots/error-dialog-sqlite.png",
+      "kind": "screenshot",
+      "title": "KeepAnything dev console: SQLITE_BUSY database is locked",
+      "topics": ["sqlite", "debugging"],
+      "entities": ["SQLITE_BUSY", "WAL"],
+      "captureOffsetDays": 1,
+      "generated": "SVG rendered with qlmanage"
+    },
+    {
+      "id": "folder-serving-benchmark",
+      "type": "folder",
+      "path": "files/folder-serving-benchmark",
+      "kind": "dataset",
+      "title": "serving-benchmark — load test for LLM serving configurations",
+      "topics": ["llm-serving", "benchmarking"],
+      "entities": ["vLLM", "httpx"],
+      "captureOffsetDays": 14,
+      "children": ["README.md", "run_bench.py", "config.yaml", "results.csv", "notes.txt", "prompts.jsonl"]
+    },
+    {
+      "id": "url-gh-vllm",
+      "type": "url",
+      "subtype": "github_repo",
+      "url": "https://github.com/vllm-project/vllm",
+      "kind": "library",
+      "title": "vllm-project/vllm",
+      "topics": ["llm-serving", "inference-engine"],
+      "entities": ["vLLM", "PagedAttention"],
+      "captureOffsetDays": 21
+    },
+    {
+      "id": "url-gh-transformersjs",
+      "type": "url",
+      "subtype": "github_repo",
+      "url": "https://github.com/huggingface/transformers.js",
+      "kind": "library",
+      "title": "huggingface/transformers.js",
+      "topics": ["embeddings", "javascript-ml"],
+      "entities": ["Transformers.js", "ONNX Runtime", "Hugging Face"],
+      "captureOffsetDays": 10
+    },
+    {
+      "id": "url-gh-minimax-m1",
+      "type": "url",
+      "subtype": "github_repo",
+      "url": "https://github.com/MiniMax-AI/MiniMax-M1",
+      "kind": "library",
+      "title": "MiniMax-AI/MiniMax-M1",
+      "topics": ["reasoning-models", "open-weights"],
+      "entities": ["MiniMax", "MiniMax-M1"],
+      "captureOffsetDays": 7
+    },
+    {
+      "id": "url-yt-karpathy-llms",
+      "type": "url",
+      "subtype": "youtube",
+      "url": "https://www.youtube.com/watch?v=zjkBMFhNj_g",
+      "kind": "video",
+      "title": "[1hr Talk] Intro to Large Language Models — Andrej Karpathy",
+      "topics": ["llm-fundamentals", "talk"],
+      "entities": ["Andrej Karpathy"],
+      "captureOffsetDays": 40
+    },
+    {
+      "id": "url-docs-electron-utility-process",
+      "type": "url",
+      "subtype": "docs",
+      "url": "https://www.electronjs.org/docs/latest/api/utility-process",
+      "kind": "docs",
+      "title": "utilityProcess | Electron",
+      "topics": ["electron", "background-processes"],
+      "entities": ["Electron", "utilityProcess"],
+      "captureOffsetDays": 5
+    },
+    {
+      "id": "url-docs-sqlite-fts5",
+      "type": "url",
+      "subtype": "docs",
+      "url": "https://sqlite.org/fts5.html",
+      "kind": "docs",
+      "title": "SQLite FTS5 Extension",
+      "topics": ["sqlite", "full-text-search"],
+      "entities": ["SQLite", "FTS5", "bm25"],
+      "captureOffsetDays": 5
+    },
+    {
+      "id": "url-docs-gmi-llm-api",
+      "type": "url",
+      "subtype": "docs",
+      "url": "https://docs.gmicloud.ai/inference-engine/api-reference/llm-api-reference",
+      "kind": "docs",
+      "title": "GMI Cloud — LLM API reference",
+      "topics": ["inference-pricing", "llm-api"],
+      "entities": ["GMI Cloud"],
+      "captureOffsetDays": 9
+    },
+    {
+      "id": "url-blog-anyscale-batching",
+      "type": "url",
+      "subtype": "article",
+      "url": "https://www.anyscale.com/blog/continuous-batching-llm-inference",
+      "kind": "article",
+      "title": "How continuous batching enables 23x throughput in LLM inference while reducing p50 latency",
+      "topics": ["llm-serving", "continuous-batching"],
+      "entities": ["Anyscale", "vLLM"],
+      "captureOffsetDays": 22
+    },
+    {
+      "id": "url-wiki-rag",
+      "type": "url",
+      "subtype": "article",
+      "url": "https://en.wikipedia.org/wiki/Retrieval-augmented_generation",
+      "kind": "article",
+      "title": "Retrieval-augmented generation — Wikipedia",
+      "topics": ["retrieval", "llm-fundamentals"],
+      "entities": ["RAG"],
+      "captureOffsetDays": 35
+    },
+    {
+      "id": "url-raycast",
+      "type": "url",
+      "subtype": "product",
+      "url": "https://www.raycast.com/",
+      "kind": "macos_app",
+      "title": "Raycast — launcher for macOS",
+      "topics": ["macos-apps", "productivity"],
+      "entities": ["Raycast"],
+      "captureOffsetDays": 18
+    }
+  ]
+}

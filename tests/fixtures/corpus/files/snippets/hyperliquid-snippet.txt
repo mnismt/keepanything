@@ -1,0 +1,13 @@
+Hyperliquid — notes from a conversation about on-chain perps (pasted snippet)
+
+Hyperliquid runs a fully on-chain order book for perpetual futures on its own L1 (HyperBFT
+consensus). The interesting engineering claims: sub-second block times, order book matching done
+by the validators themselves rather than by an off-chain sequencer, and a bridge from Arbitrum
+for deposits. HYPE is the native token used for staking and fee discounts.
+
+Why I kept this: not for trading. The design question that interested me is how they keep a
+high-frequency order book deterministic across validators, which is the same problem as making
+an agent's tool loop reproducible: fixed ordering, explicit state transitions, replayable log.
+
+Related things I should look at: dYdX v4 (Cosmos app-chain, off-chain order book), and the
+old Serum DEX design on Solana.

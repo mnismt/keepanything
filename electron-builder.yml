@@ -1,0 +1,44 @@
+# Electron Builder configuration (macOS, Apple Silicon only).
+# Unsigned on purpose: `identity: null` disables code signing. See README for Gatekeeper notes.
+appId: com.doanlabs.keepanything
+productName: KeepAnything
+copyright: Copyright © 2026 doan-labs
+electronLanguages: [en]
+directories:
+  output: release
+  buildResources: build
+files:
+  - out/**
+  - package.json
+  - '!**/*.map'
+  # The browser build of onnxruntime is never used (the worker runs onnxruntime-node).
+  - '!**/node_modules/onnxruntime-web/**'
+# Native binaries must stay real files on disk: they are dlopen'ed and cannot live inside the asar.
+asarUnpack:
+  - '**/node_modules/onnxruntime-node/**'
+  - '**/node_modules/sharp/**'
+  - '**/node_modules/@img/**'
+# Embedding model files fetched by `pnpm run models:fetch`; seeded into <userData>/models on first launch.
+extraResources:
+  - from: build/models
+    to: models
+  # Drag-watch sidecar built by `pnpm run native`; absent when swiftc was unavailable.
+  - from: build/native
+    to: native
+asar: true
+npmRebuild: false
+mac:
+  category: public.app-category.productivity
+  icon: build/icon.icns
+  # Apple Silicon only (the npm scripts pass --arm64). No universal builds.
+  target:
+    - target: dmg
+      arch: [arm64]
+  identity: null
+  hardenedRuntime: false
+  gatekeeperAssess: false
+  darkModeSupport: true
+  extendInfo:
+    NSHumanReadableCopyright: Copyright © 2026 doan-labs
+dmg:
+  sign: false

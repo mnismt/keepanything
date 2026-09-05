@@ -1,0 +1,8 @@
+{"id": 1, "bucket": "short", "prompt": "Explain paged attention in two sentences."}
+{"id": 2, "bucket": "short", "prompt": "What is continuous batching?"}
+{"id": 3, "bucket": "short", "prompt": "List three ways to reduce time to first token."}
+{"id": 4, "bucket": "medium", "prompt": "Compare static batching and continuous batching for an LLM serving system handling a mix of short and long prompts. Discuss GPU utilisation, latency and memory."}
+{"id": 5, "bucket": "medium", "prompt": "Write a short runbook entry describing what to check when p95 latency exceeds 800 ms on the inference cluster."}
+{"id": 6, "bucket": "long", "prompt": "You are reviewing an incident where the KV-cache block size was changed from 16 to 24 tokens. Write a detailed post-mortem template with sections for timeline, impact, root cause, and action items, then fill it with plausible content."}
+{"id": 7, "bucket": "short", "prompt": "Define speculative decoding."}
+{"id": 8, "bucket": "short", "prompt": "Why does prefix caching help when every prompt shares a system prompt?"}

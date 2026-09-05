@@ -1,0 +1,145 @@
+import * as stylex from '@stylexjs/stylex'
+import { colors, layout, motion, radii, shadows, space, text, weight, zIndex } from '../../../styles/tokens.stylex'
+
+const rise = stylex.keyframes({ from: { opacity: 0, transform: 'translateY(6px)' } })
+
+export const styles = stylex.create({
+  grid: {
+    flexGrow: 1,
+    minHeight: 0,
+    overflowY: 'auto',
+    paddingTop: space.s2,
+    paddingInline: layout.contentPad,
+    paddingBottom: space.s12,
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
+    gap: space.s5,
+    alignContent: 'start'
+  },
+  card: {
+    position: 'relative',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: space.s2,
+    textAlign: 'left',
+    borderRadius: radii.r2,
+    outline: 'none',
+    animationName: rise,
+    animationDuration: motion.slow,
+    animationTimingFunction: motion.easeOut
+  },
+  cover: {
+    position: 'relative',
+    aspectRatio: '4 / 3',
+    borderRadius: radii.r2,
+    overflow: 'hidden',
+    backgroundColor: colors.bg2,
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gridTemplateRows: '1fr 1fr',
+    gap: 3,
+    padding: 3,
+    transitionProperty: 'box-shadow',
+    transitionDuration: motion.fast,
+    transitionTimingFunction: motion.easeOut,
+    boxShadow: {
+      default: `0 0 0 1px ${colors.hairline} inset`,
+      [stylex.when.ancestor(':hover')]: `0 0 0 1px ${colors.hairlineStrong} inset, ${shadows.lift}`,
+      [stylex.when.ancestor(':focus-visible')]: `0 0 0 2px ${colors.bg0}, 0 0 0 4px ${colors.accent}`
+    }
+  },
+  coverSingle: { gridTemplateColumns: '1fr', gridTemplateRows: '1fr' },
+  coverEmpty: { display: 'flex', alignItems: 'center', justifyContent: 'center', color: colors.fg4 },
+  cell: { borderRadius: 6, overflow: 'hidden', backgroundColor: colors.bg3 },
+  menu: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    opacity: { default: 0, [stylex.when.ancestor(':hover')]: 1, [stylex.when.ancestor(':focus-within')]: 1 },
+    transitionProperty: 'opacity',
+    transitionDuration: motion.fast,
+    transitionTimingFunction: motion.easeOut
+  },
+  caption: { display: 'flex', flexDirection: 'column', gap: 2, paddingInline: 4, minWidth: 0 },
+  name: { fontWeight: weight.medium, color: colors.fg1 },
+  meta: { display: 'flex', alignItems: 'center', gap: 6, fontSize: text.t12, color: colors.fg3, whiteSpace: 'nowrap' },
+  badgeDot: { width: 6, height: 6, borderRadius: '50%', backgroundColor: colors.fg4, flexShrink: 0 },
+  badgeAi: { backgroundColor: colors.accent },
+  badgeDynamic: { backgroundColor: colors.ok },
+  description: {
+    fontSize: text.t12,
+    color: colors.fg3,
+    lineHeight: 1.45,
+    overflow: 'hidden',
+    display: '-webkit-box',
+    WebkitBoxOrient: 'vertical',
+    WebkitLineClamp: 2
+  },
+  newCard: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: space.s2,
+    aspectRatio: '4 / 3',
+    borderRadius: radii.r2,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: { default: colors.hairlineStrong, ':hover': colors.fg4 },
+    color: { default: colors.fg3, ':hover': colors.fg1 },
+    backgroundColor: { default: 'transparent', ':hover': colors.bgHover },
+    transitionProperty: 'color, border-color, background-color',
+    transitionDuration: motion.fast,
+    transitionTimingFunction: motion.easeOut
+  },
+  newSub: { fontSize: text.t12, color: colors.fg4 },
+  newWrap: { display: 'flex', flexDirection: 'column', gap: space.s2 },
+  dialog: {
+    position: 'absolute',
+    inset: 0,
+    zIndex: zIndex.dialog,
+    display: 'flex',
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+    paddingTop: '18vh',
+    backgroundColor: colors.scrim
+  },
+  sheet: {
+    width: 440,
+    paddingTop: space.s5,
+    paddingInline: space.s5,
+    paddingBottom: space.s5,
+    borderRadius: radii.r3,
+    backgroundColor: colors.bg3,
+    borderWidth: 1,
+    borderStyle: 'solid',
+    borderColor: colors.hairline,
+    boxShadow: shadows.sheet,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: space.s3,
+    animationName: rise,
+    animationDuration: motion.base,
+    animationTimingFunction: motion.easeOut
+  },
+  sheetTitle: { fontSize: text.t15, fontWeight: weight.medium },
+  sheetHint: { fontSize: text.t12, color: colors.fg3, lineHeight: 1.5, marginTop: -6 },
+  field: { display: 'flex', flexDirection: 'column', gap: 6 },
+  label: { fontSize: text.t12, color: colors.fg2 },
+  input: {
+    height: 32,
+    paddingInline: space.s3,
+    borderRadius: radii.r1,
+    backgroundColor: colors.bg2,
+    borderWidth: 1,
+    borderStyle: 'solid',
+    borderColor: { default: colors.hairline, ':focus-visible': colors.accent },
+    outline: { default: 'none', ':focus-visible': 'none' },
+    color: colors.fg1,
+    '::placeholder': { color: colors.fg4 }
+  },
+  textarea: { height: 'auto', minHeight: 64, paddingBlock: space.s2, resize: 'vertical', lineHeight: 1.5 },
+  select: { appearance: 'none' },
+  row: { display: 'flex', justifyContent: 'flex-end', gap: space.s2, marginTop: space.s2 },
+  danger: { color: colors.fg2, lineHeight: 1.5 }
+})

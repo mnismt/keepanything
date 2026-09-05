@@ -1,0 +1,9 @@
+Run log
+
+run 1  baseline: HF generate with static batches of 8. GPU util hovered around 55%.
+run 2  switched to vLLM with continuous batching, no paging. Big TTFT win, some OOM at 60 concurrent.
+run 3  paged KV cache, block size 16. Throughput up 3x vs baseline; no OOM at 60.
+run 4  block size 24 (what the week-9 incident review recommended). Marginal.
+run 5  enabled prefix caching; all prompts share the same 180-token system prompt so TTFT dropped a lot.
+
+Next: try speculative decoding with a 1B draft model; measure acceptance rate on the medium prompts.

@@ -1,0 +1,19 @@
+# pnpm 11 reads its settings from this file (`.npmrc` is only used for registry/auth).
+# Hoisted layout: electron-builder needs a real node_modules tree for asarUnpack (onnxruntime-node, sharp).
+nodeLinker: hoisted
+shamefullyHoist: true
+allowBuilds:
+  electron: true
+  electron-builder: true
+  app-builder-bin: true
+  esbuild: true
+  electron-winstaller: false
+  # Prebuilt binaries ship inside the packages; no build step needed (silences pnpm 11 warnings).
+  onnxruntime-node: false
+  sharp: false
+  protobufjs: false
+  # simple-git-hooks postinstall writes `.git/hooks/pre-commit` (and friends).
+  simple-git-hooks: true
+# Added by pnpm: lucide-react 1.40.0 is newer than the default minimum release age.
+minimumReleaseAgeExclude:
+  - lucide-react@1.40.0

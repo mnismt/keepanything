@@ -1,0 +1,17 @@
+# Real public URLs for the demo corpus. One per line; `#` lines are comments.
+# GitHub repositories
+https://github.com/vllm-project/vllm
+https://github.com/huggingface/transformers.js
+https://github.com/MiniMax-AI/MiniMax-M1
+# YouTube
+https://www.youtube.com/watch?v=zjkBMFhNj_g
+# Documentation pages
+https://www.electronjs.org/docs/latest/api/utility-process
+https://sqlite.org/fts5.html
+https://docs.gmicloud.ai/inference-engine/api-reference/llm-api-reference
+# Blog post
+https://www.anyscale.com/blog/continuous-batching-llm-inference
+# Wikipedia
+https://en.wikipedia.org/wiki/Retrieval-augmented_generation
+# Product page (macOS app)
+https://www.raycast.com/

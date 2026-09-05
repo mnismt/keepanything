@@ -1,0 +1,79 @@
+{
+  "name": "keepanything",
+  "productName": "KeepAnything",
+  "version": "0.1.0",
+  "description": "Keep anything. We'll figure out the rest. Local-first macOS library with a reasoning agent.",
+  "private": true,
+  "main": "./out/main/index.js",
+  "author": "doan-labs",
+  "license": "MIT",
+  "packageManager": "pnpm@11.22.0",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "prepare": "simple-git-hooks",
+    "postinstall": "node scripts/ensure-electron.mjs",
+    "icons": "node scripts/generate-icons.mjs",
+    "native": "node scripts/build-native.mjs",
+    "dev": "pnpm run native && electron-vite dev --watch",
+    "dev:pinned": "pnpm run native && cross-env KEEPANYTHING_PIN=1 electron-vite dev --watch",
+    "start": "electron-vite preview",
+    "build": "pnpm run typecheck && pnpm run native && electron-vite build",
+    "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json && tsc --noEmit -p tests/e2e/tsconfig.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "format": "biome check --write .",
+    "format:check": "biome check .",
+    "lint": "biome lint .",
+    "test:e2e": "pnpm run build && playwright test",
+    "package:mac": "pnpm run build && electron-builder --mac --arm64 --dir",
+    "package:mac:dmg": "pnpm run build && electron-builder --mac --arm64",
+    "screenshot": "pnpm run build && node scripts/screenshot.mjs",
+    "models:fetch": "node scripts/fetch-models.mjs",
+    "eval:retrieval": "node scripts/eval-retrieval.mjs",
+    "seed:library": "pnpm run build && node scripts/seed-library.mjs",
+    "audit:comments": "node scripts/audit-comments.mjs"
+  },
+  "simple-git-hooks": {
+    "pre-commit": "pnpm exec lint-staged"
+  },
+  "lint-staged": {
+    "*": "biome check --write --files-ignore-unknown=true --no-errors-on-unmatched"
+  },
+  "dependencies": {
+    "@huggingface/transformers": "^4.2.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.11",
+    "@mozilla/readability": "^0.6.0",
+    "@playwright/test": "^1.62.1",
+    "@stylexjs/stylex": "0.19.0",
+    "@stylexjs/unplugin": "0.19.0",
+    "@types/node": "^24.10.1",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.5",
+    "@types/turndown": "^5.0.6",
+    "@vitejs/plugin-react": "^5.2.0",
+    "cmdk": "^1.1.1",
+    "cross-env": "^10.1.0",
+    "electron": "^44.1.1",
+    "electron-builder": "^26.15.3",
+    "electron-vite": "^5.0.0",
+    "linkedom": "^0.18.13",
+    "lint-staged": "^17.4.1",
+    "lucide-react": "^1.40.0",
+    "mime": "^4.1.0",
+    "motion": "^13.2.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "simple-git-hooks": "^2.14.0",
+    "turndown": "^7.2.4",
+    "typescript": "^5.9.3",
+    "unpdf": "^1.8.1",
+    "vite": "^7.3.6",
+    "vitest": "^4.1.11",
+    "zod": "^4.5.4",
+    "zustand": "^5.0.15"
+  }
+}

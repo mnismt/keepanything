@@ -1,0 +1,137 @@
+{
+  "version": 1,
+  "description": "Retrieval eval for scripts/eval-retrieval.mjs. Each query lists fixture ids from manifest.json that should appear in the top `k` (default 3). `style` documents what the query exercises: keyword (instant FTS path), natural (semantic + cues), time (soft window on captured_at), type (type/subtype/kind cue). `cues` are the cues query.ts is expected to extract.",
+  "defaultK": 3,
+  "queries": [
+    {
+      "id": "kw-vllm",
+      "query": "vllm",
+      "style": "keyword",
+      "expected": ["url-gh-vllm", "pdf-paged-attention"],
+      "acceptable": ["url-blog-anyscale-batching", "folder-serving-benchmark"]
+    },
+    {
+      "id": "kw-hyperliquid",
+      "query": "hyperliquid",
+      "style": "keyword",
+      "expected": ["txt-hyperliquid"]
+    },
+    {
+      "id": "kw-minimax",
+      "query": "minimax",
+      "style": "keyword",
+      "expected": ["url-gh-minimax-m1", "md-inference-providers"],
+      "acceptable": ["md-weekly-review", "url-docs-gmi-llm-api"]
+    },
+    {
+      "id": "type-pdf-attention",
+      "query": "that pdf about attention",
+      "style": "type",
+      "cues": { "types": ["pdf"] },
+      "expected": ["pdf-paged-attention"],
+      "mustNotOutrank": ["url-gh-vllm"]
+    },
+    {
+      "id": "nl-agents-paper",
+      "query": "the paper about language models that reason and then act",
+      "style": "natural",
+      "expected": ["pdf-react"]
+    },
+    {
+      "id": "nl-resend",
+      "query": "what did I save about cheaper Resend alternatives?",
+      "style": "natural",
+      "expected": ["txt-resend-alternatives"]
+    },
+    {
+      "id": "nl-globe",
+      "query": "the website with the globe animation",
+      "style": "natural",
+      "cues": { "types": ["url"] },
+      "expected": ["md-doan-labs-design"],
+      "note": "Type cue says url but the only globe content is a markdown note; type cues must stay soft boosts, not filters."
+    },
+    {
+      "id": "type-screenshot-pricing",
+      "query": "screenshot of inference pricing",
+      "style": "type",
+      "cues": { "subtypes": ["screenshot"] },
+      "expected": ["png-pricing-page"],
+      "acceptable": ["md-inference-providers"]
+    },
+    {
+      "id": "type-screenshot-terminal",
+      "query": "the terminal screenshot with the test results",
+      "style": "type",
+      "cues": { "subtypes": ["screenshot"] },
+      "expected": ["png-terminal-tests"]
+    },
+    {
+      "id": "nl-db-locked",
+      "query": "database is locked error",
+      "style": "natural",
+      "expected": ["png-error-dialog"],
+      "acceptable": ["url-docs-sqlite-fts5"],
+      "note": "Relies on visibleText from the vision pass of the understand task."
+    },
+    {
+      "id": "type-video-karpathy",
+      "query": "karpathy video about llms",
+      "style": "type",
+      "cues": { "types": ["video"], "subtypes": ["youtube"] },
+      "expected": ["url-yt-karpathy-llms"]
+    },
+    {
+      "id": "nl-cheap-inference",
+      "query": "something I saved about cheap inference providers",
+      "style": "natural",
+      "k": 4,
+      "expected": ["md-inference-providers", "png-pricing-page"],
+      "acceptable": ["url-docs-gmi-llm-api", "url-blog-anyscale-batching"]
+    },
+    {
+      "id": "type-repo-transformers-js",
+      "query": "github repo for running transformers in javascript",
+      "style": "type",
+      "cues": { "subtypes": ["github_repo"] },
+      "expected": ["url-gh-transformersjs"]
+    },
+    {
+      "id": "nl-electron-worker",
+      "query": "electron docs about running work in a background process",
+      "style": "natural",
+      "cues": { "kinds": ["docs"] },
+      "expected": ["url-docs-electron-utility-process"]
+    },
+    {
+      "id": "time-last-week-notes",
+      "query": "my notes from last week",
+      "style": "time",
+      "cues": { "timeframe": { "label": "last week", "sinceDaysAgo": 14 }, "kinds": ["note"] },
+      "expected": ["md-weekly-review"],
+      "acceptable": ["md-inference-providers", "txt-resend-alternatives"],
+      "note": "Note cue present, so notes are included in retrieval."
+    },
+    {
+      "id": "time-few-weeks-mac-app",
+      "query": "that mac app I saved a few weeks ago",
+      "style": "time",
+      "cues": { "timeframe": { "label": "a few weeks ago", "sinceDaysAgo": 35, "untilDaysAgo": 10 }, "kinds": ["macos_app", "cli_tool", "saas_product"] },
+      "expected": ["url-raycast"]
+    },
+    {
+      "id": "type-folder-benchmark",
+      "query": "the benchmark folder with the csv results",
+      "style": "type",
+      "cues": { "types": ["folder"] },
+      "expected": ["folder-serving-benchmark"]
+    },
+    {
+      "id": "nl-fts-sqlite",
+      "query": "full text search in sqlite",
+      "style": "natural",
+      "expected": ["url-docs-sqlite-fts5"],
+      "acceptable": ["png-error-dialog"]
+    }
+  ]
+}

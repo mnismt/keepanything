@@ -1,0 +1,6 @@
+run,scheduler,kv_cache,block_size,concurrency,tokens_per_s,ttft_p50_ms,p95_latency_s
+1,static-batching,contiguous,-,40,410,910,6.8
+2,continuous-batching,contiguous,-,40,790,520,3.9
+3,continuous-batching,paged,16,40,1180,340,2.6
+4,continuous-batching,paged,24,40,1195,335,2.5
+5,continuous-batching,paged+prefix-cache,24,40,1310,210,2.3
