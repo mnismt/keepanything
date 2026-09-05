@@ -58,6 +58,14 @@ export const LIMITS = {
   nearDuplicateCosine: 0.92,
   /** Collection name+description cosine above this = "too similar to an existing collection". */
   collectionSimilarityCosine: 0.85,
+  /** Memberships and new-collection proposals below this confidence are rejected. */
+  minCollectionConfidence: 0.7,
+  /** Eligible members a proposed collection must have. */
+  minNewCollectionMembers: 3,
+  /** Agent-written descriptions shorter than this are rejected. */
+  minCollectionDescriptionChars: 40,
+  /** `nameSimilarity` at or above this folds a proposal into the existing collection. */
+  collectionNameFold: 0.6,
   /** Retry backoff per attempt (ms). */
   retryBackoffMs: [30_000, 120_000, 600_000],
   /** Maximum job attempts before `failed`. */

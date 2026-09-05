@@ -26,12 +26,6 @@ import {
 export const MIN_RELATIONSHIP_CONFIDENCE = 0.7
 /** At most this many new relationships per subject item and run. */
 export const MAX_RELATIONSHIPS_PER_ITEM = 5
-/** Memberships below this confidence are not created. */
-export const MIN_COLLECTION_CONFIDENCE = 0.7
-/** A new collection needs this many valid members. */
-export const MIN_NEW_COLLECTION_MEMBERS = 3
-/** A new collection's description must be at least this long. */
-export const MIN_DESCRIPTION_CHARS = 40
 /** Names the brief forbids (single topic words and generic buckets). */
 export const BAD_COLLECTION_NAMES = new Set(
   [
@@ -198,16 +192,17 @@ export function applyPlan(
         reject(`add ${a.itemId} to ${collection.name}: unknown item`)
         continue
       }
-      if (a.confidence < MIN_COLLECTION_CONFIDENCE) {
-        reject(`add ${a.itemId} to ${collection.name}: confidence ${a.confidence} below ${MIN_COLLECTION_CONFIDENCE}`)
+      if (a.confidence < LIMITS.minCollectionConfidence) {
+        reject(
+          `add ${a.itemId} to ${collection.name}: confidence ${a.confidence} below ${LIMITS.minCollectionConfidence}`
+        )
         continue
       }
       const list = additions.get(collection.id) ?? []
       list.push({ itemId: a.itemId, confidence: Number(a.confidence.toFixed(2)), reason: a.reason })
-      additions.set(collection.id, list)
     }
 
-    // New collections: valid name, description, ≥ 3 members; fold into an existing near-duplicate instead.
+    // New collections: valid name, description, ≥ LIMITS.minNewCollectionMembers members; fold into an existing near-duplicate instead.
     for (const proposal of plan.newCollections) {
       const problem = collectionNameProblem(proposal.name)
       if (problem) {
@@ -218,29 +213,30 @@ export function applyPlan(
         (m, i, arr) => known(m.itemId) && arr.findIndex((x) => x.itemId === m.itemId) === i
       )
       const similar = [...byId.values()].find(
-        (c) => normalizeName(c.name) === normalizeName(proposal.name) || nameSimilarity(c.name, proposal.name) >= 0.6
+        (c) =>
+          normalizeName(c.name) === normalizeName(proposal.name) ||
+          nameSimilarity(c.name, proposal.name) >= LIMITS.collectionNameFold
       )
       if (similar) {
         const list = additions.get(similar.id) ?? []
         for (const m of members)
           list.push({ itemId: m.itemId, confidence: Number(proposal.confidence.toFixed(2)), reason: m.reason })
-        additions.set(similar.id, list)
         reject(`new collection "${proposal.name}": folded into existing "${similar.name}"`)
         continue
       }
-      if (proposal.description.trim().length < MIN_DESCRIPTION_CHARS) {
+      if (proposal.description.trim().length < LIMITS.minCollectionDescriptionChars) {
         reject(`new collection "${proposal.name}": description too short`)
         continue
       }
-      if (proposal.confidence < MIN_COLLECTION_CONFIDENCE) {
+      if (proposal.confidence < LIMITS.minCollectionConfidence) {
         reject(`new collection "${proposal.name}": confidence ${proposal.confidence}`)
         continue
       }
       const nameKey = normalizeName(proposal.name)
       const eligible = members.filter(
-        (m) => !repos.suppressions.has('collection_member', `name:${nameKey}:${m.itemId}`) && repos.items.get(m.itemId)
+        (m) => byId.has(m.itemId) || scope.candidateIds.has(m.itemId) || subjectIds.has(m.itemId)
       )
-      if (eligible.length < MIN_NEW_COLLECTION_MEMBERS) {
+      if (eligible.length < LIMITS.minNewCollectionMembers) {
         reject(`new collection "${proposal.name}": only ${eligible.length} eligible members`)
         continue
       }
