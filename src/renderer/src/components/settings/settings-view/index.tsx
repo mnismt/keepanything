@@ -196,15 +196,15 @@ export function SettingsView(): React.JSX.Element {
           </Row>
           <Row label="AI mode">
             <div {...stylex.props(styles.control)}>
+              {/* env-forced `mock` has no option; show `off` rather than an empty select */}
               <select
                 {...stylex.props(styles.field, styles.select)}
-                value={settings?.aiMode ?? 'off'}
+                value={settings?.aiMode === 'gmi' ? 'gmi' : 'off'}
                 onChange={(e) => void commit({ aiMode: e.target.value as AiMode })}
                 aria-label="AI mode"
               >
                 <option value="gmi">GMI Cloud (MiniMax)</option>
-                <option value="mock">Mock — offline, deterministic</option>
-                <option value="off">Off — keep only, never understand</option>
+                <option value="off">Off - keep only, never understand</option>
               </select>
             </div>
           </Row>

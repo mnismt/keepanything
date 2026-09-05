@@ -192,7 +192,7 @@ export const REQUEST_SCHEMAS = {
     .object({
       apiKey: text(500).optional(),
       clearApiKey: z.boolean().optional(),
-      aiMode: z.enum(['gmi', 'mock', 'off']).optional(),
+      aiMode: z.enum(['gmi', 'off']).optional(),
       model: text(200).optional(),
       baseUrl: z.string().url().max(500).optional(),
       importMode: z.enum(['copy', 'reference']).optional(),

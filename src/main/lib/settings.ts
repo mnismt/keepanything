@@ -15,6 +15,7 @@ export interface EnvDefaults {
 
 const AI_MODES: readonly AiMode[] = ['gmi', 'mock', 'off']
 
+/** Runtime validator; includes `mock` so `KEEPANYTHING_AI=mock` still resolves in dev / E2E. */
 export function isAiMode(value: unknown): value is AiMode {
   return typeof value === 'string' && (AI_MODES as readonly string[]).includes(value)
 }
@@ -135,7 +136,10 @@ export function createSettingsStore(deps: SettingsStoreDeps): SettingsStore {
     const stored = document.read().settings
     const key = apiKey()
     return {
-      aiMode: stored.aiMode ?? env.aiMode ?? (key ? 'gmi' : 'mock'),
+      // ponytail: a stored `mock` is ignored rather than migrated. `mock` is env-driven only
+      // (E2E, screenshot, seed-library) and no longer user-selectable; the stale value is inert
+      // and the next settings write overwrites it.
+      aiMode: (stored.aiMode === 'mock' ? undefined : stored.aiMode) ?? env.aiMode ?? (key ? 'gmi' : 'off'),
       model: stored.model ?? env.model ?? DEFAULT_MODEL,
       baseUrl: stored.baseUrl ?? env.baseUrl ?? DEFAULT_BASE_URL,
       hasApiKey: key !== null,
