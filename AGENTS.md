@@ -26,7 +26,9 @@ Non-goals: cloud sync, accounts, telemetry, auto-update, Windows/Linux, scraping
 - UI: StyleX (`@stylexjs/stylex` + `@stylexjs/unplugin` in the renderer Vite config, before the React
   plugin). Tokens are `defineVars` in `styles/*.stylex.ts`; the only plain CSS is `global.css` (reset,
   `@font-face`). zustand stores, cmdk palette, Lucide icons, Instrument Serif (bundled in
-  `assets/fonts/`) for editorial headlines only.
+  `assets/fonts/`) for editorial headlines only. `@scritto/react` (`<Scritto value=... />`) for values
+  that change in place (live counters, statuses); it renders each glyph in its own span, so only short
+  labels, never prose. Static text stays plain.
 - Tests: Vitest (unit), Playwright `_electron` (smoke). Packaging: electron-builder, unsigned arm64.
 - Package manager: pnpm only. Never npm or yarn. Commit `pnpm-lock.yaml`.
 

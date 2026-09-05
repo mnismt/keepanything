@@ -107,7 +107,10 @@ export const styles = stylex.create({
     display: 'flex',
     flexDirection: 'column',
     gap: space.s4,
-    overflowY: 'auto'
+    overflowY: 'auto',
+    // Scritto's leaving glyphs sit outside the host box mid-roll; without this the
+    // auto-x that overflowY implies flashes a horizontal scrollbar every tick.
+    overflowX: 'hidden'
   },
   question: { fontSize: text.t15, color: colors.fg1, lineHeight: 1.4 },
   steps: { display: 'flex', flexDirection: 'column', gap: 6 },

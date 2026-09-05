@@ -1,3 +1,4 @@
+import Scritto from '@scritto/react'
 import * as stylex from '@stylexjs/stylex'
 import { Command } from 'cmdk'
 import { ArrowLeft, CornerDownLeft, Layers, Plus, Search, Settings, SquareStack } from 'lucide-react'
@@ -155,7 +156,7 @@ function RunView({ run, question, onOpenItem, onRetry, onBack }: RunViewProps): 
             <span {...stylex.props(styles.stepLabel)}>
               {run && run.steps.length === 0 ? 'Looking through your library' : 'Thinking it over'}
             </span>
-            <span {...stylex.props(styles.stepTime)}>{formatElapsed(elapsed)}</span>
+            <Scritto {...stylex.props(styles.stepTime)} value={formatElapsed(elapsed)} trend={1} />
           </div>
         ) : null}
         {run?.status === 'failed' ? (
