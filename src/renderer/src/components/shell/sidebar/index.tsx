@@ -2,7 +2,8 @@ import * as stylex from '@stylexjs/stylex'
 import { Plus, Settings } from 'lucide-react'
 import { useReducedMotion } from 'motion/react'
 import { type DragEvent, type ReactNode, useId, useState } from 'react'
-import type { CollectionSummary } from '../../../../../shared/types'
+import { COPY } from '../../../../../shared/constants'
+import type { AiStatus, CollectionSummary } from '../../../../../shared/types'
 import { hasExternalPayload, isInternalDrag, readInternalDrag, snapshotDrop } from '../../../lib/dnd'
 import { count } from '../../../lib/format'
 import { getPathForFile, invoke } from '../../../lib/ipc-client'
@@ -14,7 +15,6 @@ import { type Section, useUi } from '../../../state/ui'
 import { shared } from '../../../styles/shared'
 import { colors } from '../../../styles/tokens.stylex'
 import { AnimatedSidebarIcon, type AnimatedSidebarIconName } from '../animated-icons'
-import { LocalStatusFooter } from '../local-status-footer'
 import { styles } from './styles'
 
 interface RowProps {
@@ -130,6 +130,9 @@ export function Sidebar(): React.JSX.Element {
   const setView = useLibrary((s) => s.setView)
   const collections = useCollections((s) => s.list)
   const stats = useSettings((s) => s.stats)
+  const aiStatus: AiStatus = stats?.aiStatus ?? 'unconfigured'
+  const statusLabel =
+    aiStatus === 'connected' ? COPY.localConnected : aiStatus === 'offline' ? COPY.localOffline : COPY.localOnly
 
   const go = (next: Section, collectionId: string | null = null): void => {
     setSection(next, collectionId)
@@ -242,8 +245,25 @@ export function Sidebar(): React.JSX.Element {
         </div>
       </div>
       <div {...stylex.props(styles.bottom)}>
-        <Row icon={<Settings size={16} strokeWidth={1.5} />} label="Settings" current={false} onClick={openSettings} />
-        <LocalStatusFooter />
+        <div {...stylex.props(styles.bottomRow)}>
+          <Row
+            icon={<Settings size={16} strokeWidth={1.5} />}
+            label="Settings"
+            current={false}
+            onClick={openSettings}
+          />
+          <span {...stylex.props(styles.status)} title="Privacy and AI settings">
+            <span
+              {...stylex.props(
+                styles.statusDot,
+                aiStatus === 'offline' && styles.statusDotOffline,
+                aiStatus !== 'connected' && aiStatus !== 'offline' && styles.statusDotOff
+              )}
+              aria-hidden="true"
+            />
+            <span {...stylex.props(styles.statusLabel)}>{statusLabel}</span>
+          </span>
+        </div>
       </div>
     </nav>
   )

@@ -131,5 +131,11 @@ export const styles = stylex.create({
     borderTopStyle: 'solid',
     borderTopColor: colors.hairline,
     flexShrink: 0
-  }
+  },
+  bottomRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: space.s2 },
+  status: { display: 'flex', alignItems: 'center', gap: space.s1, paddingInline: space.s1, cursor: 'default' },
+  statusDot: { width: 6, height: 6, borderRadius: '50%', backgroundColor: colors.accent, flexShrink: 0 },
+  statusDotOffline: { backgroundColor: colors.fg3 },
+  statusDotOff: { backgroundColor: colors.fg4 },
+  statusLabel: { fontSize: text.t11, color: colors.fg4, whiteSpace: 'nowrap' }
 })
