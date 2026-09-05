@@ -32,3 +32,28 @@ export type AnchorMode = 'right-edge' | 'tray'
 export function railAnchorX(): number {
   return LAYOUT.window.width - LAYOUT.margin.right - LAYOUT.rail.width / 2
 }
+
+/** Which screen edge the shelf grows out of. */
+export type ShelfEdge = 'left' | 'right'
+
+/**
+ * Shelf geometry (logical pixels). The panel sits flush against a screen edge like a notch in the
+ * bezel: the body's outer side is the edge itself, its inner corners are rounded, and above and
+ * below it a concave `fillet` blends the panel back into the edge. The transparent `shadow` margin
+ * on the inner side keeps the drop shadow from being clipped by the window.
+ */
+export const SHELF = {
+  body: { width: 224, height: 288 },
+  radius: 18,
+  fillet: 20,
+  shadow: 28
+} as const
+
+/** Total transparent BrowserWindow size for the shelf. */
+export const SHELF_WINDOW = {
+  width: SHELF.body.width + SHELF.shadow,
+  height: SHELF.body.height + SHELF.fillet * 2
+} as const
+
+/** How long the shelf's exit slide takes; main hides the window only after it has played. */
+export const SHELF_EXIT_MS = 260

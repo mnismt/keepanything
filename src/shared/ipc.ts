@@ -16,6 +16,7 @@
  * - Events are pushed to every app window; stores subscribe once at boot, never per component.
  */
 
+import type { ShelfEdge } from './layout'
 import type {
   AgentProposal,
   AgentResult,
@@ -110,6 +111,7 @@ export const IPC_EVENTS = {
   collectionsChanged: 'collections:changed',
   agentRun: 'agent:run',
   shelfDropped: 'shelf:dropped',
+  shelfPresence: 'shelf:presence',
   settingsChanged: 'settings:changed',
   themeChanged: 'theme:changed'
 } as const
@@ -347,6 +349,8 @@ export interface IpcEventMap {
   'collections:changed': Record<string, never>
   'agent:run': AgentRunEvent
   'shelf:dropped': { result: CaptureResult }
+  /** Main is about to show the shelf window, or will hide it once the exit animation has played. */
+  'shelf:presence': { visible: boolean; edge: ShelfEdge }
   'settings:changed': { settings: Settings }
   'theme:changed': { theme: ResolvedTheme }
 }

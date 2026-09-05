@@ -106,9 +106,9 @@ export const COPY = {
   dropHere: 'Drop here',
   dropSub: 'Keep it for later',
   pasteHint: 'Paste a link (⌘V)',
-  localOnly: 'Local only',
-  localConnected: 'Local · GMI connected',
-  localOffline: 'Local · offline - AI paused',
+  localOnly: 'GMI',
+  localConnected: 'GMI',
+  localOffline: 'GMI',
   notUnderstood: 'Kept. Not understood yet.',
   connectHint: 'Connect GMI in Settings to understand this.'
 } as const
