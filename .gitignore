@@ -24,8 +24,3 @@ assets/fonts/build/
 .probe-lint-staged.js
 .tmp-live-run.mjs
 
-# Beads / Dolt files (added by bd init)
-.dolt/
-*.db
-.beads-credential-key
-.beads/proxieddb/
