@@ -82,7 +82,7 @@ export function installAppMenu(actions: AppMenuActions): void {
       submenu: [
         {
           label: 'KeepAnything on GitHub',
-          click: () => void shell.openExternal('https://github.com/doan-labs/keepanything')
+          click: () => void shell.openExternal('https://github.com/mnismt/keepanything')
         }
       ]
     }

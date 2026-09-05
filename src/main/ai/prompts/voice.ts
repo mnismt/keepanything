@@ -35,7 +35,7 @@ export const RELATIONSHIP_CATALOG = RELATIONSHIP_TYPE_IDS.map(
 /** The conservative collection policy, stated once and reused by organize/consolidate/folder. */
 export const COLLECTION_RULES = [
   'Collections are meaningful ongoing contexts, not categories.',
-  'Good names: "Doan Labs visual direction", "Local LLM inference research", "macOS utility references", "MiniMax Hackathon".',
+  'Good names: "Local LLM inference research", "macOS utility references", "Quarterly product launch moodboard", "Field recording techniques".',
   'Bad names (never create): "Technology", "Websites", "Software", "Internet", "Articles", "Design", "Misc", "Links", or any single topic word.',
   'A new collection needs at least 3 members that genuinely share a project, question or purpose, or 2 members that name the same project or entity.',
   'Prefer adding to an existing collection over creating a similar one. Prefer doing nothing over creating something vague.',

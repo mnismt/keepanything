@@ -177,7 +177,7 @@ const SEEDS: Seed[] = [
     type: 'image',
     subtype: 'design',
     kind: 'design_reference',
-    title: 'Doan Labs landing hero exploration',
+    title: 'Editorial landing hero exploration',
     status: 'READY',
     width: 1600,
     height: 2000,
@@ -187,8 +187,8 @@ const SEEDS: Seed[] = [
     fg: '#8a7b64',
     motif: 'arc',
     understanding: 'A warm, paper-toned landing hero with a single serif headline and generous margins; no UI chrome.',
-    whyUseful: 'Visual direction candidate for the Doan Labs site.',
-    collectionIds: ['col-design', 'col-doan']
+    whyUseful: 'Visual direction candidate for a quiet, editorial landing page.',
+    collectionIds: ['col-design', 'col-moodboard']
   },
   {
     id: 'it-06',
@@ -206,7 +206,7 @@ const SEEDS: Seed[] = [
     motif: 'circle',
     understanding: 'A 94-second product intro with slow camera moves over hardware and a restrained voiceover.',
     whyUseful: 'Tone reference for premium software advertising.',
-    collectionIds: ['col-doan']
+    collectionIds: ['col-moodboard']
   },
   {
     id: 'it-07',
@@ -513,7 +513,7 @@ function col(
 export const FIXTURE_COLLECTIONS: CollectionSummary[] = [
   col('col-ai', 'Local LLM inference research', 'ai', 'agent', 'Serving engines, providers and cost comparisons.'),
   col('col-design', 'macOS utility references', 'ai', 'agent', 'Quiet, native-feeling desktop UI.'),
-  col('col-doan', 'Doan Labs visual direction', 'manual', 'user', null),
+  col('col-moodboard', 'Editorial moodboard', 'manual', 'user', null),
   col('col-read', 'Things to read', 'dynamic', 'user', 'Anything that looks like long-form reading.')
 ]
 

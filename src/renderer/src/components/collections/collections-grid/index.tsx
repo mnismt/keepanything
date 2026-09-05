@@ -242,7 +242,7 @@ export function CollectionDialog({
                 {...stylex.props(styles.input)}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder={mode === 'dynamic' ? 'Things inspiring Doan Labs' : 'Something you keep coming back to'}
+                placeholder={mode === 'dynamic' ? 'Things that keep showing up' : 'Something you keep coming back to'}
               />
             </label>
             {mode === 'dynamic' ? (
@@ -253,7 +253,7 @@ export function CollectionDialog({
                     {...stylex.props(styles.input, styles.textarea)}
                     value={rule}
                     onChange={(e) => setRule(e.target.value)}
-                    placeholder="Landing pages and visual references that could shape the Doan Labs site"
+                    placeholder="Items that share a vibe, topic or purpose"
                   />
                 </label>
                 <label {...stylex.props(styles.field)}>
