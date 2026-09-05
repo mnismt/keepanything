@@ -90,7 +90,7 @@ function Row({
   return (
     <button
       type="button"
-      {...stylex.props(styles.row, current && styles.rowCurrent, over && styles.rowDrop)}
+      {...stylex.props(shared.hoverFade, styles.row, current && styles.rowCurrent, over && styles.rowDrop)}
       aria-current={current ? 'true' : undefined}
       onClick={onClick}
       onContextMenu={onContextMenu}
@@ -209,7 +209,7 @@ export function Sidebar(): React.JSX.Element {
             <span>Collections</span>
             <button
               type="button"
-              {...stylex.props(styles.groupAdd)}
+              {...stylex.props(shared.hoverFade, styles.groupAdd)}
               aria-label="New collection"
               onClick={() => push({ kind: 'dialog', id: 'newCollection' })}
             >

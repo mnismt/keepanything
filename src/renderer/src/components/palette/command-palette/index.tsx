@@ -75,7 +75,7 @@ function SourceRow({
 }): React.JSX.Element {
   const item = useLibrary((s) => s.byId[itemId])
   return (
-    <button type="button" {...stylex.props(styles.source)} onClick={() => onOpen(itemId)}>
+    <button type="button" {...stylex.props(shared.hoverFade, styles.source)} onClick={() => onOpen(itemId)}>
       <span {...stylex.props(styles.sourceThumb)}>
         <Thumb src={item?.thumbnailUrl ?? null} fill={item?.dominantColor} />
       </span>

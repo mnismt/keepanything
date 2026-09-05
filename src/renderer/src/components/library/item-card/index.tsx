@@ -326,7 +326,7 @@ function CardInner(props: ItemCardProps): React.JSX.Element {
           {props.onRemoveFromCollection ? (
             <button
               type="button"
-              {...stylex.props(styles.quick)}
+              {...stylex.props(shared.hoverFade, styles.quick)}
               aria-label="Remove from collection"
               title="Remove from collection"
               onClick={(e) => {
@@ -341,7 +341,7 @@ function CardInner(props: ItemCardProps): React.JSX.Element {
           {props.onQuickAction ? (
             <button
               type="button"
-              {...stylex.props(styles.quick)}
+              {...stylex.props(shared.hoverFade, styles.quick)}
               aria-label={quickLabel}
               title={quickLabel}
               disabled={quickDisabled}

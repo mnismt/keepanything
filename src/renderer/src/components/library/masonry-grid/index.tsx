@@ -288,7 +288,7 @@ function ListRows({ items }: { items: ItemSummary[] }): React.JSX.Element {
       {items.map((item) => (
         <div
           key={item.id}
-          {...stylex.props(styles.row, selection.has(item.id) && styles.rowSelected)}
+          {...stylex.props(shared.hoverFade, styles.row, selection.has(item.id) && styles.rowSelected)}
           role="option"
           aria-selected={selection.has(item.id)}
           tabIndex={(focusId ?? items[0]?.id) === item.id ? 0 : -1}

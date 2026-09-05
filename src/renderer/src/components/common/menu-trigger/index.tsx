@@ -1,6 +1,7 @@
 import * as stylex from '@stylexjs/stylex'
 import { Ellipsis } from 'lucide-react'
 import type { MouseEvent } from 'react'
+import { shared } from '../../../styles/shared'
 import { styles } from './styles'
 
 /** The hover "..." that opens a native context menu at the click position. */
@@ -14,7 +15,7 @@ export function MenuTrigger({
   return (
     <button
       type="button"
-      {...stylex.props(styles.trigger)}
+      {...stylex.props(shared.hoverFade, styles.trigger)}
       aria-label={label}
       aria-haspopup="menu"
       onClick={(e) => {

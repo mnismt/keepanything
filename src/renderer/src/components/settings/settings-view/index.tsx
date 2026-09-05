@@ -221,6 +221,7 @@ export function SettingsView(): React.JSX.Element {
                   role="radio"
                   aria-checked={(settings?.theme ?? 'system') === t.value}
                   {...stylex.props(
+                    shared.hoverFade,
                     styles.segBtn,
                     i === THEMES.length - 1 && styles.segLast,
                     (settings?.theme ?? 'system') === t.value && styles.segOn

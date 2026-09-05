@@ -36,7 +36,7 @@ export const styles = stylex.create({
     fontSize: text.t13,
     textAlign: 'left',
     transitionProperty: 'border-color, color',
-    transitionDuration: motion.fast,
+    transitionDuration: motion.slow,
     transitionTimingFunction: motion.easeOut
   },
   searchText: { flexGrow: 1 },

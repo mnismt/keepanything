@@ -3,7 +3,7 @@
  * component.
  */
 import * as stylex from '@stylexjs/stylex'
-import { colors, text } from './tokens.stylex'
+import { colors, motion, text } from './tokens.stylex'
 
 export const shared = stylex.create({
   srOnly: {
@@ -42,5 +42,15 @@ export const shared = stylex.create({
   },
   noDrag: {
     WebkitAppRegion: 'no-drag'
+  },
+  /**
+   * Hover tint for controls and repeated rows. Compose it before the component's own style so a
+   * component can still override the duration. Deliberately excludes `box-shadow`: focus rings are
+   * drawn with it and must appear the instant focus moves.
+   */
+  hoverFade: {
+    transitionProperty: 'color, background-color',
+    transitionDuration: motion.base,
+    transitionTimingFunction: motion.easeOut
   }
 })

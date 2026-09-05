@@ -3,6 +3,7 @@ import { COPY } from '../../../../../shared/constants'
 import { useLibrary } from '../../../state/library'
 import { useSettings } from '../../../state/settings'
 import { useUi } from '../../../state/ui'
+import { shared } from '../../../styles/shared'
 import { Kbd } from '../../common'
 import { styles } from './styles'
 
@@ -71,7 +72,7 @@ export function EmptyState({ kind }: { kind: EmptyKind }): React.JSX.Element {
       {copy.sub ? <p {...stylex.props(styles.quietSub)}>{copy.sub}</p> : null}
       {kind === 'filtered' ? (
         <p {...stylex.props(styles.quietSub)}>
-          <button type="button" {...stylex.props(styles.linkButton)} onClick={() => setTypes([])}>
+          <button type="button" {...stylex.props(shared.hoverFade, styles.linkButton)} onClick={() => setTypes([])}>
             Show all types
           </button>
         </p>

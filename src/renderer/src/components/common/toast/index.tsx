@@ -2,6 +2,7 @@ import * as stylex from '@stylexjs/stylex'
 import { X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { type Toast as ToastModel, useToasts } from '../../../state/toasts'
+import { shared } from '../../../styles/shared'
 import { styles } from './styles'
 
 function ToastItem({ toast }: { toast: ToastModel }): React.JSX.Element {
@@ -34,7 +35,7 @@ function ToastItem({ toast }: { toast: ToastModel }): React.JSX.Element {
       {toast.secondary ? (
         <button
           type="button"
-          {...stylex.props(styles.action, styles.secondary)}
+          {...stylex.props(shared.hoverFade, styles.action, styles.secondary)}
           onClick={() => {
             void toast.secondary?.run()
             dismiss(toast.id)
@@ -46,7 +47,7 @@ function ToastItem({ toast }: { toast: ToastModel }): React.JSX.Element {
       {toast.action ? (
         <button
           type="button"
-          {...stylex.props(styles.action)}
+          {...stylex.props(shared.hoverFade, styles.action)}
           onClick={() => {
             void toast.action?.run()
             dismiss(toast.id)
@@ -55,7 +56,12 @@ function ToastItem({ toast }: { toast: ToastModel }): React.JSX.Element {
           {toast.action.label}
         </button>
       ) : null}
-      <button type="button" {...stylex.props(styles.close)} aria-label="Dismiss" onClick={() => dismiss(toast.id)}>
+      <button
+        type="button"
+        {...stylex.props(shared.hoverFade, styles.close)}
+        aria-label="Dismiss"
+        onClick={() => dismiss(toast.id)}
+      >
         <X size={14} strokeWidth={1.5} />
       </button>
     </div>

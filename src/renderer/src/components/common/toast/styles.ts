@@ -32,7 +32,10 @@ export const styles = stylex.create({
   },
   text: { flexGrow: 1, minWidth: 0 },
   detail: { display: 'block', color: colors.fg3, fontSize: text.t12, marginTop: 2 },
-  secondary: { fontWeight: weight.regular, color: { default: colors.fg3, ':hover': colors.fg1 } },
+  secondary: {
+    fontWeight: weight.regular,
+    color: { default: colors.fg3, ':hover': colors.fg1 }
+  },
   action: {
     flexShrink: 0,
     fontWeight: weight.medium,

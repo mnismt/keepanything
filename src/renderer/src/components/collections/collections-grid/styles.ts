@@ -40,6 +40,7 @@ export const styles = stylex.create({
     gap: 3,
     padding: 3,
     transitionProperty: 'box-shadow',
+    // Same `box-shadow` draws the hover lift and the focus ring; the ring wins, so this stays fast.
     transitionDuration: motion.fast,
     transitionTimingFunction: motion.easeOut,
     boxShadow: {

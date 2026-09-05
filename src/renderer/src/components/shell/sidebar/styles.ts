@@ -96,10 +96,7 @@ export const styles = stylex.create({
     textAlign: 'left',
     borderWidth: 2,
     borderStyle: 'solid',
-    borderColor: 'transparent',
-    transitionProperty: 'background-color, color',
-    transitionDuration: motion.fast,
-    transitionTimingFunction: motion.easeOut
+    borderColor: 'transparent'
   },
   rowCurrent: {
     backgroundColor: { default: colors.bgActive, ':hover': colors.bgActive },

@@ -56,7 +56,7 @@ function JobsEntry({ jobs, failed }: { jobs: JobProgress[]; failed: JobProgress[
         {expandable ? (
           <button
             type="button"
-            {...stylex.props(styles.toggle)}
+            {...stylex.props(shared.hoverFade, styles.toggle)}
             aria-label={open ? 'Hide details' : 'Show details'}
             aria-expanded={open}
             onClick={() => setOpen((v) => !v)}
@@ -85,7 +85,7 @@ function JobsEntry({ jobs, failed }: { jobs: JobProgress[]; failed: JobProgress[
                 ) : null}
               </span>
               {j.itemId ? (
-                <button type="button" {...stylex.props(styles.action)} onClick={() => void retry(j)}>
+                <button type="button" {...stylex.props(shared.hoverFade, styles.action)} onClick={() => void retry(j)}>
                   Retry
                 </button>
               ) : null}
@@ -106,13 +106,13 @@ function RunEntry({ run }: { run: RunState }): React.JSX.Element {
         <Dot tone="processing" />
         <span {...stylex.props(styles.lineText, shared.ellipsis)}>{runTitle(run)}</span>
         {run.task === 'command' ? (
-          <button type="button" {...stylex.props(styles.action)} onClick={() => openRun(run.runId)}>
+          <button type="button" {...stylex.props(shared.hoverFade, styles.action)} onClick={() => openRun(run.runId)}>
             Show
           </button>
         ) : null}
         <button
           type="button"
-          {...stylex.props(styles.action)}
+          {...stylex.props(shared.hoverFade, styles.action)}
           onClick={() => void invoke('agent:cancel', { runId: run.runId })}
         >
           Cancel

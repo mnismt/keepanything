@@ -40,7 +40,9 @@ export const styles = stylex.create({
     overflow: 'hidden',
     backgroundColor: colors.bg2,
     transitionProperty: 'box-shadow, transform',
-    transitionDuration: motion.fast,
+    // `box-shadow` carries the focus ring as well as the hover lift, so it stays fast: a ring that
+    // fades in over 260 ms trails behind where focus actually is.
+    transitionDuration: `${motion.fast}, ${motion.slow}`,
     transitionTimingFunction: motion.easeOut,
     boxShadow: {
       default: `0 0 0 1px ${colors.hairline} inset`,

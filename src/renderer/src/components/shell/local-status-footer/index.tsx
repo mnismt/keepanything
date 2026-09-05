@@ -2,6 +2,7 @@ import * as stylex from '@stylexjs/stylex'
 import { COPY } from '../../../../../shared/constants'
 import { useSettings } from '../../../state/settings'
 import { useUi } from '../../../state/ui'
+import { shared } from '../../../styles/shared'
 import { styles } from './styles'
 
 /** "Local only" / "Local · GMI connected" / "Local · offline — AI paused". Click -> Settings. */
@@ -11,7 +12,12 @@ export function LocalStatusFooter(): React.JSX.Element {
   const status = stats?.aiStatus ?? 'unconfigured'
   const label = status === 'connected' ? COPY.localConnected : status === 'offline' ? COPY.localOffline : COPY.localOnly
   return (
-    <button type="button" {...stylex.props(styles.footer)} onClick={openSettings} title="Privacy and AI settings">
+    <button
+      type="button"
+      {...stylex.props(shared.hoverFade, styles.footer)}
+      onClick={openSettings}
+      title="Privacy and AI settings"
+    >
       <span
         {...stylex.props(
           styles.dot,

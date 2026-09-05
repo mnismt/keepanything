@@ -34,7 +34,7 @@ const TYPE_FILTERS: Array<{ value: ItemType | ''; label: string }> = [
 
 function Control({ label, children }: { label: string; children: ReactNode }): React.JSX.Element {
   return (
-    <label {...stylex.props(styles.control, shared.noDrag)}>
+    <label {...stylex.props(shared.hoverFade, styles.control, shared.noDrag)}>
       <span {...stylex.props(shared.srOnly)}>{label}</span>
       {children}
       <ChevronDown {...stylex.props(styles.chevron)} size={12} strokeWidth={1.5} />
@@ -116,7 +116,7 @@ export function Toolbar(): React.JSX.Element {
           <div {...stylex.props(styles.seg, shared.noDrag)} role="group" aria-label="Layout">
             <button
               type="button"
-              {...stylex.props(styles.segBtn, layoutMode === 'grid' && styles.segOn)}
+              {...stylex.props(shared.hoverFade, styles.segBtn, layoutMode === 'grid' && styles.segOn)}
               aria-label="Grid"
               aria-pressed={layoutMode === 'grid'}
               onClick={() => setLayout('grid')}
@@ -125,7 +125,7 @@ export function Toolbar(): React.JSX.Element {
             </button>
             <button
               type="button"
-              {...stylex.props(styles.segBtn, layoutMode === 'list' && styles.segOn)}
+              {...stylex.props(shared.hoverFade, styles.segBtn, layoutMode === 'list' && styles.segOn)}
               aria-label="List"
               aria-pressed={layoutMode === 'list'}
               onClick={() => setLayout('list')}
