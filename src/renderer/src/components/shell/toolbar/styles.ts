@@ -25,6 +25,8 @@ export const styles = stylex.create({
     gap: space.s2,
     height: 28,
     width: 260,
+    minWidth: 0,
+    flexShrink: 1,
     paddingRight: space.s2,
     paddingLeft: space.s3,
     borderRadius: radii.r1,
@@ -39,7 +41,7 @@ export const styles = stylex.create({
     transitionDuration: motion.slow,
     transitionTimingFunction: motion.easeOut
   },
-  searchText: { flexGrow: 1 },
+  searchText: { flexGrow: 1, minWidth: 0 },
   control: {
     position: 'relative',
     display: 'inline-flex',

@@ -23,6 +23,11 @@ export function bootRenderer(): void {
     on(IPC_EVENTS.itemsChanged, (event) => {
       useLibrary.getState().applyItemsChanged(event)
       void useSettings.getState().loadStats()
+      // Collection counts exclude trashed items but main only emits `collections:changed` for
+      // membership edits, so membership-preserving lifecycle changes must refresh them here.
+      if (event.reason === 'trashed' || event.reason === 'restored' || event.reason === 'deleted') {
+        void useCollections.getState().load()
+      }
     }),
     on(IPC_EVENTS.jobsProgress, (progress) => useJobs.getState().applyProgress(progress)),
     on(IPC_EVENTS.collectionsChanged, () => {

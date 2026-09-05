@@ -74,7 +74,7 @@ export function Toolbar(): React.JSX.Element {
         aria-label="Search anything"
       >
         <Search size={14} strokeWidth={1.5} />
-        <span {...stylex.props(styles.searchText)}>Search anything…</span>
+        <span {...stylex.props(styles.searchText, shared.ellipsis)}>Search anything…</span>
         <Kbd>{shortcut('⌘K', platform())}</Kbd>
       </button>
       {showControls ? (
