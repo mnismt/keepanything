@@ -66,3 +66,19 @@ export function templateFromMenuAction(action: string): CommandTemplate | null {
       return null
   }
 }
+
+/** Prior Q&A a follow-up feeds back as `history`. Only free-form Asks qualify; templates carry their own scope. */
+export interface PriorTurn {
+  question: string
+  answer: string
+}
+
+export function buildFollowUp(nextQuestion: string, prior: PriorTurn): AgentCommandRequest {
+  return {
+    question: nextQuestion.trim(),
+    history: [
+      { role: 'user', content: prior.question.trim() },
+      { role: 'assistant', content: prior.answer.trim() }
+    ]
+  }
+}

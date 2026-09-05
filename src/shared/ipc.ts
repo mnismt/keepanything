@@ -193,6 +193,14 @@ export interface AgentCommandRequest {
   question: string
   itemIds?: string[]
   template?: CommandTemplate
+  /** Prior turns for a follow-up question. Ask mode only; the renderer builds this from the previous run's Q&A. */
+  history?: AgentCommandTurn[]
+}
+
+/** One turn of a prior Ask My Stuff exchange, fed back as context for a follow-up. */
+export interface AgentCommandTurn {
+  role: 'user' | 'assistant'
+  content: string
 }
 
 /** `settings:testConnection` result. */

@@ -156,6 +156,26 @@ export const styles = stylex.create({
     color: colors.ink
   },
   noteTitle: { fontWeight: weight.medium, flexGrow: 1, minWidth: 0 },
+  followUp: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: space.s3,
+    paddingInline: space.s5,
+    borderTopWidth: 1,
+    borderTopStyle: 'solid',
+    borderTopColor: colors.hairline,
+    color: colors.fg4
+  },
+  followUpInput: {
+    flexGrow: 1,
+    height: 40,
+    fontSize: text.t13,
+    color: colors.fg1,
+    backgroundColor: 'transparent',
+    borderStyle: 'none',
+    outline: { default: 'none', ':focus-visible': 'none' },
+    '::placeholder': { color: colors.fg4 }
+  },
   footer: {
     display: 'flex',
     alignItems: 'center',

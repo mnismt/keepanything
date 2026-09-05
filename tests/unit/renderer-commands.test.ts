@@ -2,11 +2,29 @@ import { describe, expect, it } from 'vitest'
 import { runHeadline, runNote, runOutcome, runTitle } from '../../src/renderer/src/lib/activity'
 import {
   buildAskAboutSelection,
+  buildFollowUp,
   buildSelectionCommand,
   commandsFor,
   SELECTION_COMMANDS,
   templateFromMenuAction
 } from '../../src/renderer/src/lib/commands'
+
+describe('follow-up command', () => {
+  it('trims the question and feeds back the prior Q&A as history', () => {
+    expect(
+      buildFollowUp(' and the alternatives? ', {
+        question: ' which app?',
+        answer: 'Rectangle'
+      })
+    ).toEqual({
+      question: 'and the alternatives?',
+      history: [
+        { role: 'user', content: 'which app?' },
+        { role: 'assistant', content: 'Rectangle' }
+      ]
+    })
+  })
+})
 
 describe('selection commands', () => {
   it('offers pairwise commands only for two or more items', () => {

@@ -7,7 +7,13 @@ import { useShallow } from 'zustand/react/shallow'
 import { COPY } from '../../../../../shared/constants'
 import type { AgentCommandRequest } from '../../../../../shared/ipc'
 import type { AgentStep, SearchHit } from '../../../../../shared/types'
-import { buildAskAboutSelection, buildSelectionCommand, commandsFor } from '../../../lib/commands'
+import {
+  buildAskAboutSelection,
+  buildFollowUp,
+  buildSelectionCommand,
+  commandsFor,
+  type PriorTurn
+} from '../../../lib/commands'
 import { count } from '../../../lib/format'
 import { describeError, invoke } from '../../../lib/ipc-client'
 import { addToCollection } from '../../../lib/library-actions'
@@ -95,14 +101,23 @@ interface RunViewProps {
   onOpenItem: (id: string) => void
   onRetry: (() => void) | null
   onBack: () => void
+  /** Null when follow-ups are not supported (template/action runs, or no prior answer). */
+  onFollowUp: ((text: string) => void) | null
 }
 
-function RunView({ run, question, onOpenItem, onRetry, onBack }: RunViewProps): React.JSX.Element {
+function RunView({ run, question, onOpenItem, onRetry, onBack, onFollowUp }: RunViewProps): React.JSX.Element {
+  const [followUp, setFollowUp] = useState('')
   const push = useToasts((s) => s.push)
   const byId = useLibrary((s) => s.byId)
   const openDetail = useUi((s) => s.openDetail)
   const closePalette = useUi((s) => s.closePalette)
   const running = run?.status === 'running'
+  const submitFollowUp = (): void => {
+    const text = followUp.trim()
+    if (!text || !onFollowUp) return
+    setFollowUp('')
+    onFollowUp(text)
+  }
   const lastStepAt = run ? run.startedAt + run.steps.reduce((ms, s) => ms + s.durationMs, 0) : null
   const elapsed = useElapsed(running ? (lastStepAt ?? run?.startedAt ?? null) : null, running)
   const [saving, setSaving] = useState(false)
@@ -200,6 +215,25 @@ function RunView({ run, question, onOpenItem, onRetry, onBack }: RunViewProps): 
           </>
         ) : null}
       </div>
+      {onFollowUp ? (
+        <div {...stylex.props(styles.followUp)}>
+          <input
+            type="text"
+            {...stylex.props(styles.followUpInput)}
+            value={followUp}
+            onChange={(e) => setFollowUp(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                submitFollowUp()
+              }
+            }}
+            placeholder="Ask a follow-up…"
+            aria-label="Ask a follow-up"
+          />
+          <Kbd>↩</Kbd>
+        </div>
+      ) : null}
       <div {...stylex.props(styles.footer)}>
         <Button small variant="quiet" onClick={onBack} aria-label="Back to search">
           <ArrowLeft size={14} strokeWidth={1.5} />
@@ -288,6 +322,18 @@ export function CommandPalette(): React.JSX.Element {
   const groups = useMemo(() => groupHits(hits), [hits])
   const showAsk = shouldOfferAsk(query, hits.length)
   const trimmed = query.trim()
+  // Follow-ups only after a free-form Ask that produced an answer; `run` belongs to `lastRequest`
+  // because `start` sets both, so the pair is always consistent.
+  const priorTurn: PriorTurn | null =
+    lastRequest &&
+    !lastRequest.itemIds &&
+    !lastRequest.template &&
+    run?.status === 'succeeded' &&
+    run.result?.task === 'command' &&
+    run.result.kind === 'answer' &&
+    run.result.answer
+      ? { question: lastRequest.question, answer: run.result.answer }
+      : null
 
   const start = async (request: AgentCommandRequest): Promise<void> => {
     setAskError(null)
@@ -371,6 +417,7 @@ export function CommandPalette(): React.JSX.Element {
             onOpenItem={open}
             onRetry={lastRequest ? () => void start(lastRequest) : null}
             onBack={back}
+            onFollowUp={priorTurn ? (text) => void start(buildFollowUp(text, priorTurn)) : null}
           />
         ) : (
           <>

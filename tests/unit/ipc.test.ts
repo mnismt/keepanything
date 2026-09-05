@@ -50,6 +50,13 @@ describe('request schemas', () => {
     accepts('relationships:create', { sourceId: 'a', targetId: 'b', type: 'inspired_by' })
     accepts('search:quick', { query: 'minimax', limit: 20 })
     accepts('agent:command', { question: 'What am I researching?', itemIds: ['a'], template: 'compare' })
+    accepts('agent:command', {
+      question: 'follow-up',
+      history: [
+        { role: 'user', content: 'first' },
+        { role: 'assistant', content: 'first answer' }
+      ]
+    })
     accepts('agent:undoRun', { runId: 'r1' })
     accepts('agent:applyProposals', { runId: 'r1' })
     accepts('system:revealLibrary', undefined)
@@ -78,6 +85,18 @@ describe('request schemas', () => {
     rejects('relationships:create', { sourceId: 'a', targetId: 'b', type: 'friends_with' })
     rejects('agent:undoRun', {})
     rejects('agent:undoRun', { runId: '' })
+    rejects('agent:command', {
+      question: 'x',
+      history: [{ role: 'system', content: 'oops' }]
+    })
+    rejects('agent:command', {
+      question: 'x',
+      history: [{ role: 'user' }]
+    })
+    rejects('agent:command', {
+      question: 'x',
+      history: Array.from({ length: 9 }, () => ({ role: 'user', content: 'x' }))
+    })
     rejects('agent:applyProposals', { runId: 'r1', extra: true })
     rejects('system:revealLibrary', { path: '/tmp' })
     rejects('settings:update', { theme: 'sepia' })

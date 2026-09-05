@@ -285,4 +285,54 @@ describe('prompt builders', () => {
     })
     expect(messageText(template[1] ?? { role: 'user', content: '' })).toContain('Compare these items')
   })
+
+  it('appends prior turns and the new question to the ask transcript', () => {
+    const messages = buildCommandMessages({
+      mode: 'ask',
+      question: 'follow-up',
+      today: '2026-09-05',
+      history: [
+        { role: 'user', content: 'first question' },
+        { role: 'assistant', content: 'first answer' }
+      ]
+    })
+    expect(messages).toHaveLength(4)
+    expect(messages[0]?.role).toBe('system')
+    expect(messages[1]).toEqual({ role: 'user', content: 'first question' })
+    expect(messages[2]).toEqual({ role: 'assistant', content: 'first answer' })
+    expect(messages[3]?.role).toBe('user')
+    expect(messageText(messages[3] ?? { role: 'user', content: '' })).toContain('Question: follow-up')
+  })
+
+  it('truncates overly long prior turns and skips empty ones', () => {
+    const long = 'x'.repeat(5_000)
+    const messages = buildCommandMessages({
+      mode: 'ask',
+      question: 'next',
+      history: [
+        { role: 'user', content: long },
+        { role: 'assistant', content: '   ' },
+        { role: 'user', content: 'kept' }
+      ]
+    })
+    expect(messages).toHaveLength(4)
+    const userOne = messages[1]
+    if (userOne?.role !== 'user') throw new Error('expected user')
+    const content = userOne.content
+    if (typeof content !== 'string') throw new Error('expected string content')
+    expect(content.endsWith('…')).toBe(true)
+    expect(content.length).toBeLessThanOrEqual(2_001)
+  })
+
+  it('ignores history for non-ask modes', () => {
+    const messages = buildCommandMessages({
+      mode: 'template',
+      template: 'compare',
+      seeds: [{ id: 'a', title: 'A', type: 'url' }],
+      // history is structurally invalid for templates; the runtime never sets it,
+      // but buildCommandMessages must not crash if a caller did.
+      history: [{ role: 'user', content: 'noop' }]
+    } as unknown as Parameters<typeof buildCommandMessages>[0])
+    expect(messages).toHaveLength(2)
+  })
 })

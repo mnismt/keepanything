@@ -484,7 +484,7 @@ export function createAgentService(deps: AgentServiceDeps): CommandAgentService 
         }
       } else {
         if (question.length === 0) throw new KaError('VALIDATION', 'Ask something first.')
-        command = { mode: 'ask', question, today: today() }
+        command = { mode: 'ask', question, today: today(), history: input.history }
       }
       const state = start(
         command,

@@ -1,6 +1,8 @@
+import type { AgentCommandTurn } from '../../../shared/ipc'
+import { truncate } from '../../../shared/text'
 import type { CommandTemplate } from '../../../shared/types'
 import type { ChatMessage } from '../../ports'
-import { systemMessage, userMessage } from '../messages'
+import { assistantMessage, systemMessage, userMessage } from '../messages'
 import { IDENTITY, jsonBlock, VOICE_RULES } from './voice'
 
 export interface CommandSeed {
@@ -12,8 +14,11 @@ export interface CommandSeed {
   capturedAgo?: string
 }
 
+/** Per-turn char cap so a stray long prior answer can't blow the prompt budget. */
+const HISTORY_TURN_CHARS = 2_000
+
 export type CommandInput =
-  | { mode: 'ask'; question: string; today?: string }
+  | { mode: 'ask'; question: string; today?: string; history?: AgentCommandTurn[] }
   | { mode: 'template'; template: CommandTemplate; seeds: CommandSeed[]; instruction?: string; today?: string }
 
 /** Byte-stable system prompt. Dates never go here (see `today` in the user message). */
@@ -47,6 +52,13 @@ const TEMPLATE_INSTRUCTIONS: Record<CommandTemplate, string> = {
 
 /** Messages for a command run (system + the request; tool results are appended by the agent). */
 export function buildCommandMessages(input: CommandInput): ChatMessage[] {
+  const messages: ChatMessage[] = [systemMessage(COMMAND_SYSTEM_PROMPT)]
+  if (input.mode === 'ask') {
+    for (const turn of input.history ?? []) {
+      const content = truncate(turn.content.trim(), HISTORY_TURN_CHARS)
+      if (content) messages.push(turn.role === 'assistant' ? assistantMessage(content) : userMessage(content))
+    }
+  }
   const lines: string[] = []
   if (input.today) lines.push(`Today: ${input.today}`)
   switch (input.mode) {
@@ -59,7 +71,8 @@ export function buildCommandMessages(input: CommandInput): ChatMessage[] {
       lines.push('', jsonBlock('Selected items', input.seeds), '', 'Read every selected item before writing.')
       break
   }
-  return [systemMessage(COMMAND_SYSTEM_PROMPT), userMessage(lines.join('\n'))]
+  messages.push(userMessage(lines.join('\n')))
+  return messages
 }
 
 /** The message that forces the last step (verified alternative to named tool_choice). */

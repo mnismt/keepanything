@@ -116,7 +116,7 @@ describe('createTray', () => {
     // showLibrary must come after hideShelf so the shelf closes before the library takes focus.
     const hideOrder = actions.hideShelf.mock.invocationCallOrder[0]
     const showOrder = actions.showLibrary.mock.invocationCallOrder[0]
-    expect(hideOrder).toBeLessThan(showOrder)
+    expect(hideOrder).toBeLessThan(showOrder ?? -1)
     expect(actions.toggleShelf).not.toHaveBeenCalled()
   })
 

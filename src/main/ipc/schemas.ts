@@ -176,7 +176,16 @@ export const REQUEST_SCHEMAS = {
     .object({
       question: text(4000).min(1),
       itemIds: z.array(id).max(200).optional(),
-      template: z.enum(['compare', 'common', 'summarize', 'brief', 'extract', 'custom']).optional()
+      template: z.enum(['compare', 'common', 'summarize', 'brief', 'extract', 'custom']).optional(),
+      history: z
+        .array(
+          z.object({
+            role: z.enum(['user', 'assistant']),
+            content: text(4000).min(1)
+          })
+        )
+        .max(8)
+        .optional()
     })
     .strict() satisfies z.ZodType<IpcRequest<'agent:command'>>,
   'agent:cancel': z.object({ runId: id }).strict() satisfies z.ZodType<IpcRequest<'agent:cancel'>>,
