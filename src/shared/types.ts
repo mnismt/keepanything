@@ -269,16 +269,13 @@ export type ItemsView = 'library' | 'links' | 'files' | 'trash' | 'collection'
 /** Sort keys for `items:list`. */
 export type ItemsSort = 'captured' | 'created' | 'title'
 
-/** How a collection is populated. */
-export type CollectionType = 'manual' | 'ai' | 'dynamic'
-
-/** Who created a collection. */
+/** How a collection was created. */
 export type CollectionCreator = 'user' | 'agent'
 
 /** Who added an item to a collection. */
-export type MembershipActor = 'user' | 'agent' | 'dynamic'
+export type MembershipActor = 'user' | 'agent'
 
-/** Filters applied to searches and dynamic collections (dates on `captured_at`). */
+/** Filters applied to agent tool calls and saved searches (dates on `captured_at`). */
 export interface SearchFilters {
   types?: ItemType[]
   subtypes?: ItemSubtype[]
@@ -292,12 +289,19 @@ export interface SearchFilters {
   strict?: boolean
 }
 
-/** Stored query of a dynamic collection. */
-export interface DynamicQuery {
-  text: string
-  filters: SearchFilters
-  /** Cosine threshold on the item's summary embedding (chunk 0). */
-  minCosine: number
+/** `collections` row. */
+export interface Collection {
+  id: string
+  name: string
+  /** `normalizeName(name)`; unique. */
+  nameKey: string
+  /** Free-form text the agent reads to decide whether new items belong. */
+  description: string | null
+  createdBy: CollectionCreator
+  color: string | null
+  pinned: boolean
+  createdAt: string
+  updatedAt: string
 }
 
 /** `collections` row. */
@@ -704,9 +708,8 @@ export interface SystemStats {
 
 /** Which native context menu to show. */
 export type ContextMenuKind = 'item' | 'items' | 'collection' | 'background'
-
 /** Who performed an audited mutation. */
-export type AuditActor = 'user' | 'agent' | 'system' | 'dynamic'
+export type AuditActor = 'user' | 'agent' | 'system'
 
 /** `audit_log` row. */
 export interface AuditEntry {
@@ -723,4 +726,4 @@ export interface AuditEntry {
 }
 
 /** `suppressions.kind`: facts the agent must never re-create after a user removed them. */
-export type SuppressionKind = 'relationship' | 'collection_member' | 'dynamic_member'
+export type SuppressionKind = 'relationship' | 'collection_member'

@@ -31,7 +31,6 @@ import type {
   CollectionSummary,
   CommandTemplate,
   ContextMenuKind,
-  DynamicQuery,
   ItemDetail,
   ItemSummary,
   ItemsSort,
@@ -70,7 +69,6 @@ export const IPC_CHANNELS = {
   captureDrop: 'capture:drop',
   collectionsList: 'collections:list',
   collectionsCreate: 'collections:create',
-  collectionsCreateDynamic: 'collections:createDynamic',
   collectionsRename: 'collections:rename',
   collectionsDelete: 'collections:delete',
   collectionsAddItems: 'collections:addItems',
@@ -236,7 +234,6 @@ export interface IpcRequestMap {
   'capture:drop': CaptureDropRequest
   'collections:list': void
   'collections:create': { name: string; description?: string }
-  'collections:createDynamic': { name: string; description?: string; query: DynamicQuery }
   'collections:rename': { id: string; name: string; description?: string }
   'collections:delete': { id: string }
   'collections:addItems': { id: string; itemIds: string[] }
@@ -286,7 +283,6 @@ export interface IpcResponseMap {
   'capture:drop': CaptureResult
   'collections:list': CollectionSummary[]
   'collections:create': Collection
-  'collections:createDynamic': Collection
   'collections:rename': void
   'collections:delete': void
   'collections:addItems': void
