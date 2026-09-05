@@ -3,8 +3,8 @@ import { BrowserWindow } from 'electron'
 import { isDev } from '../env'
 import { hardenWebContents } from '../security'
 
-/** Matches `--bg-0` in the renderer tokens; avoids a flash before the first paint. */
-export const LIBRARY_WINDOW_BACKGROUND = '#141210'
+/** Fully transparent so the `vibrancy` material shows through; the renderer paints its own glass tint. */
+export const LIBRARY_WINDOW_BACKGROUND = '#00000000'
 
 /** Default and minimum library window size (DIP). */
 export const LIBRARY_WINDOW_SIZE = { width: 1200, height: 800, minWidth: 960, minHeight: 640 } as const
@@ -49,6 +49,7 @@ export function createLibraryWindow(): BrowserWindow {
     titleBarStyle: 'hidden',
     trafficLightPosition: { x: 16, y: 18 },
     backgroundColor: LIBRARY_WINDOW_BACKGROUND,
+    vibrancy: 'fullscreen-ui',
     webPreferences: appWebPreferences()
   })
   hardenWebContents(window.webContents, { openExternalLinks: true })

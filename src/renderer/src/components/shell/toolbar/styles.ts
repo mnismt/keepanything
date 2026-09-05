@@ -31,6 +31,7 @@ export const styles = stylex.create({
     paddingLeft: space.s3,
     borderRadius: radii.r1,
     backgroundColor: colors.bg2,
+    backdropFilter: 'blur(24px)',
     borderWidth: 1,
     borderStyle: 'solid',
     borderColor: { default: colors.hairline, ':hover': colors.hairlineStrong },

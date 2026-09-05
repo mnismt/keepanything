@@ -9,6 +9,7 @@ export const styles = stylex.create({
     height: '100%',
     overflow: 'hidden',
     backgroundColor: colors.bg2,
+    backdropFilter: 'blur(24px)',
     borderRadius: 'inherit'
   },
   fill: (color: string) => ({ backgroundColor: color }),

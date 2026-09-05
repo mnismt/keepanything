@@ -19,7 +19,7 @@ export const styles = stylex.create({
     flexDirection: 'column',
     width: layout.sidebarWidth,
     height: '100%',
-    backgroundColor: colors.bg1,
+    backgroundColor: colors.glassSide,
     borderRightWidth: 1,
     borderRightStyle: 'solid',
     borderRightColor: colors.hairline,

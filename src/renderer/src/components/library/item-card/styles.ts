@@ -40,6 +40,7 @@ export const styles = stylex.create({
     borderRadius: radii.r2,
     overflow: 'hidden',
     backgroundColor: colors.bg2,
+    backdropFilter: 'blur(24px)',
     transitionProperty: 'box-shadow, transform',
     // `box-shadow` carries the focus ring as well as the hover lift, so it stays fast: a ring that
     // fades in over 260 ms trails behind where focus actually is.
@@ -100,6 +101,7 @@ export const styles = stylex.create({
     borderRadius: radii.r1,
     color: { default: colors.fg2, ':hover': colors.fg1 },
     backgroundColor: colors.bg3,
+    backdropFilter: 'blur(24px)',
     borderWidth: 1,
     borderStyle: 'solid',
     borderColor: colors.hairline,
@@ -239,6 +241,7 @@ export const styles = stylex.create({
     height: 68,
     borderRadius: radii.r1,
     backgroundColor: colors.bg3,
+    backdropFilter: 'blur(24px)',
     boxShadow: `0 0 0 1px ${colors.hairline} inset`,
     color: colors.fg4
   },

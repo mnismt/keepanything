@@ -23,7 +23,7 @@ const styles = stylex.create({
   root: {
     height: '100%',
     width: '100%',
-    backgroundColor: colors.bg0,
+    backgroundColor: colors.glass,
     color: colors.fg1,
     fontFamily: fonts.sans,
     fontSize: text.t13

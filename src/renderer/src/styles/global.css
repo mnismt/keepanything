@@ -47,8 +47,9 @@
     color-scheme: light dark;
   }
 
+  /* Transparent: the library window is vibrant (library-window.ts) and the App root paints the tint. */
   body {
-    background: #141210;
+    background: transparent;
     color: #efe9e1;
     overflow: hidden;
     user-select: none;
@@ -57,7 +58,6 @@
 
   @media (prefers-color-scheme: light) {
     body {
-      background: #f7f4ee;
       color: #1d1a17;
     }
   }

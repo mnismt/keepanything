@@ -26,6 +26,7 @@ export const styles = stylex.create({
     flexDirection: 'column',
     borderRadius: radii.r3,
     backgroundColor: colors.bg3,
+    backdropFilter: 'blur(24px)',
     borderWidth: 1,
     borderStyle: 'solid',
     borderColor: colors.hairline,

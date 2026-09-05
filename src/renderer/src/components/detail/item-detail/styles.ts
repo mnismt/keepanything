@@ -60,6 +60,7 @@ export const styles = stylex.create({
     fontFamily: fonts.sans,
     fontSize: text.t15,
     backgroundColor: colors.bg2,
+    backdropFilter: 'blur(24px)',
     color: colors.fg2,
     whiteSpace: 'pre-wrap'
   },
@@ -79,6 +80,7 @@ export const styles = stylex.create({
     paddingBottom: space.s8,
     borderRadius: radii.r2,
     backgroundColor: colors.bg2,
+    backdropFilter: 'blur(24px)',
     boxShadow: `0 0 0 1px ${colors.hairline} inset`
   },
   heroRepoName: {
@@ -113,6 +115,7 @@ export const styles = stylex.create({
     height: 120,
     borderRadius: radii.r2,
     backgroundColor: colors.bg2,
+    backdropFilter: 'blur(24px)',
     boxShadow: `0 0 0 1px ${colors.hairline} inset`,
     color: colors.fg4
   },
@@ -222,7 +225,8 @@ export const styles = stylex.create({
     gridTemplateColumns: '1fr 1fr',
     gridTemplateRows: '1fr 1fr',
     gap: 1,
-    backgroundColor: colors.bg2
+    backgroundColor: colors.bg2,
+    backdropFilter: 'blur(24px)'
   },
   rowTitle: { color: colors.fg1, fontSize: text.t13 },
   rowSub: { fontSize: text.t12, color: colors.fg3, lineHeight: 1.45 },

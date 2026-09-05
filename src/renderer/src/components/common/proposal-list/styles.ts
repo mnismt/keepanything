@@ -12,7 +12,8 @@ export const styles = stylex.create({
     borderWidth: 1,
     borderStyle: 'solid',
     borderColor: colors.hairline,
-    backgroundColor: colors.bg2
+    backgroundColor: colors.bg2,
+    backdropFilter: 'blur(24px)'
   },
   list: { display: 'flex', flexDirection: 'column', gap: 4, margin: 0, padding: 0, listStyleType: 'none' },
   item: {

@@ -27,6 +27,7 @@ export const styles = stylex.create({
     paddingBlock: 2,
     borderRadius: radii.r1,
     backgroundColor: colors.bg2,
+    backdropFilter: 'blur(24px)',
     boxShadow: `0 0 0 1px ${colors.accent}`,
     outline: { default: 'none', ':focus-visible': 'none' },
     resize: 'none',

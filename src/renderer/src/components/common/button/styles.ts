@@ -14,6 +14,7 @@ export const styles = stylex.create({
     fontWeight: weight.medium,
     color: colors.fg1,
     backgroundColor: { default: colors.bg2, ':hover': colors.bg3, ':active': colors.bgActive },
+    backdropFilter: 'blur(24px)',
     borderWidth: 1,
     borderStyle: 'solid',
     borderColor: { default: colors.hairline, ':hover': colors.hairlineStrong },
