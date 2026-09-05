@@ -278,8 +278,7 @@ export async function dispatchTool(
         name: c.name,
         description: c.description,
         count: c.count,
-        createdBy: c.createdBy,
-        type: c.type
+        createdBy: c.createdBy
       }))
       return {
         content: cap(collections),

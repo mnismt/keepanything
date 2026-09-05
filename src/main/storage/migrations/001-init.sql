@@ -86,14 +86,12 @@ CREATE VIRTUAL TABLE IF NOT EXISTS items_fts USING fts5(
   prefix='2 3'
 );
 
--- Collections (manual | ai | dynamic) and membership
+-- Collections and membership.
 CREATE TABLE IF NOT EXISTS collections (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
   name_key TEXT NOT NULL UNIQUE,                  -- normalizeName(name)
   description TEXT,
-  type TEXT NOT NULL CHECK (type IN ('manual','ai','dynamic')),
-  query TEXT,                                     -- dynamic: JSON DynamicQuery {text, filters, minCosine}
   created_by TEXT NOT NULL CHECK (created_by IN ('user','agent')),
   color TEXT,
   pinned INTEGER NOT NULL DEFAULT 0,
@@ -106,9 +104,9 @@ CREATE TABLE IF NOT EXISTS collection_items (
   item_id TEXT NOT NULL REFERENCES items(id) ON DELETE CASCADE,
   confidence REAL,
   reason TEXT,
-  added_by TEXT NOT NULL CHECK (added_by IN ('user','agent','dynamic')),
   agent_run_id TEXT,
   added_at TEXT NOT NULL,
+  added_by TEXT NOT NULL CHECK (added_by IN ('user','agent')),
   PRIMARY KEY (collection_id, item_id)
 );
 
@@ -191,11 +189,10 @@ CREATE INDEX IF NOT EXISTS jobs_claim ON jobs(status, lane, priority, run_after)
 CREATE INDEX IF NOT EXISTS jobs_item ON jobs(item_id);
 CREATE INDEX IF NOT EXISTS jobs_batch ON jobs(batch_id);
 
--- Audit log: every mutation by user/agent/system/dynamic; undo applies `before`.
+-- Audit log: every mutation by user/agent/system; undo applies `before`.
 CREATE TABLE IF NOT EXISTS audit_log (
   id TEXT PRIMARY KEY,
-  actor TEXT NOT NULL CHECK (actor IN ('user','agent','system','dynamic')),
-  action TEXT NOT NULL,
+  actor TEXT NOT NULL CHECK (actor IN ('user','agent','system')),
   entity TEXT NOT NULL,
   entity_id TEXT NOT NULL,
   before TEXT,                                    -- JSON
@@ -212,9 +209,8 @@ CREATE INDEX IF NOT EXISTS audit_log_created ON audit_log(created_at);
 -- Suppressions: facts the agent must never re-create after a user removed them.
 --   'relationship'      key '<minId>:<maxId>' (any type)
 --   'collection_member' keys '<collectionId>:<itemId>' AND 'name:<name_key>:<itemId>'
---   'dynamic_member'    key '<collectionId>:<itemId>'
 CREATE TABLE IF NOT EXISTS suppressions (
-  kind TEXT NOT NULL CHECK (kind IN ('relationship','collection_member','dynamic_member')),
+  kind TEXT NOT NULL CHECK (kind IN ('relationship','collection_member')),
   key TEXT NOT NULL,
   created_at TEXT NOT NULL,
   PRIMARY KEY (kind, key)

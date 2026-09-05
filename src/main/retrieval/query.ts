@@ -207,7 +207,7 @@ function pushUnique<T>(list: T[], values: readonly T[] | undefined): void {
   for (const v of values) if (!list.includes(v)) list.push(v)
 }
 
-/** Parse a query into tokens, phrases and cues. `filters` (agent / dynamic collections) are merged in. */
+/** Parse a query into tokens, phrases and cues. `filters` (agent tools) are merged in. */
 export function parseQuery(raw: string, now: Date, filters: SearchFilters = {}): ParsedQuery {
   const cues: QueryCues = {
     types: [...(filters.types ?? [])],

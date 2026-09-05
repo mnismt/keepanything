@@ -1,7 +1,7 @@
 import { toMediaUrl } from '../../../shared/media'
-import type { Collection, CollectionItem, CollectionSummary, DynamicQuery } from '../../../shared/types'
+import type { Collection, CollectionItem, CollectionSummary } from '../../../shared/types'
 import type { Db } from '../db'
-import { numOr, parseJson, type Row, requireText, text, toBool } from './rows'
+import { numOr, type Row, requireText, text, toBool } from './rows'
 
 export function rowToCollection(row: Row): Collection {
   return {
@@ -9,8 +9,6 @@ export function rowToCollection(row: Row): Collection {
     name: requireText(row.name, 'name'),
     nameKey: requireText(row.name_key, 'name_key'),
     description: text(row.description),
-    type: requireText(row.type, 'type') as Collection['type'],
-    query: parseJson<DynamicQuery | null>(row.query, null),
     createdBy: requireText(row.created_by, 'created_by') as Collection['createdBy'],
     color: text(row.color),
     pinned: toBool(row.pinned),
@@ -38,7 +36,7 @@ export interface CollectionRepo {
   getByNameKey(nameKey: string): Collection | null
   update(
     id: string,
-    patch: Partial<Pick<Collection, 'name' | 'nameKey' | 'description' | 'query' | 'color' | 'pinned' | 'updatedAt'>>
+    patch: Partial<Pick<Collection, 'name' | 'nameKey' | 'description' | 'color' | 'pinned' | 'updatedAt'>>
   ): void
   delete(id: string): void
   list(): Collection[]
@@ -60,21 +58,9 @@ export function createCollectionRepo(db: Db): CollectionRepo {
   return {
     insert(c) {
       db.prepare(
-        `INSERT INTO collections (id, name, name_key, description, type, query, created_by, color, pinned, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-      ).run(
-        c.id,
-        c.name,
-        c.nameKey,
-        c.description,
-        c.type,
-        c.query ? JSON.stringify(c.query) : null,
-        c.createdBy,
-        c.color,
-        c.pinned ? 1 : 0,
-        c.createdAt,
-        c.updatedAt
-      )
+        `INSERT INTO collections (id, name, name_key, description, created_by, color, pinned, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      ).run(c.id, c.name, c.nameKey, c.description, c.createdBy, c.color, c.pinned ? 1 : 0, c.createdAt, c.updatedAt)
     },
     get,
     getByNameKey(nameKey) {
@@ -87,8 +73,6 @@ export function createCollectionRepo(db: Db): CollectionRepo {
       if (patch.name !== undefined) sets.push('name = ?'), params.push(patch.name)
       if (patch.nameKey !== undefined) sets.push('name_key = ?'), params.push(patch.nameKey)
       if (patch.description !== undefined) sets.push('description = ?'), params.push(patch.description)
-      if (patch.query !== undefined)
-        sets.push('query = ?'), params.push(patch.query ? JSON.stringify(patch.query) : null)
       if (patch.color !== undefined) sets.push('color = ?'), params.push(patch.color)
       if (patch.pinned !== undefined) sets.push('pinned = ?'), params.push(patch.pinned ? 1 : 0)
       if (patch.updatedAt !== undefined) sets.push('updated_at = ?'), params.push(patch.updatedAt)

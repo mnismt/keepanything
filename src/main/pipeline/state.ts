@@ -47,7 +47,7 @@ export interface TransitionResult {
   progress: JobProgress
   /** Items that reached `READY`/`PARTIAL` in this transition. */
   settledIds: string[]
-  /** Items whose `index` stage finished (dynamic collections re-materialize). */
+  /** Items whose `index` stage finished. */
   indexedIds: string[]
   enqueued: Job[]
   /** True when the job was dropped because its item is gone. */

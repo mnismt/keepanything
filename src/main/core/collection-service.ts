@@ -4,8 +4,6 @@ import type {
   CollectionCreator,
   CollectionItem,
   CollectionSummary,
-  CollectionType,
-  DynamicQuery,
   MembershipActor
 } from '../../shared/types'
 import type { Clock, EventBus } from '../ports'
@@ -18,8 +16,6 @@ import { type IdGenerator, uuid } from './ids'
 export interface CreateCollectionInput {
   name: string
   description?: string | null
-  type?: CollectionType
-  query?: DynamicQuery | null
   createdBy: CollectionCreator
   agentRunId?: string | null
   color?: string | null
@@ -54,7 +50,7 @@ export interface CollectionService {
   ): Collection
   delete(id: string, opts: { actor: 'user' | 'agent' }): void
   /**
-   * Add members. Agent/dynamic actors skip suppressed pairs; the user actor clears suppressions.
+   * Add members. Agent actors skip suppressed pairs; the user actor clears suppressions.
    * Existing members and unknown items are skipped, never errors.
    */
   addItems(
@@ -63,14 +59,9 @@ export interface CollectionService {
     opts: { actor: MembershipActor; agentRunId?: string | null }
   ): AddItemsResult
   /** Remove one member. A user removal writes both `collection_member` suppression keys. */
-  removeItem(id: string, itemId: string, opts: { actor: 'user' | 'agent' | 'dynamic' }): void
+  removeItem(id: string, itemId: string, opts: { actor: 'user' | 'agent' }): void
   /** True when the agent must not (re-)add `itemId` to this collection. */
   isSuppressed(collection: Collection, itemId: string): boolean
-  /**
-   * Make membership equal `itemIds` minus `dynamic_member` suppressions
-   * (user-added members are kept).
-   */
-  materialize(id: string, itemIds: readonly string[]): { added: string[]; removed: string[] }
 }
 
 export interface CollectionServiceDeps {
@@ -125,14 +116,11 @@ export function createCollectionService(deps: CollectionServiceDeps): Collection
         if (collections.getByNameKey(nameKey))
           throw new KaError('CONFLICT', 'A collection with that name already exists.')
         const now = clock.nowIso()
-        const type = input.type ?? (input.query ? 'dynamic' : input.createdBy === 'agent' ? 'ai' : 'manual')
         const collection: Collection = {
           id: ids(),
           name,
           nameKey,
           description: input.description?.trim() || null,
-          type,
-          query: input.query ?? null,
           createdBy: input.createdBy,
           color: input.color ?? null,
           pinned: false,
@@ -216,11 +204,7 @@ export function createCollectionService(deps: CollectionServiceDeps): Collection
           if (opts.actor === 'user') {
             suppressions.remove('collection_member', membershipKey(id, m.itemId))
             suppressions.remove('collection_member', `name:${collection.nameKey}:${m.itemId}`)
-            suppressions.remove('dynamic_member', membershipKey(id, m.itemId))
-          } else if (
-            isSuppressed(collection, m.itemId) ||
-            (opts.actor === 'dynamic' && suppressions.has('dynamic_member', membershipKey(id, m.itemId)))
-          ) {
+          } else if (isSuppressed(collection, m.itemId)) {
             result.skipped.push({ itemId: m.itemId, reason: 'suppressed' })
             continue
           }
@@ -261,7 +245,6 @@ export function createCollectionService(deps: CollectionServiceDeps): Collection
         if (opts.actor === 'user') {
           suppressions.add('collection_member', membershipKey(id, itemId), now)
           suppressions.add('collection_member', `name:${collection.nameKey}:${itemId}`, now)
-          if (collection.type === 'dynamic') suppressions.add('dynamic_member', membershipKey(id, itemId), now)
         }
         audit.record({
           actor: opts.actor,
@@ -274,39 +257,6 @@ export function createCollectionService(deps: CollectionServiceDeps): Collection
         changed([itemId])
       })
     },
-    isSuppressed,
-    materialize(id, itemIds) {
-      return db.transaction(() => {
-        const collection = get(id)
-        if (collection.type !== 'dynamic') throw new KaError('CONFLICT', 'Only dynamic collections are materialized.')
-        const wanted = new Set(itemIds)
-        const now = clock.nowIso()
-        const added: string[] = []
-        const removed: string[] = []
-        for (const m of collections.members(id)) {
-          if (m.addedBy === 'dynamic' && !wanted.has(m.itemId)) {
-            collections.removeMember(id, m.itemId)
-            removed.push(m.itemId)
-          }
-        }
-        for (const itemId of wanted) {
-          if (collections.getMember(id, itemId) || !items.get(itemId)) continue
-          if (suppressions.has('dynamic_member', membershipKey(id, itemId)) || isSuppressed(collection, itemId))
-            continue
-          collections.addMember({
-            collectionId: id,
-            itemId,
-            confidence: null,
-            reason: null,
-            addedBy: 'dynamic',
-            agentRunId: null,
-            addedAt: now
-          })
-          added.push(itemId)
-        }
-        if (added.length + removed.length > 0) changed([...added, ...removed])
-        return { added, removed }
-      })
-    }
+    isSuppressed
   }
 }

@@ -83,14 +83,6 @@ const searchFilters = z
   })
   .strict()
 
-const dynamicQuery = z
-  .object({
-    text: text(500),
-    filters: searchFilters,
-    minCosine: z.number().min(0).max(1)
-  })
-  .strict()
-
 const empty = z.undefined()
 const bytes = z.custom<ArrayBuffer>((v) => v instanceof ArrayBuffer || ArrayBuffer.isView(v), 'Expected bytes')
 
@@ -152,9 +144,6 @@ export const REQUEST_SCHEMAS = {
   'collections:create': z
     .object({ name: text(200).min(1), description: optionalText(2000) })
     .strict() satisfies z.ZodType<IpcRequest<'collections:create'>>,
-  'collections:createDynamic': z
-    .object({ name: text(200).min(1), description: optionalText(2000), query: dynamicQuery })
-    .strict() satisfies z.ZodType<IpcRequest<'collections:createDynamic'>>,
   'collections:rename': z
     .object({ id, name: text(200).min(1), description: optionalText(2000) })
     .strict() satisfies z.ZodType<IpcRequest<'collections:rename'>>,

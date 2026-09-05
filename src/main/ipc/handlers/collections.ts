@@ -5,7 +5,6 @@ type CollectionHandlers = Pick<
   HandlerMap,
   | 'collections:list'
   | 'collections:create'
-  | 'collections:createDynamic'
   | 'collections:rename'
   | 'collections:delete'
   | 'collections:addItems'
@@ -19,9 +18,7 @@ export function createCollectionHandlers(deps: HandlerDeps): CollectionHandlers 
   return {
     'collections:list': () => collections.list(),
     'collections:create': ({ name, description }) =>
-      collections.create({ name, description: description ?? null, type: 'manual', createdBy: 'user' }),
-    'collections:createDynamic': ({ name, description, query }) =>
-      collections.create({ name, description: description ?? null, type: 'dynamic', query, createdBy: 'user' }),
+      collections.create({ name, description: description ?? null, createdBy: 'user' }),
     'collections:rename': ({ id, name, description }) => {
       collections.rename(id, name, description, { actor: 'user' })
     },

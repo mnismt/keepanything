@@ -93,7 +93,7 @@ export function createAuditService(deps: AuditDeps): AuditService {
     db.afterCommit(() => events.emit('collections.changed', {}))
   }
 
-  const isAgentFact = (entry: AuditEntry): boolean => entry.actor === 'agent' || entry.actor === 'dynamic'
+  const isAgentFact = (entry: AuditEntry): boolean => entry.actor === 'agent'
 
   const undoEntry = (entry: AuditEntry, now: string): void => {
     switch (entry.action) {
