@@ -8,6 +8,8 @@ import { isPlausibleTrayBounds } from '../positioning'
 export interface TrayActions {
   toggleShelf(): void
   showLibrary(): void
+  /** Force the shelf closed when the user is opening the library on purpose. */
+  hideShelf(): void
   /** A drag entered the status item: open the shelf so there is a real target below it. */
   armShelf(): void
   disarmShelf(): void
@@ -54,10 +56,13 @@ export function createTray(actions: TrayActions, logger: Logger): TrayController
     remember(bounds)
     actions.toggleShelf()
   })
+
   tray.on('double-click', (_event, bounds) => {
     remember(bounds)
+    actions.hideShelf()
     actions.showLibrary()
   })
+
   tray.on('right-click', (_event, bounds) => {
     remember(bounds)
     tray.popUpContextMenu(menu)

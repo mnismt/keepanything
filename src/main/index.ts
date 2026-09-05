@@ -299,6 +299,7 @@ async function bootstrap(): Promise<void> {
     {
       toggleShelf: () => windows.toggleShelf(),
       showLibrary: () => void windows.showLibrary(),
+      hideShelf: () => windows.hideShelf(),
       armShelf: () => windows.armShelf(),
       disarmShelf: () => windows.disarmShelf(),
       keepDropped: (payload) =>
