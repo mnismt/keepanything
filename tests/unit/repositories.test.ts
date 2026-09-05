@@ -68,7 +68,7 @@ describe('item repository', () => {
       mediaVersion: 2
     })
     h.item({ type: 'text', title: 'b', parentItemId: folder.id })
-    const collection = h.collections.create({ name: 'Doan Labs', createdBy: 'user' })
+    const collection = h.collections.create({ name: 'mnismt', createdBy: 'user' })
     h.collections.addItems(collection.id, [{ itemId: folder.id }], { actor: 'user' })
     h.repos.items.update(folder.id, { understanding: 'x'.repeat(400) })
 
@@ -121,7 +121,7 @@ describe('item repository', () => {
 describe('collection repository', () => {
   it('stores collections, memberships and cover thumbnails', () => {
     const c = h.collections.create({ name: 'Local LLM inference research', description: 'd', createdBy: 'agent' })
-    expect(c.type).toBe('ai')
+    expect(c.createdBy).toBe('agent')
     expect(h.repos.collections.getByNameKey('local llm inference research')?.id).toBe(c.id)
     const withThumb = h.item({ thumbnailPath: 't.png' })
     const plain = h.item()

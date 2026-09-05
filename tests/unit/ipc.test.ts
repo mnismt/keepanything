@@ -43,10 +43,6 @@ describe('request schemas', () => {
     accepts('capture:drop', { files: [], uriList: 'https://a.b', text: 'https://a.b', source: 'shelf' })
     accepts('collections:list', undefined)
     accepts('collections:create', { name: 'N' })
-    accepts('collections:createDynamic', {
-      name: 'N',
-      query: { text: 'q', filters: { types: ['url'], since: '2026-01-01T00:00:00.000Z' }, minCosine: 0.4 }
-    })
     accepts('relationships:create', { sourceId: 'a', targetId: 'b', type: 'inspired_by' })
     accepts('search:quick', { query: 'minimax', limit: 20 })
     accepts('agent:command', { question: 'What am I researching?', itemIds: ['a'], template: 'compare' })
@@ -81,7 +77,6 @@ describe('request schemas', () => {
     rejects('capture:blob', { name: 'a', mimeType: 'x', bytes: 'nope' })
     rejects('capture:drop', { files: [], source: 'email' })
     rejects('collections:create', { name: '' })
-    rejects('collections:createDynamic', { name: 'N', query: { text: 'q', filters: {}, minCosine: 2 } })
     rejects('relationships:create', { sourceId: 'a', targetId: 'b', type: 'friends_with' })
     rejects('agent:undoRun', {})
     rejects('agent:undoRun', { runId: '' })

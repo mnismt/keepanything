@@ -200,6 +200,7 @@ export function applyPlan(
       }
       const list = additions.get(collection.id) ?? []
       list.push({ itemId: a.itemId, confidence: Number(a.confidence.toFixed(2)), reason: a.reason })
+      additions.set(collection.id, list)
     }
 
     // New collections: valid name, description, ≥ LIMITS.minNewCollectionMembers members; fold into an existing near-duplicate instead.
@@ -221,6 +222,7 @@ export function applyPlan(
         const list = additions.get(similar.id) ?? []
         for (const m of members)
           list.push({ itemId: m.itemId, confidence: Number(proposal.confidence.toFixed(2)), reason: m.reason })
+        additions.set(similar.id, list)
         reject(`new collection "${proposal.name}": folded into existing "${similar.name}"`)
         continue
       }
@@ -234,7 +236,7 @@ export function applyPlan(
       }
       const nameKey = normalizeName(proposal.name)
       const eligible = members.filter(
-        (m) => byId.has(m.itemId) || scope.candidateIds.has(m.itemId) || subjectIds.has(m.itemId)
+        (m) => !repos.suppressions.has('collection_member', `name:${nameKey}:${m.itemId}`) && repos.items.get(m.itemId)
       )
       if (eligible.length < LIMITS.minNewCollectionMembers) {
         reject(`new collection "${proposal.name}": only ${eligible.length} eligible members`)

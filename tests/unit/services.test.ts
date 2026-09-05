@@ -148,8 +148,8 @@ describe('item service', () => {
 
 describe('collection service', () => {
   it('validates names and refuses duplicates (normalized)', () => {
-    h.collections.create({ name: 'Doan Labs', createdBy: 'user' })
-    expect(() => h.collections.create({ name: '  doan-labs ', createdBy: 'agent' })).toThrow(/already exists/)
+    h.collections.create({ name: 'Reading List', createdBy: 'user' })
+    expect(() => h.collections.create({ name: '  reading-list ', createdBy: 'agent' })).toThrow(/already exists/)
     expect(() => h.collections.create({ name: '   ', createdBy: 'user' })).toThrow(/name/)
     expect(h.eventsNamed('collections.changed')).toHaveLength(1)
   })
@@ -208,22 +208,17 @@ describe('collection service', () => {
     expect(h.repos.collections.getMember(c.id, item.id)).not.toBeNull()
   })
 
-  it('materializes dynamic collections while keeping user members and honouring exclusions', () => {
-    const c = h.collections.create({
-      name: 'Dyn',
-      createdBy: 'user',
-      query: { text: 'x', filters: {}, minCosine: 0.5 }
-    })
-    expect(c.type).toBe('dynamic')
-    const a = h.item()
-    const b = h.item()
-    const pinned = h.item()
-    h.collections.addItems(c.id, [{ itemId: pinned.id }], { actor: 'user' })
-    expect(h.collections.materialize(c.id, [a.id, b.id])).toEqual({ added: [a.id, b.id], removed: [] })
-    h.collections.removeItem(c.id, b.id, { actor: 'user' })
-    expect(h.collections.materialize(c.id, [a.id, b.id])).toEqual({ added: [], removed: [] })
-    expect(h.collections.materialize(c.id, [])).toEqual({ added: [], removed: [a.id] })
-    expect(h.repos.collections.getMember(c.id, pinned.id)).not.toBeNull()
+  it('user removeItem suppresses future agent adds for that pair', () => {
+    const c = h.collections.create({ name: 'Set', createdBy: 'user' })
+    const item = h.item()
+    h.collections.addItems(c.id, [{ itemId: item.id }], { actor: 'agent' })
+    h.collections.removeItem(c.id, item.id, { actor: 'user' })
+    const result = h.collections.addItems(c.id, [{ itemId: item.id }], { actor: 'agent' })
+    expect(result.added).toEqual([])
+    expect(result.skipped).toEqual([{ itemId: item.id, reason: 'suppressed' }])
+    // user actor clears the suppression, allowing the add again
+    const retry = h.collections.addItems(c.id, [{ itemId: item.id }], { actor: 'user' })
+    expect(retry.added).toEqual([item.id])
   })
 })
 

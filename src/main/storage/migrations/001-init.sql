@@ -193,6 +193,7 @@ CREATE INDEX IF NOT EXISTS jobs_batch ON jobs(batch_id);
 CREATE TABLE IF NOT EXISTS audit_log (
   id TEXT PRIMARY KEY,
   actor TEXT NOT NULL CHECK (actor IN ('user','agent','system')),
+  action TEXT NOT NULL,
   entity TEXT NOT NULL,
   entity_id TEXT NOT NULL,
   before TEXT,                                    -- JSON

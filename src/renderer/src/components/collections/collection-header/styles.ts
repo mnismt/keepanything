@@ -10,6 +10,7 @@ export const styles = stylex.create({
     paddingBottom: space.s4,
     maxWidth: 760
   },
+  reason: { fontSize: text.t13, color: colors.fg2, lineHeight: 1.5 },
   reasonLead: { color: colors.fg3 },
   actions: { display: 'flex', gap: space.s2, marginTop: space.s2, marginInlineStart: -6 },
   quiet: {

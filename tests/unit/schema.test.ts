@@ -100,8 +100,6 @@ describe('001-init.sql', () => {
       name: 'Local LLM inference research',
       name_key: 'local llm inference research',
       description: 'Notes and articles about running models locally and serving them cheaply.',
-      type: 'ai',
-      query: null,
       created_by: 'agent',
       color: null,
       pinned: 0,
@@ -245,7 +243,7 @@ describe('001-init.sql', () => {
   it('supports FTS MATCH with bm25 weights and prefix queries', () => {
     const rows = [
       { id: 'i1', title: 'Batching strategies for LLM inference', text: 'continuous batching on GPUs' },
-      { id: 'i2', title: 'Doan Labs landing page', text: 'globe animation with warm typography' },
+      { id: 'i2', title: 'mnismt landing page', text: 'globe animation with warm typography' },
       { id: 'i3', title: 'Inference providers compared', text: 'cheap inference pricing table' }
     ]
     for (const r of rows) {
