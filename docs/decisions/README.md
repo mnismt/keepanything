@@ -19,4 +19,5 @@ decision, add a new record and mark the old one superseded. Keep each under a pa
 | [010](010-renderer-security-baseline.md) | Locked-down renderer plus a privileged `ka-media:` scheme | Accepted |
 | [011](011-stylex-and-layers.md) | StyleX with CSS layers and a pinned `@layer reset` | Accepted |
 | [012](012-deterministic-ai-modes.md) | Three AI modes (`gmi`/`mock`/`off`) so tests are deterministic | Accepted |
-| [013](013-bundle-everything-devdependencies.md) | Every package is a devDependency except `@huggingface/transformers` | Accepted |
+|[013](013-bundle-everything-devdependencies.md) | Every package is a devDependency except `@huggingface/transformers` | Accepted |
+|[014](014-one-collection-shape.md) | One collection shape; `description` is the rule the agent reads; thresholds in `LIMITS` | Accepted |

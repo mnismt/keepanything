@@ -20,7 +20,7 @@ Humans recognise things worth keeping but are bad at stopping to organise them. 
 filename, tags, collection? KeepAnything removes those decisions: see something useful → drag it → drop it → continue
 working. Everything after that is automatic. Over time it becomes a semantic memory layer; retrieval works the way
 humans remember: "that open-source macOS app I saved a few weeks ago", "the website with the globe animation",
-"something I saved about cheap inference providers", "show me everything that influenced the Doan Labs website".
+"something I saved about cheap inference providers", "show me everything that influenced the mnismt website".
 
 ## 2. Hackathon context (MiniMax Week, Reasoning track)
 The AI must not merely do input → classification → tags. The reasoning component must visibly perform useful multi-step
@@ -71,7 +71,7 @@ captured visual / OG image; PDF first-page preview; GitHub rich repo preview; te
 stack/collage. Not identical database rows.
 
 ## 9. Navigation
-Sidebar: Library, Links, Files, Collections, Trash. Below: AI-generated / user collections (e.g. Doan Labs,
+Sidebar: Library, Links, Files, Collections, Trash. Below: AI-generated / user collections (e.g. mnismt,
 Design References, AI Infrastructure, Things to Read). Bottom: Settings. Keep it simple.
 
 ## 10. Processing state on cards
@@ -110,85 +110,83 @@ Not just tags: a lightweight relationship graph — related_to, inspired_by, sam
 continuation_of, contradicts, duplicate_of, created_from, belongs_to, AI-generated with confidence scores.
 
 ## 15. Collections
-Semantic views; items belong to many without duplication. Manual, AI-created or dynamic. AI conservative: avoid
-"Technology / Websites / Software / Internet"; prefer "Doan Labs visual direction", "Local LLM inference research",
-"macOS utility references", "MiniMax Hackathon" — meaningful ongoing contexts.
+Semantic views; items belong to many without duplication. Created by a person or the agent, both kinds work the same
+way: the description tells the agent what belongs there, and every membership is a row in the table. Good names are
+ongoing contexts ("mnismt visual direction", "Local LLM inference research", "macOS utility references", "MiniMax
+Hackathon"). The agent is conservative: avoid "Technology / Websites / Software / Internet" and any single topic word;
+prefer adding to an existing collection over creating a similar one, and prefer doing nothing over creating something
+vague.
 
-## 16. Dynamic collections
-Eventually membership based on meaning ("Things inspiring Doan Labs", "Tools I wanted to try"). MVP: semantic
-queries + filters, not a rules engine.
-
-## 17. Search / command interface
+## 16. Search / command interface
 Cmd+K central. Simple queries ("minimax", "hyperliquid", "github") behave like fast local search. Natural-language
 queries ("find that open-source mac app I saved recently", "show the website with a globe animation", "what did I
 save about cheaper Resend alternatives?") invoke semantic retrieval + reasoning. Understand imperfect memory.
 
-## 18. "Ask My Stuff"
+## 17. "Ask My Stuff"
 Agentic retrieval: question → interpret memory cues → likely types/topics/time ranges → search → inspect candidates
 → refine → answer with supporting items. Result shows the source objects, not just an AI answer.
 
-## 19. Multi-item reasoning
+## 18. Multi-item reasoning
 Select multiple objects: Compare these / What do these have in common? / Summarise this research / Turn these into a
 brief / Extract the key ideas / Which one should I use? / Create a note from these. Agent inspects all items,
 reasons across them, creates a new artifact inside KeepAnything with references back to sources.
 
-## 20. Automatic insight
+## 19. Automatic insight
 Not annoyingly proactive, but may notice meaningful patterns (competitor pages saved over days → "Competitive
 research"). Conservative: don't interrupt unless confidence and usefulness are high; most automatic actions silent and
 reversible.
 
-## 21. Embeddings and retrieval
+## 20. Embeddings and retrieval
 Embeddings for candidate retrieval, not the whole intelligence layer: cheap local filtering → text/metadata search →
 embeddings → candidates → reasoning model → decision. Never send the whole library to an LLM; keep tokens reasonable.
 
-## 22. Content extraction
+## 21. Content extraction
 Extensible pipeline: text (direct), markdown (content + headings), PDF (text + page preview), images (metadata +
 vision), URLs (title, metadata, content, preview), folders (safe traversal with limits), unknown binaries (store
 safely). Always distinguish stored successfully from understood successfully.
 
-## 23. Privacy
+## 22. Privacy
 Make local-first visible: distinguish data stored locally vs sent to an AI provider. Provider behind an abstraction
 (analyzeObject, reason, embed, generateStructuredOutput). Integrate MiniMax through GMI Cloud; provider config
 isolated so model versions change without rewriting the app. Only send what a specific task needs.
 
-## 24. Database model
+## 23. Database model
 Item (id, type, title, originalPath, managedPath, url, mimeType, size, createdAt, capturedAt, modifiedAt,
 processingStatus, understanding, whyUseful, metadata JSON, extractedText, thumbnailPath); Collection (id, name,
-description, type, query, createdBy, createdAt); CollectionItem (collectionId, itemId, confidence, reason);
-Relationship (id, source, target, type, description, confidence); Embedding (itemId, chunkId, vector, content);
+description, createdBy, createdAt); CollectionItem (collectionId, itemId, confidence, reason, addedBy);
 generated artifacts as Items; AgentRun (id, itemId, task, status, model, startedAt, completedAt, toolCalls, result,
 error) for debugging and demos.
 
-## 25. Processing pipeline
+## 24. Processing pipeline
 Background jobs: CAPTURED → EXTRACTING → EXTRACTED → EMBEDDING → UNDERSTANDING → RELATING → READY; failure states
 EXTRACTION_FAILED, AI_FAILED, PARTIAL; stages retryable; AI never blocks adding items.
 
-## 26. Visual quality
+## 25. Visual quality
 Software someone keeps open every day. Avoid excessive borders, cards within cards, giant empty metrics, neon AI
 gradients, pills everywhere, generic shadcn-dashboard look, clutter, emoji-heavy UI, marketing headings in-app.
 Prefer subtle typography hierarchy, breathing room, careful spacing, smooth transitions, native controls, contextual
 menus, keyboard shortcuts, restrained shadows, good thumbnails, content-first. Dark mode must look particularly good.
 Reference: Raycast, Linear, Arc-era macOS apps, Are.na, Pinterest density, Apple utilities, without cloning.
 
-## 27. Interactions
+## 26. Interactions
 drag → capture shelf appears; drop → immediate acknowledgement; hover card → subtle controls; double click → detail;
 Space → Quick Look; Cmd+K → search/command; Cmd+A select; Shift-click multi-select; Delete → Trash; drag cards →
 collection; right click → contextual menu. Usable without AI visibly in the way.
 
-## 28. Agent transparency
-No chain-of-thought exposure, but explain organisation briefly: 'Added to "Doan Labs" — Because: landing-page visual
-reference related to 4 existing Doan Labs items'; 'Related to "SKUD intro video" — Shared theme: premium software
+## 27. Agent transparency
+No chain-of-thought exposure, but explain organisation briefly: 'Added to "mnismt" — Because: landing-page visual
+reference related to 4 existing mnismt items'; 'Related to "SKUD intro video" — Shared theme: premium software
 advertising'. Users can undo, remove relationship, remove from collection, rename collection, override understanding.
 User corrections take precedence over future automatic organisation.
 
-## 29. MVP scope
+## 28. MVP scope
 Polished vertical slice: app launches; beautiful library UI; drag/drop files; drag URLs; local persistence;
 thumbnails/previews; extraction pipeline; MiniMax understanding; semantic relationships; automatic collections;
 natural-language search; item detail; multi-item compare/summarise. Later: global floating drag shelf, Share
 extensions, browser extension, complex dynamic collections, advanced parsers. Core product must work even if
 macOS-level drag interception is technically expensive.
 
-## 30. Demo scenario
+## 29. Demo scenario
 Empty library. Drag in: a MiniMax article, a GitHub repository, an AI infrastructure PDF, a product screenshot, a Doan
 Labs design reference, another model provider page, a random research note. No tags/folders. Library develops
 relationships/collections. Ask "What am I researching here?" → agent searches, reasons, identifies a theme, cites
@@ -196,28 +194,28 @@ objects. Ask "Turn my inference research into a short comparison." → agent sea
 compares, generates a note linked to sources. Demonstrates understanding context, planning retrieval, selecting
 tools, reasoning across objects, creating output, not simple classification.
 
-## 31. Principles
+## 30. Principles
 1 Capture easier than organisation. 2 Never require organisation at capture time. 3 AI reduces UI. 4 Preserve
 originals; organisation semantic and reversible. 5 Relationships > folders. 6 Reason before acting. 7 Useful work,
 not AI theatre (no fake thinking animations, no streaming for show). 8 Original content remains the hero; AI is
 infrastructure.
 
-## 32. Voice
+## 31. Voice
 Understated personality. Good: "Keep anything." "We'll figure out the rest." "Saved." "Found 4 related things."
 "This looks like part of your MiniMax research." "Still figuring this one out." "Couldn't read this page, but the link
 is safe." Bad: "Harness the power of AI…", "Unlock your second brain", "revolutionary AI".
 
-## 33. Engineering quality
+## 32. Engineering quality
 Strict TypeScript, modular architecture, DB migrations, robust error handling, structured logging, clear AI-provider
 abstraction, tests for core data operations and reasoning tool boundaries, duplicate-import prevention, graceful
 handling of deleted/missing files, no secrets committed, documented env/config, graceful offline behaviour, AI
 failures never corrupt library state. Sensible libraries; no premature microservices.
 
-## 34. Code organisation
+## 33. Code organisation
 desktop/ ui/ core/ storage/ capture/ extraction/ ai/ agent/ retrieval/ previews/ (names may follow framework
 conventions; preserve boundaries).
 
-## 35. Implementation strategy
+## 34. Implementation strategy
 Inspect repo → short plan → vertical slices: Foundation → Capture → Library → Understanding → Organisation →
 Reasoning → Commands → Multi-item → Native polish. Keep the app runnable at every stage.
 
