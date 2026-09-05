@@ -5,6 +5,7 @@ export const styles = stylex.create({
   button: {
     display: 'inline-flex',
     alignItems: 'center',
+    flexShrink: 0,
     gap: space.s2,
     height: 28,
     paddingInline: space.s3,
@@ -16,8 +17,8 @@ export const styles = stylex.create({
     borderWidth: 1,
     borderStyle: 'solid',
     borderColor: { default: colors.hairline, ':hover': colors.hairlineStrong },
-    transitionProperty: 'background-color, border-color, opacity',
-    transitionDuration: motion.fast,
+    transitionProperty: 'background-color, border-color, color, opacity',
+    transitionDuration: motion.slow,
     transitionTimingFunction: motion.easeOut,
     whiteSpace: 'nowrap',
     opacity: { default: 1, ':disabled': 0.45 },
@@ -48,6 +49,7 @@ export const styles = stylex.create({
     paddingInline: space.s2
   },
   smallIcon: {
-    width: 24
+    width: 24,
+    paddingInline: 0
   }
 })

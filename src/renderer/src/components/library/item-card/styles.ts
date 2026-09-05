@@ -7,6 +7,7 @@ const enter = stylex.keyframes({
 
 export const styles = stylex.create({
   card: {
+    cursor: 'pointer',
     position: 'absolute',
     top: 0,
     left: 0,

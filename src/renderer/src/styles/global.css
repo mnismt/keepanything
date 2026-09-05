@@ -103,7 +103,20 @@
     margin: 0;
   }
 
-  button {
+  /* Pointer on everything clickable; components opt out (drag handles, text fields, disabled). */
+  button:not(:disabled),
+  a[href],
+  summary,
+  label[for],
+  [role='button'],
+  [role='option'],
+  [role='radio'],
+  [role='tab'],
+  [role='menuitem'] {
+    cursor: pointer;
+  }
+
+  button:disabled {
     cursor: default;
   }
 

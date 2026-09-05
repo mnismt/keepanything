@@ -80,7 +80,10 @@ export const styles = stylex.create({
     color: { default: colors.fg4, ':hover': colors.fg1 },
     backgroundColor: { default: 'transparent', ':hover': colors.bgHover },
     padding: 2,
-    borderRadius: 4
+    borderRadius: 4,
+    transitionProperty: 'background-color, border-color, color, opacity',
+    transitionDuration: motion.slow,
+    transitionTimingFunction: motion.easeOut
   },
   row: {
     display: 'flex',
@@ -96,7 +99,10 @@ export const styles = stylex.create({
     textAlign: 'left',
     borderWidth: 2,
     borderStyle: 'solid',
-    borderColor: 'transparent'
+    borderColor: 'transparent',
+    transitionProperty: 'background-color, border-color, color, opacity',
+    transitionDuration: motion.slow,
+    transitionTimingFunction: motion.easeOut
   },
   rowCurrent: {
     backgroundColor: { default: colors.bgActive, ':hover': colors.bgActive },

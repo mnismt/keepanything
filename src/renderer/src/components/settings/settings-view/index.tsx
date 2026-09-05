@@ -1,14 +1,15 @@
 import * as stylex from '@stylexjs/stylex'
-import { Copy, FolderOpen, X } from 'lucide-react'
+import { Check, Copy, FolderOpen, KeyRound, PlugZap, RotateCw, Trash2, X } from 'lucide-react'
 import { type ReactNode, useEffect, useRef, useState } from 'react'
 import { DEFAULT_BASE_URL, DEFAULT_MODEL } from '../../../../../shared/constants'
-import type { AiMode, CaptureMode, Theme } from '../../../../../shared/types'
+import type { CaptureMode, Theme } from '../../../../../shared/types'
 import { describeError, invoke } from '../../../lib/ipc-client'
 import { useSettings } from '../../../state/settings'
 import { useToasts } from '../../../state/toasts'
 import { useUi } from '../../../state/ui'
 import { shared } from '../../../styles/shared'
 import { Button } from '../../common'
+import { GmiCloudLogo } from '../provider-logo'
 import { styles } from './styles'
 
 function Row({ label, children }: { label: string; children: ReactNode }): React.JSX.Element {
@@ -20,11 +21,62 @@ function Row({ label, children }: { label: string; children: ReactNode }): React
   )
 }
 
-const THEMES: Array<{ value: Theme; label: string }> = [
+function Section({ title, sub, children }: { title: string; sub?: string; children: ReactNode }): React.JSX.Element {
+  return (
+    <section {...stylex.props(styles.section)} aria-label={title}>
+      <div {...stylex.props(styles.sectionHead)}>
+        <h3 {...stylex.props(shared.eyebrow)}>{title}</h3>
+        {sub ? <span {...stylex.props(styles.sectionSub)}>{sub}</span> : null}
+      </div>
+      <div {...stylex.props(styles.card)}>{children}</div>
+    </section>
+  )
+}
+
+function Seg<T extends string>({
+  value,
+  options,
+  onChange,
+  label
+}: {
+  value: T
+  options: ReadonlyArray<{ value: T; label: string }>
+  onChange: (v: T) => void
+  label: string
+}): React.JSX.Element {
+  return (
+    <div {...stylex.props(styles.seg)} role="radiogroup" aria-label={label}>
+      {options.map((o) => (
+        <button
+          key={o.value}
+          type="button"
+          role="radio"
+          aria-checked={o.value === value}
+          {...stylex.props(styles.segBtn, o.value === value && styles.segOn)}
+          onClick={() => onChange(o.value)}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+const THEMES = [
   { value: 'system', label: 'System' },
   { value: 'light', label: 'Light' },
   { value: 'dark', label: 'Dark' }
-]
+] as const satisfies ReadonlyArray<{ value: Theme; label: string }>
+
+const IMPORT_MODES = [
+  { value: 'copy', label: 'Copy into library' },
+  { value: 'reference', label: 'Reference in place' }
+] as const satisfies ReadonlyArray<{ value: CaptureMode; label: string }>
+
+const UNDERSTANDING = [
+  { value: 'gmi', label: 'On' },
+  { value: 'off', label: 'Off' }
+] as const
 
 /**
  * The plain key is never rendered back: only `apiKeyMasked` from main.
@@ -90,6 +142,25 @@ export function SettingsView(): React.JSX.Element {
 
   const hasKey = settings?.hasApiKey ?? false
   const showKeyField = editingKey || !hasKey
+  const understanding = settings?.aiMode === 'gmi' ? 'gmi' : 'off'
+
+  const status = !hasKey
+    ? { tone: null, text: 'No key yet' }
+    : testing
+      ? { tone: null, text: 'Testing…' }
+      : lastTest?.ok
+        ? { tone: styles.dotOk, text: `Connected · ${lastTest.latencyMs} ms` }
+        : lastTest
+          ? { tone: styles.dotBad, text: 'Not reachable' }
+          : { tone: null, text: 'Key saved' }
+
+  const embeddings = settings
+    ? settings.embeddings.provider === 'minilm'
+      ? `Local MiniLM · ${settings.embeddings.dims}-d · ${settings.embeddings.modelPresent ? 'model present' : 'downloading'}`
+      : settings.embeddings.provider === 'local-hash'
+        ? 'Local fallback (model missing) · full-text search still works'
+        : 'Off'
+    : '…'
 
   return (
     <div {...stylex.props(styles.scrim)} role="presentation" onMouseDown={(e) => e.target === e.currentTarget && pop()}>
@@ -108,11 +179,26 @@ export function SettingsView(): React.JSX.Element {
           </Button>
         </div>
 
-        <section {...stylex.props(styles.section)} aria-label="GMI Cloud">
-          <div {...stylex.props(styles.sectionHead)}>
-            <h3 {...stylex.props(styles.sectionTitle)}>GMI Cloud</h3>
-            <span {...stylex.props(styles.sectionSub)}>MiniMax reasoning, used only to understand what you keep</span>
+        <Section title="Provider" sub="Used only to understand what you keep">
+          <div {...stylex.props(styles.provider)}>
+            <span {...stylex.props(styles.providerMark)}>
+              <GmiCloudLogo mark height={16} />
+            </span>
+            <div {...stylex.props(styles.providerText)}>
+              <span {...stylex.props(styles.providerName)}>
+                GMI Cloud
+                <span {...stylex.props(styles.badge)}>Default</span>
+              </span>
+              <span {...stylex.props(styles.providerSub)}>
+                MiniMax reasoning via OpenAI-compatible chat completions
+              </span>
+            </div>
+            <span {...stylex.props(styles.status)} aria-live="polite">
+              <span {...stylex.props(styles.dot, status.tone)} />
+              {status.text}
+            </span>
           </div>
+
           <Row label="API key">
             {showKeyField ? (
               <div {...stylex.props(styles.control)}>
@@ -121,23 +207,26 @@ export function SettingsView(): React.JSX.Element {
                   type="password"
                   autoComplete="off"
                   spellCheck={false}
-                  placeholder={hasKey ? 'Paste a new key to replace it' : 'Paste your GMI key'}
+                  placeholder={hasKey ? 'Paste a new key to replace it' : 'Paste your GMI Cloud key'}
                   value={key}
                   onChange={(e) => setKey(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && void saveKey()}
                   aria-label="GMI API key"
                 />
-                <Button onClick={() => void saveKey()} disabled={!key.trim()}>
+                <Button small onClick={() => void saveKey()} disabled={!key.trim()}>
+                  <Check size={14} strokeWidth={1.5} />
                   Save
                 </Button>
                 {hasKey ? (
                   <Button
+                    small
                     variant="quiet"
                     onClick={() => {
                       setEditingKey(false)
                       setKey('')
                     }}
                   >
+                    <X size={14} strokeWidth={1.5} />
                     Cancel
                   </Button>
                 ) : null}
@@ -145,28 +234,25 @@ export function SettingsView(): React.JSX.Element {
             ) : (
               <div {...stylex.props(styles.control)}>
                 <span {...stylex.props(styles.masked)}>••••••••{settings?.apiKeyMasked?.slice(-4) ?? ''}</span>
+                <Button variant="quiet" small onClick={() => void testConnection()} disabled={testing}>
+                  <PlugZap size={14} strokeWidth={1.5} />
+                  Test
+                </Button>
                 <Button variant="quiet" small onClick={() => setEditingKey(true)}>
+                  <KeyRound size={14} strokeWidth={1.5} />
                   Replace
                 </Button>
                 <Button variant="quiet" small onClick={() => void clearKey()}>
+                  <Trash2 size={14} strokeWidth={1.5} />
                   Remove
-                </Button>
-                <Button variant="quiet" small onClick={() => void testConnection()} disabled={testing}>
-                  {testing ? 'Testing…' : 'Test connection'}
                 </Button>
               </div>
             )}
-            {lastTest ? (
-              <span {...stylex.props(styles.hint, lastTest.ok ? styles.ok : styles.bad)}>
-                {lastTest.ok
-                  ? `Connected · ${lastTest.model} · ${lastTest.latencyMs} ms`
-                  : `Couldn't connect · ${lastTest.error ?? 'unknown error'}`}
-              </span>
-            ) : (
-              <span {...stylex.props(styles.hint)}>
-                Stored encrypted on this Mac. Never written to logs or shown again.
-              </span>
-            )}
+            <span {...stylex.props(styles.hint, lastTest && !lastTest.ok && styles.bad)}>
+              {lastTest && !lastTest.ok
+                ? `Couldn't connect · ${lastTest.error ?? 'unknown error'}`
+                : 'Stored encrypted on this Mac. Never written to logs or shown again.'}
+            </span>
           </Row>
           <Row label="Base URL">
             <div {...stylex.props(styles.control)}>
@@ -194,56 +280,39 @@ export function SettingsView(): React.JSX.Element {
               />
             </div>
           </Row>
-          <Row label="AI mode">
+          <Row label="Understanding">
             <div {...stylex.props(styles.control)}>
-              {/* env-forced `mock` has no option; show `off` rather than an empty select */}
-              <select
-                {...stylex.props(styles.field, styles.select)}
-                value={settings?.aiMode === 'gmi' ? 'gmi' : 'off'}
-                onChange={(e) => void commit({ aiMode: e.target.value as AiMode })}
-                aria-label="AI mode"
-              >
-                <option value="gmi">GMI Cloud (MiniMax)</option>
-                <option value="off">Off - keep only, never understand</option>
-              </select>
+              {/* env-forced `mock` has no option; it shows as Off */}
+              <Seg
+                label="Understanding"
+                value={understanding}
+                options={UNDERSTANDING}
+                onChange={(v) => void commit({ aiMode: v })}
+              />
             </div>
+            <span {...stylex.props(styles.hint)}>Off keeps everything but never sends anything to the provider.</span>
           </Row>
-        </section>
+        </Section>
 
-        <section {...stylex.props(styles.section)} aria-label="Appearance and library">
-          <h3 {...stylex.props(styles.sectionTitle)}>Library</h3>
+        <Section title="Library">
           <Row label="Theme">
-            <div {...stylex.props(styles.seg)} role="radiogroup" aria-label="Theme">
-              {THEMES.map((t, i) => (
-                <button
-                  key={t.value}
-                  type="button"
-                  role="radio"
-                  aria-checked={(settings?.theme ?? 'system') === t.value}
-                  {...stylex.props(
-                    shared.hoverFade,
-                    styles.segBtn,
-                    i === THEMES.length - 1 && styles.segLast,
-                    (settings?.theme ?? 'system') === t.value && styles.segOn
-                  )}
-                  onClick={() => void commit({ theme: t.value })}
-                >
-                  {t.label}
-                </button>
-              ))}
+            <div {...stylex.props(styles.control)}>
+              <Seg
+                label="Theme"
+                value={settings?.theme ?? 'system'}
+                options={THEMES}
+                onChange={(v) => void commit({ theme: v })}
+              />
             </div>
           </Row>
-          <Row label="Import mode">
+          <Row label="Import">
             <div {...stylex.props(styles.control)}>
-              <select
-                {...stylex.props(styles.field, styles.select)}
+              <Seg
+                label="Import mode"
                 value={settings?.importMode ?? 'copy'}
-                onChange={(e) => void commit({ importMode: e.target.value as CaptureMode })}
-                aria-label="Import mode"
-              >
-                <option value="copy">Copy files into the library</option>
-                <option value="reference">Reference originals where they are</option>
-              </select>
+                options={IMPORT_MODES}
+                onChange={(v) => void commit({ importMode: v })}
+              />
             </div>
           </Row>
           <Row label="Location">
@@ -259,63 +328,59 @@ export function SettingsView(): React.JSX.Element {
                 title="Copy path"
                 onClick={() => void copyPath()}
               >
-                <Copy size={14} strokeWidth={1.5} />
+                <Copy size={16} strokeWidth={1.5} />
               </Button>
-              <Button small variant="quiet" title="Show library in Finder" onClick={() => void revealLibrary()}>
-                <FolderOpen size={14} strokeWidth={1.5} />
-                Show in Finder
+              <Button
+                icon
+                small
+                variant="quiet"
+                aria-label="Show library in Finder"
+                title="Show in Finder"
+                onClick={() => void revealLibrary()}
+              >
+                <FolderOpen size={16} strokeWidth={1.5} />
               </Button>
             </div>
           </Row>
           <Row label="Embeddings">
-            <span {...stylex.props(styles.hint)}>
-              {settings
-                ? settings.embeddings.provider === 'minilm'
-                  ? `Local MiniLM · ${settings.embeddings.dims}-d · ${settings.embeddings.modelPresent ? 'model present' : 'model downloading'}`
-                  : settings.embeddings.provider === 'local-hash'
-                    ? 'Lightweight local fallback (model missing) · full-text search still works'
-                    : 'Off'
-                : '…'}
-            </span>
+            <span {...stylex.props(styles.value)}>{embeddings}</span>
           </Row>
-          <div {...stylex.props(styles.stats)}>
-            <div {...stylex.props(styles.stat)}>
-              <span {...stylex.props(styles.statValue)}>{stats?.items ?? '–'}</span>
-              <span {...stylex.props(styles.statLabel)}>items</span>
-            </div>
-            <div {...stylex.props(styles.stat)}>
-              <span {...stylex.props(styles.statValue)}>{stats?.connections ?? '–'}</span>
-              <span {...stylex.props(styles.statLabel)}>connections</span>
-            </div>
-            <div {...stylex.props(styles.stat)}>
-              <span {...stylex.props(styles.statValue)}>{stats?.collections ?? '–'}</span>
-              <span {...stylex.props(styles.statLabel)}>collections</span>
-            </div>
-            <div {...stylex.props(styles.stat)}>
-              <span {...stylex.props(styles.statValue)}>{stats?.processing ?? '–'}</span>
-              <span {...stylex.props(styles.statLabel)}>in progress</span>
-            </div>
-          </div>
-        </section>
+        </Section>
 
-        <section {...stylex.props(styles.section)} aria-label="Privacy">
-          <h3 {...stylex.props(styles.sectionTitle)}>Privacy</h3>
+        <Section title="Library at a glance">
+          <div {...stylex.props(styles.stats)}>
+            {(
+              [
+                ['items', stats?.items],
+                ['connections', stats?.connections],
+                ['collections', stats?.collections],
+                ['in progress', stats?.processing]
+              ] as const
+            ).map(([label, n]) => (
+              <div key={label} {...stylex.props(styles.stat)}>
+                <span {...stylex.props(styles.statValue)}>{n ?? '–'}</span>
+                <span {...stylex.props(styles.statLabel)}>{label}</span>
+              </div>
+            ))}
+          </div>
+        </Section>
+
+        <Section title="Privacy">
           <div {...stylex.props(styles.privacy)}>
-            <div>
+            <div {...stylex.props(styles.privacyCol)}>
               <h4 {...stylex.props(shared.eyebrow, styles.privacyHead)}>Stays on this Mac</h4>
               Originals, thumbnails, extracted text, the search index, embeddings, collections, relationships and the
               run log.
             </div>
-            <div>
-              <h4 {...stylex.props(shared.eyebrow, styles.privacyHead)}>Sent to GMI, only while understanding</h4>A
-              trimmed excerpt of one item at a time (or a downscaled image), plus one-line summaries of related items.
-              Never the whole library.
+            <div {...stylex.props(styles.privacyCol)}>
+              <h4 {...stylex.props(shared.eyebrow, styles.privacyHead)}>Sent to the provider</h4>
+              Only while understanding: a trimmed excerpt of one item at a time (or a downscaled image), plus one-line
+              summaries of related items. Never the whole library.
             </div>
           </div>
-        </section>
+        </Section>
 
-        <section {...stylex.props(styles.section)} aria-label="Danger zone">
-          <h3 {...stylex.props(styles.sectionTitle)}>Danger zone</h3>
+        <Section title="Danger zone">
           <div {...stylex.props(styles.dangerBox)}>
             <span {...stylex.props(styles.dangerText)}>
               <span {...stylex.props(styles.dangerTitle)}>Reprocess everything</span>
@@ -324,6 +389,7 @@ export function SettingsView(): React.JSX.Element {
             {confirmReprocess ? (
               <>
                 <Button variant="quiet" small onClick={() => setConfirmReprocess(false)}>
+                  <X size={14} strokeWidth={1.5} />
                   Cancel
                 </Button>
                 <Button
@@ -335,16 +401,18 @@ export function SettingsView(): React.JSX.Element {
                     push({ text: n === null ? "Couldn't start that." : `Re-reading ${n} items in the background.` })
                   }}
                 >
+                  <RotateCw size={14} strokeWidth={1.5} />
                   Yes, reprocess {stats?.items ?? ''}
                 </Button>
               </>
             ) : (
               <Button variant="quiet" small onClick={() => setConfirmReprocess(true)}>
+                <RotateCw size={14} strokeWidth={1.5} />
                 Reprocess…
               </Button>
             )}
           </div>
-        </section>
+        </Section>
       </div>
     </div>
   )

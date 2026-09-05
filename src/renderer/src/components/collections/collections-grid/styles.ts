@@ -17,6 +17,7 @@ export const styles = stylex.create({
     alignContent: 'start'
   },
   card: {
+    cursor: 'pointer',
     position: 'relative',
     display: 'flex',
     flexDirection: 'column',
