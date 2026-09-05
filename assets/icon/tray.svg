@@ -1,0 +1,8 @@
+<!-- Menu-bar template image: pure black on transparent, macOS recolours it. Same sheet-into-slot
+     mark as the app icon, drawn as a filled silhouette with a 2 unit gap so sheet and slot stay
+     separate at 18 px. 36 unit viewBox rendered at 18 and 36 px. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36">
+  <defs><clipPath id="above"><rect x="0" y="0" width="36" height="22"/></clipPath></defs>
+  <rect x="9" y="5" width="18" height="19" rx="2" fill="#000" transform="rotate(-7 18 15)" clip-path="url(#above)"/>
+  <rect x="3" y="25" width="30" height="4" rx="2" fill="#000"/>
+</svg>

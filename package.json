@@ -14,7 +14,7 @@
   "scripts": {
     "prepare": "simple-git-hooks",
     "postinstall": "node scripts/ensure-electron.mjs",
-    "icons": "node scripts/generate-icons.mjs",
+    "icons": "electron scripts/generate-icons.mjs",
     "native": "node scripts/build-native.mjs",
     "dev": "pnpm run native && electron-vite dev --watch",
     "dev:pinned": "pnpm run native && cross-env KEEPANYTHING_PIN=1 electron-vite dev --watch",

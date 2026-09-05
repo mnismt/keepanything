@@ -1,3 +1,4 @@
+import { join } from 'node:path'
 import { app, BrowserWindow, screen, type WebContents } from 'electron'
 import type { Logger } from '../ports'
 import { containsPoint } from '../positioning'
@@ -50,6 +51,12 @@ export function createWindowManager(deps: WindowManagerDeps): WindowManager {
     if (process.platform !== 'darwin') return
     try {
       app.setActivationPolicy(policy)
+      // Unpackaged runs use the stock Electron.app, whose Dock tile is Electron's. macOS rebuilds
+      // the tile on every accessory -> regular switch, so the icon is reapplied here rather than once
+      // at startup. The name still reads "Electron" (Info.plist); only a packaged build fixes that.
+      if (policy === 'regular' && !app.isPackaged) {
+        app.dock?.setIcon(join(app.getAppPath(), 'build/icon.png'))
+      }
     } catch (error) {
       deps.logger.debug('setActivationPolicy failed', { policy, error })
     }

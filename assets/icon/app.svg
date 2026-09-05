@@ -1,0 +1,10 @@
+<!-- macOS app icon source. Body sits on the 824/1024 grid; colours are the brand tokens
+     (light accent #b8813a, paper #ece7dd, bg0 #141210). The mark is the app's core gesture:
+     a sheet dropping into a slot. The sheet is clipped at the slot line so it reads as
+     entering, not resting on top. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <rect x="100" y="100" width="824" height="824" rx="185" fill="#b8813a"/>
+  <defs><clipPath id="above"><rect x="100" y="100" width="824" height="490"/></clipPath></defs>
+  <rect x="330" y="230" width="364" height="440" rx="40" fill="#ece7dd" transform="rotate(-10 512 450)" clip-path="url(#above)"/>
+  <rect x="230" y="560" width="564" height="64" rx="32" fill="#141210"/>
+</svg>
