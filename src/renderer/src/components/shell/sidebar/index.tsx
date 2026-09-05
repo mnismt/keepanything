@@ -156,13 +156,6 @@ export function Sidebar(): React.JSX.Element {
           current={section === 'library'}
           onClick={() => go('library')}
         />
-        <Row
-          icon="inbox"
-          label="Inbox"
-          count={stats?.processing}
-          current={section === 'inbox'}
-          onClick={() => go('inbox')}
-        />
         <Row icon="links" label="Links" current={section === 'links'} onClick={() => go('links')} />
         <Row icon="file" label="Files" current={section === 'files'} onClick={() => go('files')} />
         <Row

@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 import {
-  INBOX_STATUSES,
   isFailed,
   isProcessingStatus,
   isTerminal,
@@ -32,11 +31,8 @@ const OUTCOMES: readonly StageOutcome[] = ['ok', 'partial', 'failed']
 const BEFORE_UNDERSTANDING: readonly ProcessingStatus[] = ['CAPTURED', 'EXTRACTING', 'EXTRACTED', 'EMBEDDING']
 
 describe('status vocabulary', () => {
-  it('lists every status once and derives the inbox set', () => {
+  it('lists every status once', () => {
     expect(new Set(PROCESSING_STATUSES).size).toBe(PROCESSING_STATUSES.length)
-    expect(INBOX_STATUSES).not.toContain('READY')
-    expect(INBOX_STATUSES).not.toContain('PARTIAL')
-    expect(INBOX_STATUSES).toHaveLength(PROCESSING_STATUSES.length - 2)
     expect(isProcessingStatus('READY')).toBe(true)
     expect(isProcessingStatus('ready')).toBe(false)
   })

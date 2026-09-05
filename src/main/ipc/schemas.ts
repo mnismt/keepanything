@@ -99,7 +99,7 @@ const bytes = z.custom<ArrayBuffer>((v) => v instanceof ArrayBuffer || ArrayBuff
 export const REQUEST_SCHEMAS = {
   'items:list': z
     .object({
-      view: z.enum(['library', 'inbox', 'links', 'files', 'trash', 'collection']),
+      view: z.enum(['library', 'links', 'files', 'trash', 'collection']),
       collectionId: id.optional(),
       types: z.array(itemType).max(20).optional(),
       sort: z.enum(['captured', 'created', 'title']).optional(),

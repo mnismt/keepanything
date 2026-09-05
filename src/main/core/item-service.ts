@@ -28,9 +28,6 @@ export interface ItemPipeline {
 /** Everything optional except type and title. */
 export type NewItemInput = Partial<Omit<Item, 'id' | 'type' | 'title'>> & Pick<Item, 'type' | 'title'> & { id?: string }
 
-/** Milliseconds a "recently kept" item stays in the Inbox. */
-export const INBOX_RECENT_MS = 24 * 60 * 60 * 1000
-
 /** Understanding fields the user may override, in the order they are applied. */
 const OVERRIDABLE: readonly UserOverridableField[] = [
   'title',
@@ -225,7 +222,6 @@ export function createItemService(deps: ItemServiceDeps): ItemService {
       }
       const query = {
         view: request.view,
-        recentSince: new Date(clock.now().getTime() - INBOX_RECENT_MS).toISOString(),
         ...(request.collectionId !== undefined ? { collectionId: request.collectionId } : {}),
         ...(request.types !== undefined ? { types: request.types } : {}),
         ...(request.sort !== undefined ? { sort: request.sort } : {}),

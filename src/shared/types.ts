@@ -268,7 +268,7 @@ export interface ItemDetail {
 }
 
 /** Sidebar views for `items:list`. */
-export type ItemsView = 'library' | 'inbox' | 'links' | 'files' | 'trash' | 'collection'
+export type ItemsView = 'library' | 'links' | 'files' | 'trash' | 'collection'
 
 /** Sort keys for `items:list`. */
 export type ItemsSort = 'captured' | 'created' | 'title'

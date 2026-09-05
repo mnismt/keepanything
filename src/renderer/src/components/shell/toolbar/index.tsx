@@ -13,7 +13,6 @@ import { styles } from './styles'
 
 const TITLES: Record<string, string> = {
   library: 'Library',
-  inbox: 'Inbox',
   links: 'Links',
   files: 'Files',
   trash: 'Trash',

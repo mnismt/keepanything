@@ -1,8 +1,6 @@
 import * as stylex from '@stylexjs/stylex'
-import { useCallback, useMemo, useRef } from 'react'
+import { useCallback, useRef } from 'react'
 import { useShallow } from 'zustand/react/shallow'
-import { isTerminal } from '../../shared/status'
-import type { ItemSummary } from '../../shared/types'
 import { CollectionDialog, CollectionHeader, CollectionsGrid } from './components/collections'
 import { ItemDetail } from './components/detail'
 import { type EmptyKind, EmptyState, MasonryGrid, TrashHeader } from './components/library'
@@ -66,8 +64,6 @@ export function App(): React.JSX.Element {
 function emptyKindFor(section: string, filtered: boolean): EmptyKind {
   if (filtered) return 'filtered'
   switch (section) {
-    case 'inbox':
-      return 'inbox'
     case 'collection':
       return 'collection'
     case 'trash':
@@ -102,17 +98,6 @@ function LibraryApp(): React.JSX.Element {
   const palette = modalStack.some((m) => m.kind === 'palette')
   const contentInert = Boolean(detail || dialog || palette)
 
-  const groups = useMemo(() => {
-    if (section !== 'inbox') return undefined
-    const working: ItemSummary[] = []
-    const recent: ItemSummary[] = []
-    for (const i of items) (isTerminal(i.processingStatus) ? recent : working).push(i)
-    return [
-      { title: 'Still working on', items: working },
-      { title: 'Recently kept', items: recent }
-    ]
-  }, [items, section])
-
   return (
     <div {...stylex.props(styles.app)} data-route="library">
       <Sidebar />
@@ -134,7 +119,7 @@ function LibraryApp(): React.JSX.Element {
           ) : (
             <>
               {section === 'trash' ? <TrashHeader /> : null}
-              <MasonryGrid items={items} groups={groups} onLayout={onLayout} />
+              <MasonryGrid items={items} onLayout={onLayout} />
             </>
           )}
           <SelectionBar />

@@ -30,8 +30,6 @@ const MIN_COL: Record<Density, number> = { comfortable: 220, compact: 168 }
 
 export interface MasonryGridProps {
   items: ItemSummary[]
-  /** Optional group headers: render items in sections (Inbox). */
-  groups?: Array<{ title: string; items: ItemSummary[] }>
   /** Lets the parent know the current layout for keyboard navigation. */
   onLayout?: (layout: MasonryLayout) => void
 }
@@ -214,14 +212,12 @@ function Section({
   items,
   width,
   density,
-  onLayout,
-  offsetLabel
+  onLayout
 }: {
   items: ItemSummary[]
   width: number
   density: Density
   onLayout?: (l: MasonryLayout) => void
-  offsetLabel?: string
 }): React.JSX.Element {
   const selection = useLibrary((s) => s.selection)
   const focusId = useLibrary((s) => s.focusId)
@@ -250,39 +246,36 @@ function Section({
   const effectiveFocus = focusId && layout.rects[focusId] ? focusId : (items[0]?.id ?? null)
 
   return (
-    <>
-      {offsetLabel ? <h2 {...stylex.props(styles.groupTitle)}>{offsetLabel}</h2> : null}
-      <div
-        {...stylex.props(styles.canvas, styles.canvasHeight(layout.height))}
-        data-grid-canvas
-        role="listbox"
-        aria-multiselectable="true"
-        aria-label={offsetLabel ?? 'Items'}
-      >
-        {width > 0
-          ? items.map((item) => {
-              const r = layout.rects[item.id]
-              if (!r) return null
-              return (
-                <ItemCard
-                  key={item.id}
-                  item={item}
-                  x={r.x}
-                  y={r.y}
-                  w={r.w}
-                  h={r.h}
-                  captionHeight={CAPTION_HEIGHT}
-                  selected={selection.has(item.id)}
-                  focused={effectiveFocus === item.id}
-                  multi={selection.size > 1}
-                  entering={entering.has(item.id)}
-                  {...handlers}
-                />
-              )
-            })
-          : null}
-      </div>
-    </>
+    <div
+      {...stylex.props(styles.canvas, styles.canvasHeight(layout.height))}
+      data-grid-canvas
+      role="listbox"
+      aria-multiselectable="true"
+      aria-label="Items"
+    >
+      {width > 0
+        ? items.map((item) => {
+            const r = layout.rects[item.id]
+            if (!r) return null
+            return (
+              <ItemCard
+                key={item.id}
+                item={item}
+                x={r.x}
+                y={r.y}
+                w={r.w}
+                h={r.h}
+                captionHeight={CAPTION_HEIGHT}
+                selected={selection.has(item.id)}
+                focused={effectiveFocus === item.id}
+                multi={selection.size > 1}
+                entering={entering.has(item.id)}
+                {...handlers}
+              />
+            )
+          })
+        : null}
+    </div>
   )
 }
 
@@ -328,7 +321,7 @@ function ListRows({ items }: { items: ItemSummary[] }): React.JSX.Element {
  * JS-positioned columns from `layoutMasonry`; ResizeObserver reflow; list mode.
  * Keyboard navigation is handled by `useShellKeys` using the layout reported through `onLayout`.
  */
-export function MasonryGrid({ items, groups, onLayout }: MasonryGridProps): React.JSX.Element {
+export function MasonryGrid({ items, onLayout }: MasonryGridProps): React.JSX.Element {
   const [ref, width] = useWidth<HTMLDivElement>()
   const density = useLibrary((s) => s.density)
   const layoutMode = useLibrary((s) => s.layout)
@@ -371,19 +364,6 @@ export function MasonryGrid({ items, groups, onLayout }: MasonryGridProps): Reac
       <div ref={ref} {...stylex.props(styles.inner)} data-grid-inner>
         {layoutMode === 'list' ? (
           <ListRows items={items} />
-        ) : groups ? (
-          groups
-            .filter((g) => g.items.length > 0)
-            .map((g, i) => (
-              <Section
-                key={g.title}
-                items={g.items}
-                width={width}
-                density={density}
-                offsetLabel={g.title}
-                onLayout={i === 0 ? onLayout : undefined}
-              />
-            ))
         ) : (
           <Section items={items} width={width} density={density} onLayout={onLayout} />
         )}

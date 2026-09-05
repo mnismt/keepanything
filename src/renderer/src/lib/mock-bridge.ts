@@ -106,11 +106,6 @@ export function createMockBridge(): KeepAnythingApi {
       case 'trash':
         rows = [...state.items.values()].filter((i) => state.trashed.has(i.id))
         break
-      case 'inbox': {
-        const dayAgo = Date.now() - 24 * 3_600_000
-        rows = live().filter((i) => !isTerminal(i.processingStatus) || Date.parse(i.capturedAt) > dayAgo)
-        break
-      }
       case 'links':
         rows = live().filter((i) => i.type === 'url')
         break

@@ -22,16 +22,6 @@ export const styles = stylex.create({
     transitionTimingFunction: motion.easeOut
   },
   canvasHeight: (h: number) => ({ height: h }),
-  groupTitle: {
-    fontSize: text.t12,
-    fontWeight: weight.medium,
-    letterSpacing: '0.04em',
-    textTransform: 'uppercase',
-    color: colors.fg4,
-    paddingTop: space.s4,
-    paddingInline: 4,
-    paddingBottom: space.s3
-  },
   list: { display: 'flex', flexDirection: 'column' },
   row: {
     display: 'grid',

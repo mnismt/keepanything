@@ -5,7 +5,6 @@
  */
 import { create } from 'zustand'
 import type { ItemsChangedEvent } from '../../../shared/ipc'
-import { isTerminal } from '../../../shared/status'
 import type { ItemSummary, ItemsSort, ItemsView, ItemType } from '../../../shared/types'
 import { invoke } from '../lib/ipc-client'
 
@@ -72,8 +71,6 @@ export function belongsToView(item: ItemSummary, query: LibraryQuery): boolean {
   switch (query.view) {
     case 'library':
       return item.parentItemId === null
-    case 'inbox':
-      return !isTerminal(item.processingStatus) || Date.parse(item.capturedAt) > Date.now() - 24 * 3_600_000
     case 'links':
       return item.type === 'url'
     case 'files':

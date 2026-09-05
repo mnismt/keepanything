@@ -6,10 +6,9 @@ import { useUi } from '../../../state/ui'
 import { Kbd } from '../../common'
 import { styles } from './styles'
 
-export type EmptyKind = 'library' | 'inbox' | 'collection' | 'trash' | 'filtered' | 'links' | 'files'
+export type EmptyKind = 'library' | 'collection' | 'trash' | 'filtered' | 'links' | 'files'
 
 const QUIET_COPY: Record<Exclude<EmptyKind, 'library'>, { line: string; sub?: string }> = {
-  inbox: { line: COPY.nothingWaiting, sub: 'New captures land here until they are understood.' },
   collection: {
     line: COPY.emptyCollection,
     sub: 'Drop onto this collection in the sidebar, or wait for the agent to notice a match.'
@@ -77,7 +76,7 @@ export function EmptyState({ kind }: { kind: EmptyKind }): React.JSX.Element {
           </button>
         </p>
       ) : null}
-      {kind === 'collection' || kind === 'inbox' ? <AiHint /> : null}
+      {kind === 'collection' ? <AiHint /> : null}
     </section>
   )
 }

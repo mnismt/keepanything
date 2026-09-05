@@ -40,7 +40,7 @@ src/
   shared/                      ZERO imports (no node, no DOM, no zod). Types + constants only.
     types.ts                   Item, ItemSummary, ItemDetail, Collection*, Relationship*, AgentRun*, AgentResult, SearchHit, Candidate, Settings, JobProgress, CaptureResult …
     ipc.ts                     IPC_CHANNELS, IpcRequest<C>/IpcResponse<C> maps, IPC_EVENTS payloads, IpcErrorCode, error envelope
-    status.ts                  PROCESSING_STATUSES, INBOX_STATUSES, isFailed(), USER_STAGES, STATUS_LABEL/STAGE_LABEL copy, transition table next(status, stage, outcome)
+    status.ts                  PROCESSING_STATUSES, isFailed(), USER_STAGES, STATUS_LABEL/STAGE_LABEL copy, transition table next(status, stage, outcome)
     actions.ts                 ITEM_ACTIONS (id, label, appliesTo) — the closed action vocabulary shared by UI and agent
     kinds.ts                   KINDS closed vocabulary for Understanding.kind; RELATIONSHIP_TYPES with inverse/symmetric map + labels
     constants.ts               limits (folder traversal, text caps, chunking), timeouts, product copy strings
@@ -103,7 +103,7 @@ src/
     lib/    ipc-client.ts (typed invoke/on + dev MockBridge when window.keepAnything is absent)  keyboard.ts (focus-zone scoped map)  format.ts  dnd.ts (internal MIME)
     components/
       shell/      Sidebar  Toolbar  StatusStack  DropOverlay  LocalStatusFooter
-      library/    MasonryGrid (JS-positioned)  ItemCard + bodies (Image, Video, Url, Github, Pdf, Text, Folder, Note, File)  ItemRow  EmptyState  TrashHeader  InboxGroups
+      library/    MasonryGrid (JS-positioned)  ItemCard + bodies (Image, Video, Url, Github, Pdf, Text, Folder, Note, File)  ItemRow  EmptyState  TrashHeader
       detail/     ItemDetail (hero, Understanding [editable], Related, Collections, Actions, footer)  NoteView  AgentActivity ("How this was organized")
       palette/    CommandPalette (cmdk; local hits first; Ask row rules)  AskResult (evidence header + sources)  RunProgress
       selection/  SelectionBar
@@ -205,7 +205,7 @@ Requests via `ipcRenderer.invoke`; every response is `{ ok: true, data } | { ok:
 Handlers throw `KaError`; router maps it, logs anything else as INTERNAL. Payloads validated by zod in `main/ipc/schemas.ts`.
 
 ```
-items:list        { view: 'library'|'inbox'|'links'|'files'|'trash'|'collection', collectionId?, types?, sort?: 'captured'|'created'|'title', limit?, offset? } → ItemSummary[]
+items:list        { view: 'library'|'links'|'files'|'trash'|'collection', collectionId?, types?, sort?: 'captured'|'created'|'title', limit?, offset? } → ItemSummary[]
 items:get         { id } → ItemDetail   // item + relationships[{…, direction:'out'|'in', label, other: ItemSummary}] + collections[{…, reason, addedBy, agentRunId}] + latestRuns: AgentRunSummary[] + children?: ItemSummary[]
 items:update      { id, patch: { title?, understanding?, whyUseful? } } → ItemDetail        // sets user_overrides, re-indexes
 items:trash / items:restore / items:deleteForever   { ids } → void
@@ -390,7 +390,7 @@ system sans elsewhere; card at rest = no border/shadow (the thumbnail is the car
 motion 120/180/260 ms + reduced-motion rule. Styling = CSS Modules + tokens (no Tailwind/shadcn). Icons = Lucide 16 px 1.5 stroke.
 Light values in the same file. Global reset is document-style (selectable text in detail/notes, scrollable panes).
 
-**Shell**: Sidebar (traffic-light inset, "KeepAnything", Library / Inbox / Links / Files / Collections / Trash; "Collections"
+**Shell**: Sidebar (traffic-light inset, "KeepAnything", Library / Links / Files / Collections / Trash; "Collections"
 list with counts + "New Collection"; Settings; `LocalStatusFooter`: "Local only" / "Local · GMI connected" / "Local · offline — AI paused",
 click → Settings › Privacy). Toolbar: search **button** ("Search anything… ⌘K", opens the palette; one search surface), grid/list
 toggle, sort, filter. Content area: MasonryGrid or ItemRow list (default list in Links/Files? no: grid everywhere, list optional).
@@ -407,8 +407,7 @@ label (1.2 s opacity pulse, off under reduced motion). Internal drags use `appli
 drag image = stacked thumbs + count; sidebar rows show an accent ring on dragover; drop → `collections:addItems` + toast with Undo.
 
 **States**: empty library = editorial hero "Keep anything. / *We'll figure out the rest.*" + drop hint + "Paste a link (⌘V)" (+ stat
-card only when empty); Inbox = items not READY/PARTIAL ∪ captured < 24 h grouped "Still working on" / "Recently kept", empty
-"Nothing waiting."; empty collection "Nothing here yet. Drag things in or let it fill up."; Trash "Trash is empty." with
+card only when empty); empty collection "Nothing here yet. Drag things in or let it fill up."; Trash "Trash is empty." with
 Restore / Delete forever / Empty Trash; no hits "Nothing matches "x"." + Ask row; Ask none "Couldn't find anything about that.";
 AI unavailable → cards "Kept. Not understood yet.", detail "Connect GMI in Settings to understand this."; failures expose "Try again";
 missing original → file tile "Original moved or deleted", Open/Reveal disabled; duplicate → "Already kept · 3 weeks ago" + ring.

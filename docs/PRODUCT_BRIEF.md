@@ -71,13 +71,15 @@ captured visual / OG image; PDF first-page preview; GitHub rich repo preview; te
 stack/collage. Not identical database rows.
 
 ## 9. Navigation
-Sidebar: Library, Inbox, Links, Files, Collections, Trash. Below: AI-generated / user collections (e.g. Doan Labs,
+Sidebar: Library, Links, Files, Collections, Trash. Below: AI-generated / user collections (e.g. Doan Labs,
 Design References, AI Infrastructure, Things to Read). Bottom: Settings. Keep it simple.
 
-## 10. Inbox
-Newly captured objects enter an Inbox state = captured but not completely understood yet. The user does NOT process
-it manually. Lifecycle: captured → extracting → understanding → relating → organised. Lightweight processing
-indicators. Failures recoverable ("Couldn't extract this page — URL saved anyway."). Never lose the original.
+## 10. Processing state on cards
+Captured objects enter an in-progress state until the pipeline settles. The user does not process items manually.
+Lifecycle: captured → extracting → understanding → relating → organised. Each card surfaces its current state with
+a small dot and one short label ("Still figuring this one out.", "Couldn't read this, but it's kept.").
+Failures are recoverable: a card with a failed state exposes "Try again". Library sorts by capture time so the most
+recently kept items are at the top. The original is never lost.
 
 ## 11. Item detail view
 Original shown prominently. Then: Understanding (concise, specific: "An engineering article comparing inference

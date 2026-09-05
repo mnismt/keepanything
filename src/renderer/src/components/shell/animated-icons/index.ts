@@ -4,7 +4,6 @@ export {
   type AnimatedSidebarIconProps,
   CollectionsIcon,
   FileIcon,
-  InboxIcon,
   LibraryIcon,
   LinksIcon,
   TrashIcon

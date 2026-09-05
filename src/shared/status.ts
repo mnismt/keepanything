@@ -25,11 +25,6 @@ export const PROCESSING_STATUSES = [
 /** One of `PROCESSING_STATUSES`. */
 export type ProcessingStatus = (typeof PROCESSING_STATUSES)[number]
 
-/** Statuses shown in the Inbox: everything that is not fully settled (`READY` / `PARTIAL`). */
-export const INBOX_STATUSES: readonly ProcessingStatus[] = PROCESSING_STATUSES.filter(
-  (s) => s !== 'READY' && s !== 'PARTIAL'
-)
-
 export function isProcessingStatus(value: unknown): value is ProcessingStatus {
   return typeof value === 'string' && (PROCESSING_STATUSES as readonly string[]).includes(value)
 }

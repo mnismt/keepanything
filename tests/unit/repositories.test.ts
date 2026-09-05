@@ -95,13 +95,11 @@ describe('item repository', () => {
     const trashed = h.item({ type: 'image', title: 'gone' })
     h.repos.items.setDeleted([trashed.id], h.clock.nowIso())
     const ids = (view: Parameters<typeof h.repos.items.list>[0]['view'], extra = {}): string[] =>
-      h.repos.items.list({ view, recentSince: '2026-09-02T10:00:00.000Z', ...extra }).map((i) => i.id)
+      h.repos.items.list({ view, ...extra }).map((i) => i.id)
 
     expect(ids('library')).toEqual(expect.arrayContaining([folder.id, link.id, ready.id]))
     expect(ids('library')).not.toContain(child.id)
     expect(ids('library')).not.toContain(trashed.id)
-    expect(ids('inbox')).toEqual(expect.arrayContaining([folder.id, link.id]))
-    expect(ids('inbox')).not.toContain(ready.id)
     expect(ids('links')).toEqual([link.id])
     expect(ids('files')).toEqual(expect.arrayContaining([folder.id, ready.id]))
     expect(ids('files')).not.toContain(link.id)

@@ -1,6 +1,6 @@
 import { LIMITS } from '../../../shared/constants'
 import { toMediaUrl } from '../../../shared/media'
-import { INBOX_STATUSES, isProcessingStatus } from '../../../shared/status'
+import { isProcessingStatus } from '../../../shared/status'
 import { truncate } from '../../../shared/text'
 import type {
   Item,
@@ -9,7 +9,6 @@ import type {
   ItemSummary,
   ItemsSort,
   ItemsView,
-  ProcessingStatus,
   SystemStats
 } from '../../../shared/types'
 import type { Db, SqlValue } from '../db'
@@ -254,8 +253,6 @@ export interface ItemListQuery {
   sort?: ItemsSort
   limit?: number
   offset?: number
-  /** Items captured at/after this timestamp also count as "recently kept". */
-  recentSince?: string
 }
 
 /** Row access, FTS sync and summary assembly. Callers own transactions. */
@@ -383,19 +380,6 @@ export function createItemRepo(db: Db): ItemRepo {
         where.push('ci.collection_id = ?', 'i.deleted_at IS NULL')
         params.push(query.collectionId ?? '')
         break
-      case 'inbox': {
-        where.push('i.deleted_at IS NULL', 'i.parent_item_id IS NULL')
-        const statuses = INBOX_STATUSES as readonly ProcessingStatus[]
-        const clause = `i.processing_status IN (${placeholders(statuses.length)})`
-        params.push(...statuses)
-        if (query.recentSince) {
-          where.push(`(${clause} OR i.captured_at >= ?)`)
-          params.push(query.recentSince)
-        } else {
-          where.push(clause)
-        }
-        break
-      }
       case 'links':
         where.push('i.deleted_at IS NULL', 'i.parent_item_id IS NULL', "i.type = 'url'")
         break

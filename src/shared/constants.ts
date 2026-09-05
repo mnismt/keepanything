@@ -97,7 +97,6 @@ export const COPY = {
   alreadyKept: (ago: string): string => `Already kept · ${ago}`,
   cantReadPage: "Couldn't read this page, but the link is safe.",
   stillFiguring: 'Still figuring this one out.',
-  nothingWaiting: 'Nothing waiting.',
   emptyCollection: 'Nothing here yet. Drag things in or let it fill up.',
   trashEmpty: 'Trash is empty.',
   noMatches: (q: string): string => `Nothing matches "${q}".`,
