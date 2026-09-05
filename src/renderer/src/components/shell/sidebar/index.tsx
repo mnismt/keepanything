@@ -140,8 +140,8 @@ export function Sidebar(): React.JSX.Element {
     e.preventDefault()
     const result = await invoke('system:contextMenu', { kind: 'collection', ids: [], collectionId: c.id })
     if (!result.ok || !result.data.action) return
-    if (result.data.action === 'rename') push({ kind: 'dialog', id: 'renameCollection', collectionId: c.id })
-    if (result.data.action === 'delete') void useCollections.getState().remove(c.id)
+    if (result.data.action === 'rename-collection') push({ kind: 'dialog', id: 'renameCollection', collectionId: c.id })
+    if (result.data.action === 'delete-collection') push({ kind: 'dialog', id: 'deleteCollection', collectionId: c.id })
   }
 
   const clipId = useId()
