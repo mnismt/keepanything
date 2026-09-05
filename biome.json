@@ -17,6 +17,7 @@
       "!docs",
       "!assets",
       "!tests/fixtures",
+      "!**/routeTree.gen.ts",
       "!**/*.md"
     ]
   },

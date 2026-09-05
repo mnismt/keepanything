@@ -18,7 +18,6 @@ Non-goals: cloud sync, accounts, telemetry, auto-update, Windows/Linux, scraping
 
 - Electron 44 (Node 24), electron-vite 5 (main / preload / renderer / worker bundles), Vite 7, React 19,
   TypeScript 5.9 strict with `noUncheckedIndexedAccess`.
-- Storage: `node:sqlite` (`DatabaseSync`) with FTS5. Migrations in `src/main/storage/migrations/*.sql`.
 - AI: GMI Cloud `POST /v1/chat/completions`, model `MiniMaxAI/MiniMax-M3`. Structured output is
   fenced-JSON extraction + zod + one retry; `response_format` is not relied on. Notes in `docs/GMI_NOTES.md`.
 - Embeddings: `@huggingface/transformers` running `Xenova/all-MiniLM-L6-v2` (q8, 384-d) in a
@@ -37,6 +36,7 @@ Non-goals: cloud sync, accounts, telemetry, auto-update, Windows/Linux, scraping
 | Task | Command |
 | --- | --- |
 | Dev (library window opens; HMR for renderer, restart on main/preload) | `pnpm run dev` |
+| Website dev server (`web/`, port 3000) | `pnpm run web:dev` |
 | Typecheck (node, web, e2e tsconfigs) | `pnpm run typecheck` |
 | Unit tests | `pnpm run test` |
 | Format + lint fix (also runs on staged files via the lint-staged pre-commit hook) | `pnpm run format` |
@@ -78,7 +78,18 @@ native/         drag-watch/main.swift: the global drag sidecar (NDJSON on stdout
 scripts/        fetch-models, build-native, screenshot, seed-library, eval-retrieval, probe/ (GMI + embedding probes).
 tests/unit/     Vitest.   tests/e2e/  Playwright smoke.   tests/fixtures/corpus/  test corpus + eval queries.
 assets/         fonts, tray template PNGs.   build/  app icon, icns, models (gitignored).   docs/  brief, architecture, notes.
+web/            Marketing site. Separate project, see below.
 ```
+
+### web/
+
+The public website: TanStack Start (file-based routing, SSR) + Tailwind v4 + Vite 8 + React 19.
+It is a standalone project, not a pnpm workspace member: its own `package.json`, `pnpm-lock.yaml`,
+`node_modules` and `pnpm-workspace.yaml`. Run pnpm from inside `web/` (`pnpm dev`, `pnpm build`,
+`pnpm typecheck`). The root forwards one script, `web:dev`; installs and builds stay separate so
+electron-builder never sees the site's dependency tree. The two projects share nothing but the repo
+and the root `biome.json`, which formats both. Deploy with the host's root directory set to `web/`.
+If the site ever needs something from `src/shared/`, add a pnpm workspace then, not Turborepo.
 
 ## Conventions
 - Use kebab-case for source filenames, including React components and hooks; keep conventional `index.ts(x)` barrels and required compound suffixes such as `*.stylex.ts`.

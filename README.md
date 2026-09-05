@@ -56,10 +56,8 @@ Copy `.env.example` to `.env` (gitignored), or enter the key in Settings where i
 | Variable | Meaning | Default |
 | --- | --- | --- |
 | `KEEPANYTHING_GMI_API_KEY` | GMI Cloud API key | empty (AI runs in `mock` mode) |
-| `KEEPANYTHING_GMI_BASE_URL` | OpenAI-compatible base URL | `https://api.gmi-serving.com/v1` |
 | `KEEPANYTHING_MODEL` | Reasoning model id | `MiniMaxAI/MiniMax-M3` |
 | `KEEPANYTHING_AI` | `gmi`, `mock` or `off` | `gmi` with a key, else `mock` |
-
 Also `KEEPANYTHING_E2E=1` (separate `userData`, test hooks) and `KEEPANYTHING_DEBUG=1`. Dev runs use
 `<userData>/dev`, so dev and packaged builds never share a library.
 
