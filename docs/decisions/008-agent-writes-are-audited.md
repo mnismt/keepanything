@@ -11,9 +11,9 @@ one that recreates the collection you just deleted.
 
 The agent has no direct database access. It calls services (`collection-service`,
 `relationship-service`) that write an `audit_log` row for every change, tagged with the actor
-(`user` | `system`) and the agent run. Every agent action is undoable. When a user removes something
-the agent proposed, the removal writes a *suppression* row, and the organize stage reads suppressions
-before proposing, so the agent will not redo it. Collections are proposed conservatively.
+(`user` | `agent` | `system` | `dynamic` — the four `AuditActor` values in `shared/types.ts`) and the agent run.
+Every agent action is undoable. When a user removes something the agent proposed, the removal writes a
+*suppression* row, and the organize stage reads suppressions before proposing, so the agent will not redo it.
 
 ## Consequences
 

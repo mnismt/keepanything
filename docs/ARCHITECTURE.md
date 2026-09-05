@@ -65,41 +65,56 @@ src/
       object-store.ts          managed copies objects/<itemId>/<safe-name>; streaming sha256 (worker for >8 MB); exists/missing checks
     capture/                   [slice 3]
       intake.ts                createIntake(deps): Intake — captureFiles/captureUrl/captureText/captureBlob/captureDrop (owns ALL drop classification + precedence rules)
-      file-importer.ts folder-importer.ts url-importer.ts text-importer.ts dedupe.ts (sha256, table-driven URL canonicalization)
+      classify.ts              per-file type guess (extension + magic sniff), isTempPath check, isScreenshotName
+      folder.ts                scanFolder(path, limits) → shallow manifest + sampling
+      url.ts                   parseUriList, canonicalizeUrl, guessUrlSubtype, isMediaUrl, isSingleUrl, titleFromUrl
     extraction/                [slice 3]
-      registry.ts  text.ts  markdown.ts  pdf.ts (unpdf, in worker)  image.ts (dims, screenshot heuristic)  folder.ts (listing/sampling)
-      url/ fetch.ts (fetchHtml(url, fetchImpl) + HEAD content-type sniff)  readable.ts (linkedom+readability+turndown, in worker)  metadata.ts  adapters/{github,youtube,twitter,generic}.ts
+      registry.ts              per-type dispatch (text/markdown/pdf/image/url/folder/archive/spreadsheet/content)
+      text.ts                  plain + markdown (headings into metadata); markdown shares this module
+      pdf.ts pdf-core.ts       pdf.ts drives pdf-core (unpdf, in worker); page_count, page-1 aspect
+      image.ts image-dims.ts   image.ts (screenshot heuristic, mime), image-dims.ts (pure dims)
+      archive.ts spreadsheet.ts content.ts folder.ts  binary fallbacks + per-kind text
+      url/ fetch.ts (fetchHtml(url, fetchImpl) + HEAD content-type sniff)  readable.ts (linkedom+readability+turndown, in worker)  metadata.ts  detect.ts (host/path → UrlSubtype)  analyze.ts (og/ld+json → subtype)  cache.ts (canonical-URL key)  pdf-url.ts (HEAD-sniffed PDF download)  index.ts (barrel)
+        adapters/ {arxiv, generic, github, twitter, youtube}.ts   // generic is the default; the rest only when they materially help
       worker-tasks.ts          registry of worker-side tasks owned by extraction (pdfText, htmlToReadable)
     previews/                  [slice 3]
       thumbnails.ts (qlmanage / nativeImage)  snapshot.ts (offscreen window, reusable)  assets.ts (favicon/og download)  color.ts (dominant color)
+    agent/                     [slice 4]
+      index.ts                 createAgentService(deps) — wires tasks + orchestrator + tool dispatch + run repo
+      orchestrator.ts          runToolLoop + COMMAND_MAX_STEPS; forces `finish` on the last allowed step
+      test-connection.ts       settings:testConnection
+      tools/definitions.ts tools/handlers.ts  (AGENT_TOOLS, FINISH_TOOL; evidence preconditions, collection quality rules, suppression checks, propose/run-memory)
+      tasks/ common.ts (TaskServices, structuredCall, startTaskRun, requireItem)  understand.ts (runUnderstand, understandingPatch, previewsFor, compactMetadata)  organize.ts (runRelate + batch organizer, applyPlan, nameSimilarity, isNearDuplicate, batchSubjects, maybeScheduleConsolidate)  consolidate.ts (canMerge, runConsolidate, MERGE_*)
     ai/                        [slice 4]
       provider.ts (impl of ports.AIProvider types)  gmi-minimax.ts  mock-provider.ts  scripted-provider.ts (tests)
+      messages.ts              systemMessage/userMessage/textPart/imagePart/assistantMessage/toolMessage/appendToLastUserMessage
       structured.ts            JSON extraction (last ```json fence → balanced objects from the end → first zod pass), truncation detection, retry with errors, lenient tool-arg repair
       prompts/  schemas/       task prompts; zod schemas (Understanding, OrganizePlan, CommandFinish, …)
       embeddings/ transformers.ts (worker-side)  hash.ts  index.ts (provider pick, model seeding)  worker-tasks.ts
     retrieval/                 [slice 4]
-      fts.ts  vectors.ts (matrix)  hybrid.ts (evidence, floors, weighted RRF, boosts)  query.ts (MATCH builder, cue parser, type cues, synonyms)  index.ts (createRetrieval)
-    agent/                     [slice 4]
-      tools/definitions.ts tools/handlers.ts (evidence preconditions, collection quality rules, suppression checks)  orchestrator.ts  runs.ts
-      tasks/ understand.ts  organize.ts (single + batch)  consolidate.ts  folder.ts  command.ts (ask + multi-item + actions)  index.ts (createAgent)
+      fts.ts  vectors.ts (matrix)  hybrid.ts (evidence, floors, weighted RRF, boosts)  query.ts (MATCH builder, cue parser, type cues, synonyms)  index.ts (createRetrieval)  context.ts (per-item feature snapshot used by the agent)
     pipeline/                  [foundation; stage bodies by slices]
-      queue.ts (job-repo ops)  scheduler.ts (lanes io=2, embed=1, ai=1; priority; backoff; crash reset; cancellation; batch gate)  state.ts  graph.ts (initialStages/nextStages per item type)
+      queue.ts (job-repo ops)  scheduler.ts (lanes io=2, embed=1, ai=1; priority; backoff; crash reset; cancellation; batch gate; pauseAi/resumeAi + scheduleAiResume)  state.ts  graph.ts (initialStages/nextStages per item type)
       stages/ index.ts (frozen STAGES list)  extract.ts thumbnail.ts snapshot.ts [slice 3]  embed.ts understand.ts index.ts relate.ts organize-batch.ts consolidate.ts [slice 4]
     worker/                    [foundation scaffold]
       index.ts (utilityProcess entry; merges extraction/worker-tasks + ai/embeddings/worker-tasks)  rpc.ts (request/response protocol)
     ipc/                       [foundation, complete]
-      router.ts (createRouter({handle, isKnownSender, handlers}))  schemas.ts (zod, `satisfies z.ZodType<IpcRequest<C>>`)  events.ts (push to windows)  handlers/*.ts (all channels, against ports)
+      router.ts (createRouter({handle, isKnownSender, handlers}))  schemas.ts (zod, `satisfies z.ZodType<IpcRequest<C>>`)  events.ts (push to windows)  handlers/*.ts (all channels, against ports)  deps.ts (typed handler deps)
     desktop/                   [foundation]
       library-window.ts  shelf-window.ts  tray.ts  app-menu.ts  context-menu.ts  media-protocol.ts  shortcuts.ts  activation.ts  dom-fallback.ts (BrowserWindow-based HTML fetch fallback, used by extraction via PageFetcher port)
+    positioning.ts             pure tray-anchoring math (logical pixels, unit-tested; no Electron)
+    shelf-policy.ts            shelf show/hide policy constants and helpers
+    security.ts                 PRODUCTION_CSP (mirror of `electron.vite.config.ts`), privilege guard helpers
     lib/                       logger.ts (JSON lines, redaction)  config.ts (settings + secret store)  fs.ts  worker-client.ts  clock.ts
 
   preload/  index.ts (contextBridge: invoke/on/getPathForFile/platform)  api.ts (KeepAnythingApi type)
 
   renderer/src/
     main.tsx app.tsx (route by ?view=library|shelf; mounts fixed component slots)
-    styles/ tokens.css (light+dark, the design contract)  global.css (document-style reset)  fonts.css
-    state/  library.ts (items, filters, selection, focus)  collections.ts  runs.ts (agent runs keyed by runId, subscribed at boot)  ui.ts (route, modalStack, palette)  toasts.ts  settings.ts  jobs.ts
-    lib/    ipc-client.ts (typed invoke/on + dev MockBridge when window.keepAnything is absent)  keyboard.ts (focus-zone scoped map)  format.ts  dnd.ts (internal MIME)
+    styles/ tokens.stylex.ts (defineVars for colours/radii/durations/shadows — contract)  shared.ts (shared stylex.create blocks)  themes.ts (createTheme light/dark for the shadow set)  global.css (reset + @font-face, the only plain CSS, lives in `@layer reset`)
+    state/  library.ts (items, filters, selection, focus, sort/layout/density)  collections.ts  runs.ts (agent runs keyed by runId, subscribed at boot)  ui.ts (route, modalStack, palette, theme, paletteRunId)  toasts.ts  settings.ts  jobs.ts  boot.ts (renderer startup)
+    lib/    ipc-client.ts (typed invoke/on + dev MockBridge when window.keepAnything is absent)  keyboard.ts (focus-zone scoped map)  format.ts  dnd.ts (internal MIME; uses `INTERNAL_DND_MIME` from shared/constants)
+    hooks/  use-shell-keys.ts  use-window-capture.ts
     components/
       shell/      Sidebar  Toolbar  StatusStack  DropOverlay  LocalStatusFooter
       library/    MasonryGrid (JS-positioned)  ItemCard + bodies (Image, Video, Url, Github, Pdf, Text, Folder, Note, File)  ItemRow  EmptyState  TrashHeader
@@ -115,7 +130,8 @@ src/
 **Contract files** (changed only by the foundation owner, in writing, one person): `src/shared/**`, `src/main/ports.ts`,
 `src/main/ipc/**`, `src/main/pipeline/{queue,scheduler,state,graph}.ts`, `src/main/pipeline/stages/index.ts`,
 `src/main/worker/**`, `src/main/index.ts`, `package.json`, `electron.vite.config.ts`, `electron-builder.yml`,
-`src/renderer/src/styles/tokens.css`, `src/renderer/src/app.tsx`, `src/renderer/src/state/**`, `src/renderer/src/lib/ipc-client.ts`.
+`src/renderer/src/styles/{tokens.stylex.ts,shared.ts,themes.ts}`, `src/renderer/src/app.tsx`,
+`src/renderer/src/state/**`, `src/renderer/src/lib/ipc-client.ts`.
 Slices replace bodies behind frozen exported names; they never add paths to contract files or run `pnpm add`.
 Stubs: `throw new KaError('NOT_IMPLEMENTED', …)`.
 
@@ -208,7 +224,7 @@ items:get         { id } → ItemDetail   // item + relationships[{…, directio
 items:update      { id, patch: { title?, understanding?, whyUseful? } } → ItemDetail        // sets user_overrides, re-indexes
 items:trash / items:restore / items:deleteForever   { ids } → void
 items:reprocess   { id, from?: Stage } → void        items:reprocessAll { from?: Stage } → { count }
-items:openOriginal | items:revealInFinder | items:quickLook | items:openUrl   { id } → void
+items:openOriginal | items:revealInFinder | items:quickLook | items:openExternal   { id } → void   // items:openExternal opens the item's URL via `system:openExternal` for url items
 items:readContent { id } → { markdown?: string, text?: string }
 capture:files     { paths: string[], mode?: 'copy'|'reference' } → CaptureResult
 capture:url       { url } → CaptureResult          capture:text { text, title? } → CaptureResult
@@ -239,6 +255,7 @@ collections:changed { }
 agent:run           { runId, task, status: 'running'|'succeeded'|'failed'|'cancelled', itemId?, batchId?, step?: AgentStep, result?: AgentResult, error?: IpcError, undoable?: boolean }
                     // emitted: on start (before invoke resolves), after every tool step, at the end
 shelf:dropped       { result: CaptureResult }
+shelf:presence      { visible, edge: 'left'|'right' }   // sent to the shelf around show/hide so it can slide in, and out before the window hides
 settings:changed    { settings }
 theme:changed       { theme: 'light'|'dark' }
 ```
@@ -325,15 +342,16 @@ rejected) is recorded as an `AgentStep` (payload summaries ≤ 500 chars) and em
 - **consolidate** (when the ai lane drains and ≥3 items were organized since last sweep): all items' one-liners+topics
   (pre-cluster by cosine above 200 items), tools incl. `rename_collection`; conservative, audited, reversible.
 - **folder**: structure + samples + children one-liners → folder understanding; optional collection.
-- **command** (Ask + multi-item + item actions, ≤12 steps): step 1 classify (memory-cue retrieval → search tools;
+- **command** (Ask + multi-item + item actions, ≤`COMMAND_MAX_STEPS`=8 steps): step 1 classify (memory-cue retrieval → search tools;
   library survey → `list_items`/`topic_overview`; multi-item template → read seeds); read ≤3–5 items; `finish({kind:'answer'|'note', …, sources[{itemId, role, why}], cues})`.
   Notes via `create_note`. No answer without sources unless none cleared the floor (`sources: []`, UI says "Couldn't find anything about that." + nearest hits).
 
 ### Pipeline
 Statuses: `CAPTURED → EXTRACTING → EXTRACTED → EMBEDDING → UNDERSTANDING → RELATING → READY`; `PARTIAL` (stored, not fully
 understood), `EXTRACTION_FAILED` (continues to understanding on metadata only → PARTIAL), `AI_FAILED` (retryable),
-`WAITING_FOR_AI` (no key / offline: ai-lane jobs stay queued; resumes on settings change or connectivity). Transition table
-`shared/status.ts:next(status, stage, outcome)`; user-facing `USER_STAGES = reading(EXTRACTING,EXTRACTED,EMBEDDING) →
+`WAITING_FOR_AI` (no key / offline: ai-lane jobs park with `run_after = now + aiRetryMs`; the scheduler sets
+`aiPausedFlag`, `scheduleAiResume` reopens the lane on transient outages, and `pauseAi`/`resumeAi` are
+called from `settings:update` and on connect/disconnect). Transition table `shared/status.ts:next(status, stage, outcome)`; user-facing `USER_STAGES = reading(EXTRACTING,EXTRACTED,EMBEDDING) →
 understanding(UNDERSTANDING) → connecting(RELATING)`.
 
 Stages `extract, thumbnail, snapshot (io) · embed, index (embed) · understand, relate, organize_batch, consolidate (ai)`.
@@ -361,7 +379,9 @@ Regular app: **no** `LSUIElement`, **no** `dock.hide()`; `setActivationPolicy('r
 `'accessory'` after the user closes it (tray + shelf keep running); `activate`/`second-instance` show the window; hide-on-close;
 `before-quit` flag preserved. Library window: `titleBarStyle:'hidden'`, `trafficLightPosition:{x:16,y:18}`, `backgroundColor`
 = `--bg-0`, min 960×640, no vibrancy; top 52 px `-webkit-app-region: drag`. Shelf: `type:'panel'`, frameless, transparent,
-`alwaysOnTop 'floating'`, visible on all workspaces incl. full-screen, non-activating, positioned via `positioning.ts`.
+`alwaysOnTop 'floating'`, visible on all workspaces incl. full-screen, non-activating, docked flush against a screen edge
+(`computeEdgeDockedPosition`, geometry in `shared/layout.ts`); the renderer draws the notch silhouette (SVG path with concave
+fillets into the edge) and slides it in and out on `shelf:presence`, main hides the window only after `SHELF_EXIT_MS`.
 Theme: `nativeTheme` + Settings override → `data-theme` attribute + `theme:changed`; `<meta name="color-scheme" content="light dark">`.
 Accent from `systemPreferences.getAccentColor()` (fallback warm amber) pushed as `--accent`, not implemented: the
 renderer always uses the amber `accent` token.
@@ -378,14 +398,17 @@ Context menus: native `Menu.popup`; resolve from item click handlers, `setTimeou
 
 ## 8. UI (foundation B = shell + tokens + stores; slice 5 = components)
 
-**Tokens (`tokens.css`, contract, light+dark from day one)**: dark surfaces `--bg-0 #141210` (main) `--bg-1 #1a1816` (sidebar)
-`--bg-2 #221f1c` (rows/text cards) `--bg-3 #2a2622` (sheets/palette); text `--fg-1 #efe9e1`, `--fg-2 rgba(239,233,225,.64)`,
-`--fg-3 rgba(239,233,225,.48)`; `--hairline rgba(255,255,255,.07)`; `--accent` runtime (fallback `#d9a35a`) used only for
-selection/focus/drop ring; radii 6/10/14; type scale 11/12/13(base)/15/20/28, weights 400/500/600, `tabular-nums` for counts;
-hero serif = bundled OFL **Instrument Serif** (regular + italic, `assets/fonts/`), 44px, only in the empty-library hero;
-system sans elsewhere; card at rest = no border/shadow (the thumbnail is the card); sheet shadow `0 24px 64px rgba(0,0,0,.45)`;
-motion 120/180/260 ms + reduced-motion rule. Styling = CSS Modules + tokens (no Tailwind/shadcn). Icons = Lucide 16 px 1.5 stroke.
-Light values in the same file. Global reset is document-style (selectable text in detail/notes, scrollable panes).
+**Tokens (`tokens.stylex.ts`, contract, light+dark from day one)**: `defineVars` for surfaces (`bg0/1/2/3`), text
+(`fg1/2/3`, `ink`), hairline, paper, accent (fallback amber `d9a35a`; runtime `--accent` push not wired), radii 6/10/14,
+type scale 11/12/13/15/20/28 with weights 400/500/600 and `tabular-nums` for counts, motion 120/180/260 ms with
+a reduced-motion rule. Light values live in the same file under `[LIGHT]` selectors; `themes.ts` calls
+`createTheme` only on the shadow set. Hero serif = bundled OFL **Instrument Serif** (regular + italic,
+`assets/fonts/`, declared in `global.css`), 44 px, empty-library hero only; system sans elsewhere.
+Sheet shadow dark `0 24px 64px rgba(0,0,0,.45)`, light `rgba(40,32,24,.22)`. **Styling = StyleX** via
+`@stylexjs/unplugin` (`useCSSLayers:true`, `devMode:'full'`, registered before the React plugin so Fast
+Refresh survives), with all CSS in layers and the only plain CSS being `global.css` (reset + `@font-face`)
+inside `@layer reset`; `index.html` declares `<style>@layer reset;</style>` first to pin layer order in dev.
+Icons = Lucide 16 px 1.5 stroke.
 
 **Shell**: Sidebar (traffic-light inset, "KeepAnything", Library / Links / Files / Collections / Trash; "Collections"
 list with counts + "New Collection"; Settings; `LocalStatusFooter`: "Local only" / "Local · GMI connected" / "Local · offline — AI paused",
@@ -400,8 +423,8 @@ Enter = detail, Space = Quick Look, Shift+arrow extends selection, ⌘A, Esc cle
 Keyboard map scoped by focus zone (grid / input / sheet). Cards: per-type bodies (image, video thumb + play glyph + duration,
 url snapshot/og + favicon + domain, github card, pdf page + "PDF · 2.4 MB", text excerpt card, folder 4-thumb collage + count,
 note with source count, file tile), title + secondary line, hover "…" → native context menu, processing = 6 px dot + USER_STAGES
-label (1.2 s opacity pulse, off under reduced motion). Internal drags use `application/x-keepanything-items`; `<img>` non-draggable;
-drag image = stacked thumbs + count; sidebar rows show an accent ring on dragover; drop → `collections:addItems` + toast with Undo.
+label (1.2 s opacity pulse, off under reduced motion). Internal drags carry item ids under `INTERNAL_DND_MIME`
+(`shared/constants`); `<img>` non-draggable;
 
 **States**: empty library = editorial hero "Keep anything. / *We'll figure out the rest.*" + drop hint + "Paste a link (⌘V)" (+ stat
 card only when empty); empty collection "Nothing here yet. Drag things in or let it fill up."; Trash "Trash is empty." with

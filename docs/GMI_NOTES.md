@@ -150,8 +150,9 @@ and a short "I'll search your library…" sentence with `auto`. Errors: JSON `{ 
 
 ## 6. Recommendations for `structured.ts`
 
-- Extraction order: `JSON.parse(trim)` → first ```` ``` ```` fence (json or not) → substring from first `{` to
-  last `}` → fail. Also strip a leading `<think>…</think>` block defensively even though none was observed.
+- Extraction order in `src/main/ai/structured.ts`: `JSON.parse(trim)` of the whole reply → ```` ``` ```` fence
+candidates in **reverse** order with the `json`-tagged one preferred → balanced `{…}` substrings ending
+at the last `}`. Strip a leading `<think>…</think>` defensively even though none was observed.
 - `finish_reason === 'length'` → do not parse; retry once with `max_tokens × 2` (cap 16k). Observed
   completions for understand-size prompts are 100–450 tokens, so 8k is already 20× headroom; the retry is
   for pathological repetition, not normal output.
@@ -248,9 +249,11 @@ Observations that changed or confirmed the notes above:
    the retry answered in 37.1 s; three minutes later two consecutive `HTTP 429` (delays 1.7 s, 6.3 s) exhausted the
    provider retries and the scheduler parked the job with `AI_UNAVAILABLE`. Run 2, six minutes later, saw **0 retries
    in 34 calls**. The free tier is bursty; budget for it.
-   ⚠ Parking also set the scheduler's `aiPausedFlag`, and nothing but a settings change clears it, so the pipeline
-   stayed idle for the rest of run 1 (`pipeline/scheduler.ts handleError`). The driver script worked around it by
-   calling `settings:update {}` when items sat in `WAITING_FOR_AI`; the underlying scheduler bug is still open.
+   ⚠ Originally, parking set the scheduler's `aiPausedFlag` and nothing but a settings change cleared it;
+   the driver script worked around it by calling `settings:update {}`. The scheduler now exposes
+   `pauseAi` / `resumeAi` (`src/main/pipeline/scheduler.ts`) and `scheduleAiResume` auto-reopens the lane
+   for transient `AI_UNAVAILABLE` / `OFFLINE` errors; only `AI_NOT_CONFIGURED` stays parked until the
+   user enters a key.
 3. **Prompt caching only covers ~128 tokens of the understand prefix** (`cached_tokens: 128` on 21 of 23 calls; two
    calls hit 1 024/1 115 when a similar README repeated). Within an agentic run caching works as designed: the second
    and third `command` calls reported 2 986 → 6 985 → 7 157 cached tokens, i.e. the whole previous transcript.
