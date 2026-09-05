@@ -3,13 +3,9 @@ import { Pencil, Trash2 } from 'lucide-react'
 import { useCollections } from '../../../state/collections'
 import { useUi } from '../../../state/ui'
 import { InlineEdit } from '../../common'
-import { TypeBadge } from '../collections-grid'
 import { styles } from './styles'
 
-/**
- * Header inside a collection view: type, the agent's reason ("Because these all...") or the dynamic
- * rule, inline rename of the description, and delete.
- */
+/** Header inside a collection view: the agent's reason ("Because these all...") or an inline editable description. */
 export function CollectionHeader({ collectionId }: { collectionId: string }): React.JSX.Element | null {
   const c = useCollections((s) => s.list.find((x) => x.id === collectionId))
   const rename = useCollections((s) => s.rename)
@@ -18,12 +14,7 @@ export function CollectionHeader({ collectionId }: { collectionId: string }): Re
   const agentMade = c.createdBy === 'agent'
   return (
     <div {...stylex.props(styles.header)}>
-      <div {...stylex.props(styles.meta)}>
-        <TypeBadge type={c.type} />
-      </div>
-      {c.type === 'dynamic' && c.query ? (
-        <p {...stylex.props(styles.rule)}>Fills with anything about “{c.query.text}”.</p>
-      ) : agentMade && c.description ? (
+      {agentMade && c.description ? (
         <p {...stylex.props(styles.reason)}>
           <span {...stylex.props(styles.reasonLead)}>Why these belong together · </span>
           {c.description}

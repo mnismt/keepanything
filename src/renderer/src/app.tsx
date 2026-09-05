@@ -129,9 +129,6 @@ function LibraryApp(): React.JSX.Element {
       </main>
       {dialog && dialog.kind === 'dialog' && dialog.id === 'settings' ? <SettingsView /> : null}
       {dialog && dialog.kind === 'dialog' && dialog.id === 'newCollection' ? <CollectionDialog mode="new" /> : null}
-      {dialog && dialog.kind === 'dialog' && dialog.id === 'newDynamicCollection' ? (
-        <CollectionDialog mode="dynamic" />
-      ) : null}
       {dialog && dialog.kind === 'dialog' && dialog.id === 'renameCollection' ? (
         <CollectionDialog mode="rename" collectionId={dialog.collectionId} />
       ) : null}

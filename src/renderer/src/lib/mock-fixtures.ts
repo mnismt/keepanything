@@ -489,7 +489,6 @@ export function toItem(summary: ItemSummary, seed?: Seed): Item {
 function col(
   id: string,
   name: string,
-  type: CollectionSummary['type'],
   createdBy: CollectionSummary['createdBy'],
   description: string | null
 ): CollectionSummary {
@@ -498,8 +497,6 @@ function col(
     name,
     nameKey: name.toLowerCase(),
     description,
-    type,
-    query: type === 'dynamic' ? { text: 'things worth reading later', filters: {}, minCosine: 0.4 } : null,
     createdBy,
     color: null,
     pinned: false,
@@ -511,10 +508,10 @@ function col(
 }
 
 export const FIXTURE_COLLECTIONS: CollectionSummary[] = [
-  col('col-ai', 'Local LLM inference research', 'ai', 'agent', 'Serving engines, providers and cost comparisons.'),
-  col('col-design', 'macOS utility references', 'ai', 'agent', 'Quiet, native-feeling desktop UI.'),
-  col('col-moodboard', 'Editorial moodboard', 'manual', 'user', null),
-  col('col-read', 'Things to read', 'dynamic', 'user', 'Anything that looks like long-form reading.')
+  col('col-ai', 'Local LLM inference research', 'agent', 'Serving engines, providers and cost comparisons.'),
+  col('col-design', 'macOS utility references', 'agent', 'Quiet, native-feeling desktop UI.'),
+  col('col-moodboard', 'Editorial moodboard', 'user', null),
+  col('col-read', 'Things to read', 'user', 'Anything that looks like long-form reading.')
 ]
 
 export const FIXTURE_RELATIONSHIPS: Relationship[] = [

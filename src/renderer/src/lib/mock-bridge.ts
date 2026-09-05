@@ -575,19 +575,14 @@ export function createMockBridge(): KeepAnythingApi {
       }
       case 'collections:list':
         return respond(collectionSummaries() as IpcResponseMap[C])
-      case 'collections:create':
-      case 'collections:createDynamic': {
+      case 'collections:create': {
         const { name, description } = p as IpcRequestMap['collections:create']
-        const query =
-          channel === 'collections:createDynamic' ? (p as IpcRequestMap['collections:createDynamic']).query : null
         const now = new Date().toISOString()
         const c: CollectionSummary = {
           id: uid('col'),
           name,
           nameKey: name.toLowerCase(),
           description: description ?? null,
-          type: query ? 'dynamic' : 'manual',
-          query,
           createdBy: 'user',
           color: null,
           pinned: false,

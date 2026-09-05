@@ -229,7 +229,7 @@ export function Sidebar(): React.JSX.Element {
                 <span
                   {...stylex.props(
                     styles.swatch,
-                    c.type !== 'manual' && styles.swatchAi,
+                    c.createdBy === 'agent' && styles.swatchAi,
                     c.color ? styles.swatchColor(c.color) : null
                   )}
                 />

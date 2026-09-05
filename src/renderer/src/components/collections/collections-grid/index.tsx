@@ -1,7 +1,7 @@
 import * as stylex from '@stylexjs/stylex'
 import { Layers, Plus } from 'lucide-react'
 import { type FormEvent, useEffect, useRef, useState } from 'react'
-import type { CollectionSummary, CollectionType, ItemType } from '../../../../../shared/types'
+import type { CollectionSummary } from '../../../../../shared/types'
 import { count } from '../../../lib/format'
 import { describeError, invoke } from '../../../lib/ipc-client'
 import { useCollections } from '../../../state/collections'
@@ -11,25 +11,6 @@ import { useUi } from '../../../state/ui'
 import { shared } from '../../../styles/shared'
 import { Button, MenuTrigger, Thumb } from '../../common'
 import { styles } from './styles'
-
-/** Human label for a collection type: a dot and a word, not a chip. */
-export const COLLECTION_TYPE_LABEL: Record<CollectionType, string> = {
-  manual: 'Yours',
-  ai: 'Organized for you',
-  dynamic: 'Dynamic'
-}
-
-export function TypeBadge({ type }: { type: CollectionType }): React.JSX.Element {
-  return (
-    <>
-      <span
-        {...stylex.props(styles.badgeDot, type === 'ai' && styles.badgeAi, type === 'dynamic' && styles.badgeDynamic)}
-        aria-hidden="true"
-      />
-      <span>{COLLECTION_TYPE_LABEL[type]}</span>
-    </>
-  )
-}
 
 function CollectionCard({ c, onOpen }: { c: CollectionSummary; onOpen: () => void }): React.JSX.Element {
   const pushModal = useUi((s) => s.push)
@@ -78,8 +59,6 @@ function CollectionCard({ c, onOpen }: { c: CollectionSummary; onOpen: () => voi
         <span {...stylex.props(styles.name, shared.ellipsis)}>{c.name}</span>
         <span {...stylex.props(styles.meta)}>
           <span>{count(c.count, 'item')}</span>
-          <span aria-hidden="true">·</span>
-          <TypeBadge type={c.type} />
         </span>
         {c.description ? <span {...stylex.props(styles.description)}>{c.description}</span> : null}
       </span>
@@ -112,28 +91,17 @@ export function CollectionsGrid(): React.JSX.Element {
           New collection
           <span {...stylex.props(styles.newSub)}>Drag things in, or let the agent fill it</span>
         </button>
-        <Button variant="quiet" small onClick={() => pushModal({ kind: 'dialog', id: 'newDynamicCollection' })}>
-          New dynamic collection…
-        </Button>
       </div>
     </div>
   )
 }
 
-const DYNAMIC_TYPES: Array<{ value: ItemType | ''; label: string }> = [
-  { value: '', label: 'Anything' },
-  { value: 'url', label: 'Links only' },
-  { value: 'pdf', label: 'PDFs only' },
-  { value: 'image', label: 'Images only' },
-  { value: 'note', label: 'Notes only' }
-]
-
-/** New / rename / dynamic / delete dialogs (one small sheet). */
+/** New / rename / delete dialogs (one small sheet). */
 export function CollectionDialog({
   mode,
   collectionId
 }: {
-  mode: 'new' | 'rename' | 'dynamic' | 'delete'
+  mode: 'new' | 'rename' | 'delete'
   collectionId?: string
 }): React.JSX.Element {
   const existing = useCollections((s) => (collectionId ? s.list.find((c) => c.id === collectionId) : undefined))
@@ -148,8 +116,6 @@ export function CollectionDialog({
   const push = useToasts((s) => s.push)
   const [name, setName] = useState(existing?.name ?? '')
   const [description, setDescription] = useState(existing?.description ?? '')
-  const [rule, setRule] = useState('')
-  const [type, setType] = useState<ItemType | ''>('')
   const [busy, setBusy] = useState(false)
   const ref = useRef<HTMLInputElement>(null)
   useEffect(() => ref.current?.focus(), [])
@@ -178,37 +144,12 @@ export function CollectionDialog({
       }
     } else if (mode === 'rename' && collectionId) {
       await rename(collectionId, trimmed, description.trim() || undefined)
-    } else if (mode === 'dynamic') {
-      const text = rule.trim()
-      if (!text) {
-        setBusy(false)
-        return
-      }
-      const r = await invoke('collections:createDynamic', {
-        name: trimmed,
-        ...(description.trim() ? { description: description.trim() } : {}),
-        query: { text, filters: type ? { types: [type] } : {}, minCosine: 0.4 }
-      })
-      if (!r.ok) push({ text: describeError(r.error) })
-      else {
-        void useCollections.getState().load()
-        push({ text: `${trimmed} will fill up as things match.` })
-        setSection('collection', r.data.id)
-        setView('collection', r.data.id)
-      }
     }
     setBusy(false)
     pop()
   }
 
-  const title =
-    mode === 'new'
-      ? 'New collection'
-      : mode === 'rename'
-        ? 'Rename collection'
-        : mode === 'dynamic'
-          ? 'New dynamic collection'
-          : 'Delete collection?'
+  const title = mode === 'new' ? 'New collection' : mode === 'rename' ? 'Rename collection' : 'Delete collection?'
 
   return (
     <div
@@ -230,11 +171,6 @@ export function CollectionDialog({
           </p>
         ) : (
           <>
-            {mode === 'dynamic' ? (
-              <p {...stylex.props(styles.sheetHint)}>
-                Describe what belongs here in plain words. Items that match join on their own.
-              </p>
-            ) : null}
             <label {...stylex.props(styles.field)}>
               <span {...stylex.props(styles.label)}>Name</span>
               <input
@@ -242,46 +178,23 @@ export function CollectionDialog({
                 {...stylex.props(styles.input)}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder={mode === 'dynamic' ? 'Things that keep showing up' : 'Something you keep coming back to'}
+                placeholder="Something you keep coming back to"
               />
             </label>
-            {mode === 'dynamic' ? (
-              <>
-                <label {...stylex.props(styles.field)}>
-                  <span {...stylex.props(styles.label)}>Rule</span>
-                  <textarea
-                    {...stylex.props(styles.input, styles.textarea)}
-                    value={rule}
-                    onChange={(e) => setRule(e.target.value)}
-                    placeholder="Items that share a vibe, topic or purpose"
-                  />
-                </label>
-                <label {...stylex.props(styles.field)}>
-                  <span {...stylex.props(styles.label)}>Only include</span>
-                  <select
-                    {...stylex.props(styles.input, styles.select)}
-                    value={type}
-                    onChange={(e) => setType(e.target.value as ItemType | '')}
-                  >
-                    {DYNAMIC_TYPES.map((t) => (
-                      <option key={t.value} value={t.value}>
-                        {t.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </>
-            ) : (
-              <label {...stylex.props(styles.field)}>
-                <span {...stylex.props(styles.label)}>Description (optional)</span>
-                <input
-                  {...stylex.props(styles.input)}
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="What this is for"
-                />
-              </label>
-            )}
+            <label {...stylex.props(styles.field)}>
+              <span {...stylex.props(styles.label)}>Description (optional)</span>
+              <input
+                {...stylex.props(styles.input)}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="What this is for"
+              />
+              {mode === 'new' || mode === 'rename' ? (
+                <span {...stylex.props(styles.fieldHint)}>
+                  The AI reads this description, and what is already inside, to decide where new items go.
+                </span>
+              ) : null}
+            </label>
           </>
         )}
         <div {...stylex.props(styles.row)}>
@@ -293,12 +206,8 @@ export function CollectionDialog({
               Delete
             </Button>
           ) : (
-            <Button
-              variant="primary"
-              type="submit"
-              disabled={busy || !name.trim() || (mode === 'dynamic' && !rule.trim())}
-            >
-              {mode === 'new' || mode === 'dynamic' ? 'Create' : 'Rename'}
+            <Button variant="primary" type="submit" disabled={busy || !name.trim()}>
+              {mode === 'new' ? 'Create' : 'Rename'}
             </Button>
           )}
         </div>

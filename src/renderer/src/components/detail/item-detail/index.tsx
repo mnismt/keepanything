@@ -202,8 +202,7 @@ function CollectionRow({
 }): React.JSX.Element {
   const summary = useCollections((s) => s.list.find((x) => x.id === c.id))
   const covers = summary?.coverThumbnailUrls.slice(0, 4) ?? []
-  const who =
-    c.addedBy === 'agent' ? 'Organized for you' : c.addedBy === 'dynamic' ? 'Matched the rule' : 'Added by you'
+  const who = c.addedBy === 'agent' ? 'Organized for you' : 'Added by you'
   return (
     <div {...stylex.props(styles.row, stylex.defaultMarker())}>
       <span {...stylex.props(styles.rowCover)}>

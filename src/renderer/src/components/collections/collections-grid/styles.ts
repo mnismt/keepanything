@@ -66,9 +66,7 @@ export const styles = stylex.create({
   caption: { display: 'flex', flexDirection: 'column', gap: 2, paddingInline: 4, minWidth: 0 },
   name: { fontWeight: weight.medium, color: colors.fg1 },
   meta: { display: 'flex', alignItems: 'center', gap: 6, fontSize: text.t12, color: colors.fg3, whiteSpace: 'nowrap' },
-  badgeDot: { width: 6, height: 6, borderRadius: '50%', backgroundColor: colors.fg4, flexShrink: 0 },
-  badgeAi: { backgroundColor: colors.accent },
-  badgeDynamic: { backgroundColor: colors.ok },
+  fieldHint: { fontSize: text.t12, color: colors.fg3, lineHeight: 1.4 },
   description: {
     fontSize: text.t12,
     color: colors.fg3,

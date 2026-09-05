@@ -14,7 +14,7 @@ export type Modal =
   | { kind: 'detail'; itemId: string; originId?: string }
   | {
       kind: 'dialog'
-      id: 'settings' | 'newCollection' | 'newDynamicCollection' | 'renameCollection' | 'deleteCollection'
+      id: 'settings' | 'newCollection' | 'renameCollection' | 'deleteCollection'
       collectionId?: string
     }
   | { kind: 'palette' }
