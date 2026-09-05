@@ -6,6 +6,8 @@
  * factored out by Electron, so no per-display multiplication is needed here.
  */
 
+import type { ShelfEdge } from '../shared/layout'
+
 export interface Rect {
   x: number
   y: number
@@ -43,6 +45,13 @@ export interface PositionOptions {
 export interface PanelPosition extends Point {
   /** Whether the panel opens below (menu bar at top) or above (dock-style bottom bar) the icon. */
   placement: 'below' | 'above'
+}
+
+export interface EdgeDockOptions {
+  windowSize: Size
+  /** `display.workArea` of the display to dock to. */
+  workArea: Rect
+  edge: ShelfEdge
 }
 
 export interface EdgePositionOptions {
@@ -93,6 +102,17 @@ export function isPlausibleTrayBounds(trayBounds: Rect, displayBounds: Rect): bo
     cy >= displayBounds.y &&
     cy < displayBounds.y + displayBounds.height
   )
+}
+
+/**
+ * Dock the window flush against the left or right edge of the work area, centred vertically, so a
+ * panel drawn up to the window's outer side reads as growing out of the screen edge.
+ */
+export function computeEdgeDockedPosition(options: EdgeDockOptions): Point {
+  const { windowSize, workArea, edge } = options
+  const x = edge === 'right' ? workArea.x + workArea.width - windowSize.width : workArea.x
+  const y = Math.round(workArea.y + (workArea.height - windowSize.height) / 2)
+  return clampToBounds({ x, y, ...windowSize }, workArea)
 }
 
 /**

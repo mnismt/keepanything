@@ -34,7 +34,7 @@ const styles = stylex.create({
   main: { position: 'relative', flexGrow: 1, minWidth: 0, display: 'flex', flexDirection: 'column' },
   content: { position: 'relative', flexGrow: 1, minHeight: 0, display: 'flex', flexDirection: 'column' },
   loading: { flexGrow: 1 },
-  shelfRoot: { height: '100%', padding: 6, backgroundColor: 'transparent' },
+  shelfRoot: { height: '100%', backgroundColor: 'transparent', overflow: 'hidden' },
   error: { paddingBlock: space.s6, paddingInline: layout.contentPad, color: colors.fg2, fontSize: text.t15 },
   errorDetail: { marginTop: space.s2, color: colors.fg4, fontSize: text.t12 }
 })

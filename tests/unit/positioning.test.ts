@@ -3,6 +3,7 @@ import {
   clamp,
   clampToBounds,
   computeEdgeAnchoredPosition,
+  computeEdgeDockedPosition,
   computePanelPosition,
   type Rect
 } from '../../src/main/positioning'
@@ -44,6 +45,34 @@ describe('computeEdgeAnchoredPosition', () => {
   it('stays inside a work area shorter than the window', () => {
     const shortArea: Rect = { x: 0, y: 38, width: 1512, height: 300 }
     const pos = computeEdgeAnchoredPosition({ windowSize, workArea: shortArea, topGap: 4 })
+    expect(pos.y).toBe(shortArea.y)
+  })
+})
+
+describe('computeEdgeDockedPosition', () => {
+  const size = { width: 292, height: 340 }
+
+  it('sits flush against the right edge, centred vertically', () => {
+    const pos = computeEdgeDockedPosition({ windowSize: size, workArea, edge: 'right' })
+    expect(pos.x + size.width).toBe(workArea.x + workArea.width)
+    expect(pos.y).toBe(38 + Math.round((944 - 340) / 2))
+  })
+
+  it('sits flush against the left edge', () => {
+    const pos = computeEdgeDockedPosition({ windowSize: size, workArea, edge: 'left' })
+    expect(pos.x).toBe(workArea.x)
+  })
+
+  it('respects a secondary display origin and a Dock that trims the work area', () => {
+    const external: Rect = { x: 1512, y: -400, width: 2560, height: 1415 }
+    const pos = computeEdgeDockedPosition({ windowSize: size, workArea: external, edge: 'right' })
+    expect(pos.x + size.width).toBe(external.x + external.width)
+    expect(pos.y).toBe(-400 + Math.round((1415 - 340) / 2))
+  })
+
+  it('stays inside a work area shorter than the window', () => {
+    const shortArea: Rect = { x: 0, y: 38, width: 1512, height: 300 }
+    const pos = computeEdgeDockedPosition({ windowSize: size, workArea: shortArea, edge: 'right' })
     expect(pos.y).toBe(shortArea.y)
   })
 })

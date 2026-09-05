@@ -1,10 +1,11 @@
 import { join } from 'node:path'
 import { app, BrowserWindow, screen, type WebContents } from 'electron'
+import { SHELF_EXIT_MS, type ShelfEdge } from '../../shared/layout'
 import type { Logger } from '../ports'
 import { containsPoint } from '../positioning'
 import { nextShelfState, type ShelfDecision, type ShelfPresence } from '../shelf-policy'
 import { createLibraryWindow } from './library-window'
-import { createShelfWindow, positionShelf } from './shelf-window'
+import { announceShelf, createShelfWindow, positionShelf } from './shelf-window'
 
 /** Owns the library window and the shelf; the single source of "known senders" for the IPC router. */
 export interface WindowManager {
@@ -44,6 +45,9 @@ export function createWindowManager(deps: WindowManagerDeps): WindowManager {
   let shelf: BrowserWindow | null = null
   let presence: ShelfPresence = 'hidden'
   let autoHide: ReturnType<typeof setTimeout> | null = null
+  /** Set while the shelf plays its exit slide, before the window is actually hidden. */
+  let exiting: ReturnType<typeof setTimeout> | null = null
+  const edge: ShelfEdge = 'right'
   /** Did the drag currently being tracked end in something being kept? */
   let kept = false
 
@@ -101,17 +105,35 @@ export function createWindowManager(deps: WindowManagerDeps): WindowManager {
     autoHide = null
   }
 
-  /** Run one decision from `shelf-policy`: move the window, then (re)arm the auto-hide timer. */
+  const cancelExit = (): void => {
+    if (exiting) clearTimeout(exiting)
+    exiting = null
+  }
+
+  /**
+   * Run one decision from `shelf-policy`: move the window, then (re)arm the auto-hide timer.
+   * Showing is immediate (the renderer slides in from the edge once it hears `shelf:presence`);
+   * hiding lets the renderer slide out first and only then takes the window off screen.
+   */
   const apply = (decision: ShelfDecision): void => {
     presence = decision.presence
     cancelAutoHide()
     if (decision.action === 'show') {
+      cancelExit()
       const window = ensureShelf()
-      positionShelf(window)
+      // Mid-exit the window is still up: leave its bounds alone so the slide back in is seamless.
+      if (!window.isVisible()) positionShelf(window, edge)
       // Never `show()`: taking focus in the middle of a drag can cancel the drag in the source app.
       window.showInactive()
+      announceShelf(window, { visible: true, edge })
     } else if (decision.action === 'hide') {
-      if (shelf && !shelf.isDestroyed() && shelf.isVisible()) shelf.hide()
+      if (shelf && !shelf.isDestroyed() && shelf.isVisible() && !exiting) {
+        announceShelf(shelf, { visible: false, edge })
+        exiting = setTimeout(() => {
+          exiting = null
+          if (shelf && !shelf.isDestroyed() && shelf.isVisible()) shelf.hide()
+        }, SHELF_EXIT_MS + 40)
+      }
     }
     if (decision.hideAfterMs !== null) {
       autoHide = setTimeout(() => {
@@ -167,6 +189,7 @@ export function createWindowManager(deps: WindowManagerDeps): WindowManager {
     isKnownSender: (id) => live().some((w) => w.webContents.id === id),
     destroyAll() {
       cancelAutoHide()
+      cancelExit()
       for (const w of live()) w.destroy()
       library = null
       shelf = null

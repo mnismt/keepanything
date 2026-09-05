@@ -1,29 +1,26 @@
 import { BrowserWindow, screen } from 'electron'
-import { computeEdgeAnchoredPosition } from '../positioning'
+import type { IpcEventMap } from '../../shared/ipc'
+import { SHELF_WINDOW, type ShelfEdge } from '../../shared/layout'
+import { computeEdgeDockedPosition } from '../positioning'
 import { hardenWebContents } from '../security'
 import { appWebPreferences, loadRenderer } from './library-window'
 
-/** Shelf panel size (DIP). */
-export const SHELF_SIZE = { width: 300, height: 190 } as const
-
-const SHELF_TOP_GAP = 12
-
 /**
- * The Shelf: a small always-on-top drop target. Frameless, transparent,
- * `type: 'panel'`, floating level, visible on every Space including full-screen apps, non-activating.
- * Shown by the drag watcher while a drag is in flight, or by the tray, ⌘⇧K and the menu.
- * Renderer route `?view=shelf`.
+ * The Shelf: a small always-on-top drop target that lives flush against a screen edge. Frameless,
+ * transparent, `type: 'panel'`, floating level, visible on every Space including full-screen apps,
+ * non-activating. Shown by the drag watcher while a drag is in flight, or by the tray, ⌘⇧K and
+ * the menu. Renderer route `?view=shelf`; the renderer draws the notch shape and the slide.
  */
 export function createShelfWindow(): BrowserWindow {
   const window = new BrowserWindow({
-    width: SHELF_SIZE.width,
-    height: SHELF_SIZE.height,
+    width: SHELF_WINDOW.width,
+    height: SHELF_WINDOW.height,
     show: false,
     frame: false,
     transparent: true,
     hasShadow: false,
     resizable: false,
-    movable: true,
+    movable: false,
     minimizable: false,
     maximizable: false,
     fullscreenable: false,
@@ -42,9 +39,15 @@ export function createShelfWindow(): BrowserWindow {
   return window
 }
 
-/** Dock the shelf to the top-right of the display under the cursor. */
-export function positionShelf(window: BrowserWindow): void {
+/** Dock the shelf flush against `edge` of the display under the cursor, centred vertically. */
+export function positionShelf(window: BrowserWindow, edge: ShelfEdge): void {
   const display = screen.getDisplayNearestPoint(screen.getCursorScreenPoint())
-  const pos = computeEdgeAnchoredPosition({ windowSize: SHELF_SIZE, workArea: display.workArea, topGap: SHELF_TOP_GAP })
-  window.setBounds({ x: pos.x - 16, y: pos.y, width: SHELF_SIZE.width, height: SHELF_SIZE.height })
+  const pos = computeEdgeDockedPosition({ windowSize: SHELF_WINDOW, workArea: display.workArea, edge })
+  window.setBounds({ ...pos, width: SHELF_WINDOW.width, height: SHELF_WINDOW.height })
+}
+
+/** Tell the shelf renderer to slide in, or to slide out ahead of the window being hidden. */
+export function announceShelf(window: BrowserWindow, payload: IpcEventMap['shelf:presence']): void {
+  if (window.isDestroyed()) return
+  window.webContents.send('shelf:presence', payload)
 }
