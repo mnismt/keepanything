@@ -27,7 +27,7 @@ function AiHint(): React.JSX.Element | null {
   if (!status || status === 'connected') return null
   const label =
     status === 'offline'
-      ? 'Offline — things are kept and understood later.'
+      ? 'Offline - things are kept and understood later.'
       : status === 'off'
         ? 'AI is off. Things are kept, not understood.'
         : 'Connect GMI in Settings to understand what you keep.'

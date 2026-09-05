@@ -11,7 +11,7 @@ export type AnimatedSidebarIconProps = {
   /**
    * True while the sidebar row is pointed at or keyboard-focused.
    * The gesture is an answer to the pointer, which is what makes a column of six of them
-   * readable — one performs, the others stay marks.
+   * readable - one performs, the others stay marks.
    */
   active: boolean
   /**

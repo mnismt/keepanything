@@ -343,7 +343,7 @@ export function createMockBridge(): KeepAnythingApi {
         const cues = { topics: ['inference', 'serving cost'], types: [] as ItemSummary['type'][] }
         let result: AgentRunDetail['result']
         if (template === 'brief' && sources.length > 0) {
-          const note = capture(`Brief — ${question.slice(0, 40)}`, 'note', {
+          const note = capture(`Brief - ${question.slice(0, 40)}`, 'note', {
             excerpt: answer,
             kind: 'note',
             processingStatus: 'READY',

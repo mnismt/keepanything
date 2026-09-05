@@ -5,7 +5,7 @@ import { useUi } from '../../../state/ui'
 import { shared } from '../../../styles/shared'
 import { styles } from './styles'
 
-/** "Local only" / "Local · GMI connected" / "Local · offline — AI paused". Click -> Settings. */
+/** "Local only" / "Local · GMI connected" / "Local · offline - AI paused". Click -> Settings. */
 export function LocalStatusFooter(): React.JSX.Element {
   const stats = useSettings((s) => s.stats)
   const openSettings = useUi((s) => s.openSettings)

@@ -10,7 +10,7 @@ const LEFT = 'M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71'
 const RIGHT = 'M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71'
 
 /**
- * The chain halves drift toward each other on hover — a held state in two targets, so an
+ * The chain halves drift toward each other on hover - a held state in two targets, so an
  * interrupted hover reverses from wherever it is rather than from the start.
  *
  * `CLOSE` is 1.5 units in the 24-unit viewBox: ~0.9px at the rendered size, the device-pixel

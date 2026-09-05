@@ -14,11 +14,11 @@ const STAGGER = 0.05
  * A held state: books lift off the shelf on hover and settle back on leave.
  *
  * The vertical translate is held in two targets (`lifted` vs rest) so an interrupted hover
- * — pointer leaves mid-rise, then returns — re-aims the spring cleanly with the velocity
+ * - pointer leaves mid-rise, then returns - re-aims the spring cleanly with the velocity
  * intact. Stagger across the four spines so they cascade in reading order rather than all
  * rising as a block.
  *
- * Magnitudes are chosen against the 24-unit viewBox: `LIFT` is 1.6 units — about 1px at the
+ * Magnitudes are chosen against the 24-unit viewBox: `LIFT` is 1.6 units - about 1px at the
  * 14px the icon renders at, which is at the device-pixel floor the portfolio skill names.
  */
 const LIFT = -1.6

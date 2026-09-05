@@ -7,7 +7,7 @@ import type { AnimatedSidebarIconProps } from '../types'
 
 /**
  * Names of icons the sidebar can render. Kept as a string union so `name` is checked at the
- * call site — a typo here is a build error.
+ * call site - a typo here is a build error.
  */
 export type AnimatedSidebarIconName = 'library' | 'links' | 'file' | 'collections' | 'trash'
 type IconComponent = (props: AnimatedSidebarIconProps) => React.JSX.Element

@@ -11,7 +11,7 @@ const BODY =
 const FOLD = 'M14 2v5a1 1 0 0 0 1 1h5'
 
 /**
- * The corner fold lifts on hover — held in two targets so an interrupted hover reverses from
+ * The corner fold lifts on hover - held in two targets so an interrupted hover reverses from
  * wherever it is rather than from the start.
  *
  * The path's bbox runs from (14, 2) to (20, 8); the hinge sits at the bottom-left of that box
