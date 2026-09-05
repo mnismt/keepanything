@@ -47,12 +47,16 @@ export function createTray(actions: TrayActions, logger: Logger): TrayController
     { label: 'Open Library', click: () => actions.showLibrary() },
     { label: 'Toggle Shelf', sublabel: '⌘⇧K', click: () => actions.toggleShelf() },
     { type: 'separator' },
-    { label: 'Quit KeepAnything', click: () => actions.quit() }
+    { label: 'Quit', click: () => actions.quit() }
   ])
 
   tray.on('click', (_event, bounds) => {
     remember(bounds)
     actions.toggleShelf()
+  })
+  tray.on('double-click', (_event, bounds) => {
+    remember(bounds)
+    actions.showLibrary()
   })
   tray.on('right-click', (_event, bounds) => {
     remember(bounds)
