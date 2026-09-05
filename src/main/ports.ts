@@ -1,6 +1,5 @@
 /** TypeScript interfaces for every seam between layers. */
 
-import type { ActionId } from '../shared/actions'
 import type { AgentCommandRequest, AgentRunEvent, CaptureDropRequest, ItemsChangedEvent } from '../shared/ipc'
 import type { StageOutcome } from '../shared/status'
 import type {
@@ -166,8 +165,6 @@ export type AgentActor = 'user' | 'system'
 export interface AgentService {
   /** Ask / multi-item template / ⌘K command. Resolves after the `running` event was emitted. */
   command(input: AgentCommandRequest, actor?: AgentActor): Promise<{ runId: string }>
-  /** One of `ITEM_ACTIONS` on one item. */
-  action(itemId: string, actionId: ActionId): Promise<{ runId: string }>
   cancel(runId: string): void
   getRun(runId: string): AgentRunDetail | null
   /** Revert one audited mutation (applies `before`, writes suppression for agent facts). */
@@ -397,7 +394,6 @@ export type StagePatchableColumn =
   | 'entities'
   | 'visionText'
   | 'retrievalHints'
-  | 'suggestedActions'
   | 'aiConfidence'
   | 'extractedText'
   | 'excerpt'

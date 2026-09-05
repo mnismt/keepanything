@@ -10,13 +10,12 @@
  *   `getPathForFile`, `text/uri-list`, `text/plain`, `text/html`) and does ZERO classification.
  *   Intake owns every precedence rule (webloc vs files, image URLs, temp paths, URL-vs-text).
  * - `agent:run` (event): subscribe ONCE at boot into a store keyed by `runId`. The `running` event
- *   is emitted BEFORE the `agent:command` / `agent:action` invoke resolves, so the store must accept
+ *   is emitted BEFORE the `agent:command` invoke resolves, so the store must accept
  *   events for run ids it has not seen yet; the invoke result only tells the caller which id to
  *   watch. Subsequent events arrive after every tool step and once at the end.
  * - Events are pushed to every app window; stores subscribe once at boot, never per component.
  */
 
-import type { ActionId } from './actions'
 import type {
   AgentProposal,
   AgentResult,
@@ -79,7 +78,6 @@ export const IPC_CHANNELS = {
   relationshipsRemove: 'relationships:remove',
   searchQuick: 'search:quick',
   agentCommand: 'agent:command',
-  agentAction: 'agent:action',
   agentCancel: 'agent:cancel',
   agentRun: 'agent:run',
   agentUndo: 'agent:undo',
@@ -237,7 +235,6 @@ export interface IpcRequestMap {
   'relationships:remove': { id: string }
   'search:quick': { query: string; limit?: number }
   'agent:command': AgentCommandRequest
-  'agent:action': { itemId: string; actionId: ActionId }
   'agent:cancel': { runId: string }
   'agent:run': { id: string }
   'agent:undo': { auditId: string }
@@ -288,7 +285,6 @@ export interface IpcResponseMap {
   'relationships:remove': void
   'search:quick': SearchHit[]
   'agent:command': { runId: string }
-  'agent:action': { runId: string }
   'agent:cancel': void
   'agent:run': AgentRunDetail
   'agent:undo': void

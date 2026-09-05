@@ -29,7 +29,6 @@ describe('item repository', () => {
       topics: ['inference', 'gpu'],
       entities: ['vLLM'],
       retrievalHints: ['cheap inference'],
-      suggestedActions: ['summarize_argument'],
       metadata: { og: { siteName: 'Example' }, custom: 1 },
       userOverrides: { title: true },
       isMissing: true,

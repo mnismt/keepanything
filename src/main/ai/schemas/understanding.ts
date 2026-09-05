@@ -1,10 +1,7 @@
 import { z } from 'zod'
-import { ITEM_ACTIONS } from '../../../shared/actions'
 import { KINDS } from '../../../shared/kinds'
 import type { Understanding } from '../../../shared/types'
-import { confidenceSchema, defineSchema, lenientEnum, lenientEnumList, nonEmptyString, stringList } from './common'
-
-const ACTION_IDS = ITEM_ACTIONS.map((a) => a.id) as [string, ...string[]]
+import { confidenceSchema, defineSchema, lenientEnum, nonEmptyString, stringList } from './common'
 
 const optionalText = z.preprocess(
   (v) => (typeof v === 'string' && v.trim().length > 0 ? v.trim() : undefined),
@@ -22,7 +19,6 @@ export const understandingZod = z.object({
   visualDescription: optionalText,
   visibleText: optionalText,
   retrievalHints: stringList(6),
-  suggestedActions: lenientEnumList(ACTION_IDS, 4),
   confidence: confidenceSchema
 }) as unknown as z.ZodType<Understanding, unknown>
 

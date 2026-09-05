@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { runHeadline, runOutcome, runTitle } from '../../src/renderer/src/lib/activity'
+import { runHeadline, runNote, runOutcome, runTitle } from '../../src/renderer/src/lib/activity'
 import {
   buildAskAboutSelection,
   buildSelectionCommand,
@@ -50,6 +50,8 @@ describe('run descriptions', () => {
     expect(runTitle({ task: 'command', status: 'running' })).toBe('Looking through your library')
     expect(runTitle({ task: 'command', status: 'succeeded' })).toBe('Answered')
     expect(runTitle({ task: 'organize_batch', status: 'succeeded' })).toBe('Organized')
+    expect(runTitle({ task: 'understand', status: 'failed' })).toBe('Understanding')
+    expect(runTitle({ task: 'understand', status: 'cancelled' })).toBe('Understanding')
     expect(runHeadline({ task: 'understand', status: 'running' }, 'Read the page')).toBe(
       'Understanding · Read the page'
     )
@@ -75,6 +77,27 @@ describe('run descriptions', () => {
         result: { task: 'organize', itemId: 'i', relationshipIds: [], collectionIds: [], summary: '' }
       })
     ).toBe('Nothing to connect yet.')
+    expect(
+      runOutcome({
+        task: 'organize',
+        status: 'succeeded',
+        result: { task: 'organize', itemId: 'i', relationshipIds: [], collectionIds: [], summary: 'A long story.' }
+      })
+    ).toBe('Nothing to connect yet.')
+    expect(
+      runNote({
+        task: 'organize',
+        status: 'succeeded',
+        result: { task: 'organize', itemId: 'i', relationshipIds: [], collectionIds: [], summary: 'A long story.' }
+      })
+    ).toBe('A long story.')
+    expect(
+      runOutcome({
+        task: 'understand',
+        status: 'succeeded',
+        result: { task: 'understand', itemId: 'i', skippedFields: [] } as never
+      })
+    ).toBe('')
     expect(
       runOutcome({
         task: 'command',

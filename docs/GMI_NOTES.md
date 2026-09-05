@@ -157,8 +157,7 @@ and a short "I'll search your library…" sentence with `auto`. Errors: JSON `{ 
   for pathological repetition, not normal output.
 - Validation failure → one retry appending the zod error as a user message ("The JSON was invalid: …
   Return the corrected JSON object only."). At 20/20 first-pass success the retry will rarely fire; when it
-  does, the most likely cause is a closed-vocabulary miss (`kind` not in `KINDS`, `suggestedActions` not in
-  `ActionId`), so put the allowed enums verbatim in the prompt and lower-case/trim enum fields before zod.
+  does, the most likely cause is a closed-vocabulary miss (`kind` not in `KINDS`), so put the allowed enums verbatim in the prompt and lower-case/trim enum fields before zod.
 - Numbers: `confidence` came back as a JSON number every time; still coerce strings.
 - Empty content with `finish_reason: 'stop'` was never observed; treat as retryable anyway.
 

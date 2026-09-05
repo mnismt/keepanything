@@ -1,8 +1,8 @@
 import * as stylex from '@stylexjs/stylex'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import type { AgentRunDetail, AgentRunSummary, AgentStep } from '../../../../../shared/types'
-import { runOutcome, runTitle } from '../../../lib/activity'
+import { runNote, runOutcome, runTitle } from '../../../lib/activity'
 import { undoRun } from '../../../lib/agent-actions'
 import { ago } from '../../../lib/format'
 import { invoke } from '../../../lib/ipc-client'
@@ -10,7 +10,7 @@ import { formatElapsed, toolLabel } from '../../../lib/palette'
 import { useLibrary } from '../../../state/library'
 import { type RunState, useRuns } from '../../../state/runs'
 import { shared } from '../../../styles/shared'
-import { Dot, ProposalList, Thumb } from '../../common'
+import { Dot, ProposalList, RevealText, Thumb } from '../../common'
 import { styles } from './styles'
 
 type Entry = { id: string; startedAt: number; live?: RunState; summary?: AgentRunSummary }
@@ -22,22 +22,34 @@ function toneFor(status: string): 'processing' | 'failed' | 'ok' | 'neutral' {
   return 'ok'
 }
 
+const STEP_STAGGER_MS = 40
+const STEP_STAGGER_CAP_MS = 320
+
+/**
+ * Steps already there when the list mounts (a finished run being expanded) fan in with a short
+ * stagger. Steps that arrive later (a live run) enter one at a time with their label sweeping in.
+ */
 function StepList({ steps }: { steps: AgentStep[] }): React.JSX.Element | null {
+  const mountedWith = useRef(steps.length)
   if (steps.length === 0) return null
   return (
     <div {...stylex.props(styles.steps)}>
-      {steps.map((s) => (
-        <span key={s.n} {...stylex.props(styles.step)}>
-          <span {...stylex.props(styles.stepTool)}>{toolLabel(s.tool)}</span>
-          <span
-            {...stylex.props(styles.stepLabel, s.status === 'rejected' && styles.stepRejected)}
-            title={s.rejectReason}
-          >
-            {s.label}
+      {steps.map((s, i) => {
+        const atMount = i < mountedWith.current
+        const delay = atMount ? Math.min(i * STEP_STAGGER_MS, STEP_STAGGER_CAP_MS) : 0
+        return (
+          <span key={s.n} {...stylex.props(styles.step, styles.stepEnter(delay))}>
+            <span {...stylex.props(styles.stepTool)}>{toolLabel(s.tool)}</span>
+            <span
+              {...stylex.props(styles.stepLabel, s.status === 'rejected' && styles.stepRejected)}
+              title={s.rejectReason}
+            >
+              <RevealText text={s.label} reveal={!atMount} durationMs={420} />
+            </span>
+            <span {...stylex.props(styles.stepTime)}>{formatElapsed(s.durationMs)}</span>
           </span>
-          <span {...stylex.props(styles.stepTime)}>{formatElapsed(s.durationMs)}</span>
-        </span>
-      ))}
+        )
+      })}
     </div>
   )
 }
@@ -102,61 +114,69 @@ function ActivityEntry({ entry, onOpenItem }: { entry: Entry; onOpenItem: (id: s
 
   const answer = result && result.task === 'command' ? result : null
   const outcome = runOutcome({ task, status, result, error })
+  const note = runNote({ task, status, result, error })
 
   return (
     <div {...stylex.props(styles.entry)}>
       <span {...stylex.props(styles.rail)}>
         <Dot tone={toneFor(status)} />
       </span>
-      <div {...stylex.props(styles.headRow)}>
-        <button type="button" {...stylex.props(styles.head)} onClick={() => setOpen((v) => !v)} aria-expanded={open}>
-          <span {...stylex.props(styles.title)}>{runTitle({ task, status })}</span>
-          {stepCount > 0 ? (
-            <span {...stylex.props(styles.outcome)}>{stepCount === 1 ? '1 step' : `${stepCount} steps`}</span>
-          ) : null}
-        </button>
-        {undoable ? (
-          <button type="button" {...stylex.props(styles.undo)} onClick={() => void undo()} disabled={undoing}>
-            {undoing ? 'Undoing…' : 'Undo'}
+      <div {...stylex.props(styles.body)}>
+        <div {...stylex.props(styles.headRow)}>
+          <button type="button" {...stylex.props(styles.head)} onClick={() => setOpen((v) => !v)} aria-expanded={open}>
+            <span {...stylex.props(styles.title)}>{runTitle({ task, status })}</span>
+            {stepCount > 0 ? (
+              <span {...stylex.props(styles.outcome)}>{stepCount === 1 ? '1 step' : `${stepCount} steps`}</span>
+            ) : null}
           </button>
+          {undoable ? (
+            <button type="button" {...stylex.props(styles.undo)} onClick={() => void undo()} disabled={undoing}>
+              {undoing ? 'Undoing…' : 'Undo'}
+            </button>
+          ) : null}
+          <span
+            {...stylex.props(styles.when)}
+            title={completedAt ? `Started ${startedAt} · finished ${completedAt}` : `Started ${startedAt}`}
+          >
+            {ago(startedAt)}
+          </span>
+        </div>
+        {outcome ? (
+          <span {...stylex.props(styles.outcome, live ? styles.outcomeEnter : null)}>
+            {undone ? 'Undone.' : outcome}
+          </span>
         ) : null}
-        <span
-          {...stylex.props(styles.when)}
-          title={completedAt ? `Started ${startedAt} · finished ${completedAt}` : `Started ${startedAt}`}
-        >
-          {ago(startedAt)}
-        </span>
+        {open ? (
+          <>
+            <StepList steps={steps} />
+            {note ? <p {...stylex.props(styles.answer, shared.selectable)}>{note}</p> : null}
+            {answer?.answer ? <p {...stylex.props(styles.answer, shared.selectable)}>{answer.answer}</p> : null}
+            {answer && answer.sources.length > 0 ? (
+              <div {...stylex.props(styles.sources)}>
+                {answer.sources.map((s) => (
+                  <SourceRow key={s.itemId} itemId={s.itemId} why={s.why} onOpen={onOpenItem} />
+                ))}
+              </div>
+            ) : null}
+            {answer && !undone ? (
+              <div {...stylex.props(styles.proposals)}>
+                <ProposalList
+                  runId={entry.id}
+                  proposals={answer.proposals ?? []}
+                  appliedCount={answer.appliedCount ?? 0}
+                  undoable={undoable}
+                />
+              </div>
+            ) : null}
+          </>
+        ) : null}
       </div>
-      {outcome ? <span {...stylex.props(styles.outcome)}>{undone ? 'Undone.' : outcome}</span> : null}
-      {open ? (
-        <>
-          <StepList steps={steps} />
-          {answer?.answer ? <p {...stylex.props(styles.answer, shared.selectable)}>{answer.answer}</p> : null}
-          {answer && answer.sources.length > 0 ? (
-            <div {...stylex.props(styles.sources)}>
-              {answer.sources.map((s) => (
-                <SourceRow key={s.itemId} itemId={s.itemId} why={s.why} onOpen={onOpenItem} />
-              ))}
-            </div>
-          ) : null}
-          {answer && !undone ? (
-            <div {...stylex.props(styles.proposals)}>
-              <ProposalList
-                runId={entry.id}
-                proposals={answer.proposals ?? []}
-                appliedCount={answer.appliedCount ?? 0}
-                undoable={undoable}
-              />
-            </div>
-          ) : null}
-        </>
-      ) : null}
     </div>
   )
 }
 
 /**
- * "How this was organized": the agent runs that touched an item, live ones from the runs store
+ * "Activity": the agent runs that touched an item, live ones from the runs store
  * merged with the persisted summaries from `items:get`. Steps are shown in product voice.
  */
 export function AgentActivity({

@@ -7,11 +7,9 @@
  * Timestamps are ISO-8601 UTC strings; ids are UUID v4 strings.
  */
 
-import type { ActionId } from './actions'
 import type { Kind } from './kinds'
 import type { ProcessingStatus } from './status'
 
-export type { ActionId } from './actions'
 export type { Kind } from './kinds'
 export type { ProcessingStatus } from './status'
 
@@ -163,8 +161,6 @@ export interface Item {
   /** visualDescription + visibleText from vision, joined. */
   visionText: string | null
   retrievalHints: string[]
-  /** Action ids from `actions.ts` suggested by the model. */
-  suggestedActions: ActionId[]
   aiConfidence: number | null
   metadata: ItemMetadata
   /** Capped at `LIMITS.maxExtractedChars`. */
@@ -454,7 +450,6 @@ export interface Understanding {
   visibleText?: string
   /** 3-6 phrases a person might type months later to find this. */
   retrievalHints: string[]
-  suggestedActions: ActionId[]
   /** 0..1 */
   confidence: number
 }

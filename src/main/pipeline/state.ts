@@ -30,7 +30,6 @@ const PATCHABLE: ReadonlySet<string> = new Set<StagePatchableColumn>([
   'entities',
   'visionText',
   'retrievalHints',
-  'suggestedActions',
   'aiConfidence',
   'extractedText',
   'excerpt',

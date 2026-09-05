@@ -1,5 +1,4 @@
 /** Every fragment is a constant so system prompts stay byte-identical across calls (server-side prefix cache). */
-import { ITEM_ACTIONS } from '../../../shared/actions'
 import { KIND_LABEL, KINDS, RELATIONSHIP_TYPE_IDS, RELATIONSHIP_TYPES } from '../../../shared/kinds'
 
 export const IDENTITY =
@@ -28,8 +27,6 @@ export const KIND_RULES = [
   'photo: a photograph. receipt: invoice, order confirmation, receipt. dataset: data files or a data page.',
   'video: video content or a video page. note: text the person wrote. other: none of the above.'
 ].join('\n')
-
-export const ACTION_CATALOG = ITEM_ACTIONS.map((action) => `- ${action.id}: ${action.description}`).join('\n')
 
 export const RELATIONSHIP_CATALOG = RELATIONSHIP_TYPE_IDS.map(
   (id) => `- ${id}: "${RELATIONSHIP_TYPES[id].label}"${RELATIONSHIP_TYPES[id].symmetric ? ' (symmetric)' : ''}`

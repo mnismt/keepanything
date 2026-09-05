@@ -1,7 +1,7 @@
 import { LIMITS } from '../../../shared/constants'
 import type { ChatMessage, ChatRequest } from '../../ports'
 import { systemMessage, userMessage } from '../messages'
-import { ACTION_CATALOG, COLLECTION_RULES, clipText, IDENTITY, jsonBlock, KIND_RULES, VOICE_RULES } from './voice'
+import { COLLECTION_RULES, clipText, IDENTITY, jsonBlock, KIND_RULES, VOICE_RULES } from './voice'
 
 /** Folder structure facts (subset of `FolderMetadata`). */
 export interface FolderStructure {
@@ -41,7 +41,6 @@ export const FOLDER_SYSTEM_PROMPT = [
   '',
   'Fields:',
   '- understanding: the same fields as for a single item, describing the folder as one thing (kind is usually other, dataset, design_reference or note; title is the project or purpose, not the directory name).',
-  `  suggestedActions ids come from:\n${ACTION_CATALOG}`,
   '- purpose: one or two sentences: what this folder seems to be for and what state it is in.',
   '- keyFiles: up to 10 files that matter most, each with a short why (entry points, briefs, final exports, READMEs).',
   '- collection: null unless the children form a meaningful ongoing context that the rules below allow.',

@@ -1,8 +1,7 @@
 import { z } from 'zod'
-import { isActionId } from '../../shared/actions'
 import type { IpcChannel, IpcRequest } from '../../shared/ipc'
 import { isKind, RELATIONSHIP_TYPE_IDS } from '../../shared/kinds'
-import type { ActionId, ItemSubtype, ItemType, Kind, RelationshipType, Stage } from '../../shared/types'
+import type { ItemSubtype, ItemType, Kind, RelationshipType, Stage } from '../../shared/types'
 
 /**
  * Zod schemas for every request payload in `IpcRequestMap`. Each entry is checked against the
@@ -64,7 +63,6 @@ const itemType = z.enum(ITEM_TYPES)
 const subtype = z.enum(SUBTYPES)
 const stage = z.enum(STAGES)
 const kind = z.custom<Kind>(isKind, 'Unknown kind')
-const actionId = z.custom<ActionId>(isActionId, 'Unknown action')
 const relationshipType = z.enum(RELATIONSHIP_TYPE_IDS as [RelationshipType, ...RelationshipType[]])
 const isoDate = z.string().refine((s) => Number.isFinite(Date.parse(s)), 'Expected an ISO-8601 timestamp')
 const httpUrl = z
@@ -181,7 +179,6 @@ export const REQUEST_SCHEMAS = {
       template: z.enum(['compare', 'common', 'summarize', 'brief', 'extract', 'custom']).optional()
     })
     .strict() satisfies z.ZodType<IpcRequest<'agent:command'>>,
-  'agent:action': z.object({ itemId: id, actionId }).strict() satisfies z.ZodType<IpcRequest<'agent:action'>>,
   'agent:cancel': z.object({ runId: id }).strict() satisfies z.ZodType<IpcRequest<'agent:cancel'>>,
   'agent:run': z.object({ id }).strict() satisfies z.ZodType<IpcRequest<'agent:run'>>,
   'agent:undo': z.object({ auditId: id }).strict() satisfies z.ZodType<IpcRequest<'agent:undo'>>,

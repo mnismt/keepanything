@@ -469,7 +469,6 @@ export function toItem(summary: ItemSummary, seed?: Seed): Item {
     entities: [],
     visionText: null,
     retrievalHints: [],
-    suggestedActions: [],
     aiConfidence: summary.understanding ? 0.82 : null,
     metadata: {},
     extractedText: null,

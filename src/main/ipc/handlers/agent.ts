@@ -7,7 +7,6 @@ type AgentHandlers = Pick<
   HandlerMap,
   | 'search:quick'
   | 'agent:command'
-  | 'agent:action'
   | 'agent:cancel'
   | 'agent:run'
   | 'agent:undo'
@@ -28,7 +27,6 @@ export function createAgentHandlers(deps: HandlerDeps): AgentHandlers {
   return {
     'search:quick': ({ query, limit }) => retrieval().quickSearch(query, limit !== undefined ? { limit } : {}),
     'agent:command': (payload) => agent().command(payload, 'user'),
-    'agent:action': ({ itemId, actionId }) => agent().action(itemId, actionId),
     'agent:cancel': ({ runId }) => {
       agent().cancel(runId)
     },

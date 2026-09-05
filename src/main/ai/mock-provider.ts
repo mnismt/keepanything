@@ -1,6 +1,5 @@
-import { actionsForItem } from '../../shared/actions'
 import { KIND_LABEL, type Kind } from '../../shared/kinds'
-import type { ItemSubtype, ItemType, Understanding } from '../../shared/types'
+import type { Understanding } from '../../shared/types'
 import type { AIProvider, ChatMessage, ChatRequest, ChatResponse, Logger, ToolCall, Usage } from '../ports'
 import { estimateTokens, hasImages, lastUserIndex, messageText } from './messages'
 import type { CommandFinish } from './schemas/command'
@@ -137,9 +136,6 @@ export function mockUnderstanding(userText: string, withImage: boolean): Underst
   const hints = [title.toLowerCase(), `${label} about ${topics[0] ?? title.toLowerCase()}`]
   if (domain) hints.push(domain.replace(/^www\./, ''))
   if (topics[1]) hints.push(`${topics[0]} ${topics[1]}`)
-  const actions = actionsForItem({ type: type as ItemType, subtype: subtype as ItemSubtype | null, kind }).map(
-    (a) => a.id
-  )
   const understanding: Understanding = {
     kind,
     title: title.slice(0, 160),
@@ -148,7 +144,6 @@ export function mockUnderstanding(userText: string, withImage: boolean): Underst
     topics,
     entities: names,
     retrievalHints: hints.slice(0, 6),
-    suggestedActions: actions,
     confidence: Math.min(0.8, 0.55 + (content.length > 500 ? 0.1 : 0) + (domain ? 0.05 : 0))
   }
   if (withImage) {

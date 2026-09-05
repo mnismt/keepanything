@@ -1,7 +1,18 @@
 import * as stylex from '@stylexjs/stylex'
-import { ChevronLeft, ChevronRight, FileText, Folder, X } from 'lucide-react'
+import {
+  ChevronLeft,
+  ChevronRight,
+  ExternalLink,
+  Eye,
+  FileText,
+  Folder,
+  FolderOpen,
+  RefreshCw,
+  StickyNote,
+  Trash2,
+  X
+} from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { actionsForItem, type ItemAction, isActionId, MAX_DEFAULT_ACTIONS } from '../../../../../shared/actions'
 import { COPY } from '../../../../../shared/constants'
 import { isTerminal, STATUS_LABEL } from '../../../../../shared/status'
 import type {
@@ -371,33 +382,6 @@ export function ItemDetail({ itemId }: { itemId: string }): React.JSX.Element {
     push({ text: 'Moved to Trash.', action: { label: 'Undo', run: () => restore([itemId]) } })
   }
 
-  const runAction = async (action: ItemAction): Promise<void> => {
-    const r = await invoke('agent:action', { itemId, actionId: action.id })
-    if (!r.ok) push({ text: describeError(r.error) })
-  }
-
-  const agentActions = useMemo<ItemAction[]>(() => {
-    if (!item) return []
-    const defaults = actionsForItem(item)
-    const suggested = (row?.suggestedActions ?? []).filter(isActionId)
-    const seen = new Set<string>()
-    const out: ItemAction[] = []
-    for (const a of [
-      ...defaults,
-      ...suggested
-        .map((id) =>
-          actionsForItem({ type: item.type, subtype: item.subtype, kind: item.kind }).find((x) => x.id === id)
-        )
-        .filter((x): x is ItemAction => Boolean(x))
-    ]) {
-      if (seen.has(a.id)) continue
-      seen.add(a.id)
-      out.push(a)
-      if (out.length === MAX_DEFAULT_ACTIONS) break
-    }
-    return out
-  }, [item, row?.suggestedActions])
-
   const hasFile = Boolean(row?.originalPath || row?.managedPath) && !item?.isMissing
   const isUrl = item?.type === 'url'
   const isNote = item?.type === 'note'
@@ -609,7 +593,10 @@ export function ItemDetail({ itemId }: { itemId: string }): React.JSX.Element {
                 {...stylex.props(styles.action)}
                 onClick={() => void invoke('items:openUrl', { id: itemId })}
               >
-                Open link
+                <span {...stylex.props(styles.actionLabel)}>
+                  <ExternalLink size={14} strokeWidth={1.75} aria-hidden />
+                  Open link
+                </span>
               </button>
             ) : (
               <button
@@ -618,7 +605,14 @@ export function ItemDetail({ itemId }: { itemId: string }): React.JSX.Element {
                 disabled={!hasFile}
                 onClick={() => void invoke('items:openOriginal', { id: itemId })}
               >
-                {isNote ? 'Open note' : 'Open original'}
+                <span {...stylex.props(styles.actionLabel)}>
+                  {isNote ? (
+                    <StickyNote size={14} strokeWidth={1.75} aria-hidden />
+                  ) : (
+                    <ExternalLink size={14} strokeWidth={1.75} aria-hidden />
+                  )}
+                  {isNote ? 'Open note' : 'Open original'}
+                </span>
               </button>
             )}
             {!isUrl ? (
@@ -629,7 +623,10 @@ export function ItemDetail({ itemId }: { itemId: string }): React.JSX.Element {
                   disabled={!hasFile}
                   onClick={() => void invoke('items:revealInFinder', { id: itemId })}
                 >
-                  Reveal in Finder
+                  <span {...stylex.props(styles.actionLabel)}>
+                    <FolderOpen size={14} strokeWidth={1.75} aria-hidden />
+                    Reveal in Finder
+                  </span>
                 </button>
                 <button
                   type="button"
@@ -637,25 +634,14 @@ export function ItemDetail({ itemId }: { itemId: string }): React.JSX.Element {
                   disabled={!hasFile}
                   onClick={() => void invoke('items:quickLook', { id: itemId })}
                 >
-                  Quick Look
+                  <span {...stylex.props(styles.actionLabel)}>
+                    <Eye size={14} strokeWidth={1.75} aria-hidden />
+                    Quick Look
+                  </span>
                   <span {...stylex.props(styles.actionMeta)}>Space</span>
                 </button>
               </>
             ) : null}
-            {agentActions.length > 0 ? <span {...stylex.props(styles.actionsDivider)} aria-hidden="true" /> : null}
-            {agentActions.map((a) => (
-              <button
-                key={a.id}
-                type="button"
-                {...stylex.props(styles.action)}
-                title={a.description}
-                disabled={aiOff || working}
-                onClick={() => void runAction(a)}
-              >
-                {a.label}
-                <span {...stylex.props(styles.actionMeta)}>{a.producesNote ? 'Makes a note' : ''}</span>
-              </button>
-            ))}
             <span {...stylex.props(styles.actionsDivider)} aria-hidden="true" />
             <button
               type="button"
@@ -665,21 +651,27 @@ export function ItemDetail({ itemId }: { itemId: string }): React.JSX.Element {
                 push({ text: ok ? 'Reading this again.' : "Couldn't start that." })
               }}
             >
-              Reprocess
+              <span {...stylex.props(styles.actionLabel)}>
+                <RefreshCw size={14} strokeWidth={1.75} aria-hidden />
+                Reprocess
+              </span>
             </button>
             <button
               type="button"
               {...stylex.props(styles.action, styles.actionDanger)}
               onClick={() => void moveToTrash()}
             >
-              Move to Trash
+              <span {...stylex.props(styles.actionLabel)}>
+                <Trash2 size={14} strokeWidth={1.75} aria-hidden />
+                Move to Trash
+              </span>
               <span {...stylex.props(styles.actionMeta)}>⌫</span>
             </button>
           </div>
         </div>
 
         <div {...stylex.props(styles.section)}>
-          <span {...stylex.props(shared.eyebrow)}>How this was organized</span>
+          <span {...stylex.props(shared.eyebrow)}>Activity</span>
           <AgentActivity itemId={itemId} latestRuns={detail?.latestRuns ?? []} onOpenItem={openItem} />
         </div>
 

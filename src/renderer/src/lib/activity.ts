@@ -11,9 +11,9 @@ export interface RunLike {
   error?: { message: string } | null
 }
 
-/** Title of a run by task, past tense when finished. */
+/** Title of a run by task: past tense once it succeeded, present participle otherwise so a stopped or failed run never claims it finished. */
 export function runTitle(run: Pick<RunLike, 'task' | 'status'>): string {
-  const running = run.status === 'running'
+  const running = run.status !== 'succeeded'
   switch (run.task) {
     case 'understand':
       return running ? 'Understanding' : 'Understood'
@@ -29,18 +29,20 @@ export function runTitle(run: Pick<RunLike, 'task' | 'status'>): string {
   }
 }
 
-/** One line summarising what a finished run did; empty while running. */
+/**
+ * One short line under the title; empty while running or when the title already says it all
+ * (a plain successful understand). The agent's free-text summary is not used here: it belongs in
+ * the expanded view.
+ */
 export function runOutcome(run: RunLike): string {
   if (run.status === 'running') return ''
   if (run.status === 'cancelled') return 'Stopped.'
   if (run.status === 'failed') return run.error?.message ? `Didn't finish: ${run.error.message}` : "Didn't finish."
   const r = run.result
-  if (!r) return 'Done.'
+  if (!r) return ''
   switch (r.task) {
     case 'understand':
-      return r.skippedFields.length > 0
-        ? `Understood (kept your edits to ${r.skippedFields.join(', ')}).`
-        : 'Understood.'
+      return r.skippedFields.length > 0 ? `Kept your edits to ${r.skippedFields.join(', ')}.` : ''
     case 'organize':
     case 'organize_batch':
     case 'consolidate': {
@@ -55,7 +57,7 @@ export function runOutcome(run: RunLike): string {
         )
       if (r.task === 'consolidate' && r.renamedCollectionIds.length > 0)
         parts.push(`Renamed ${r.renamedCollectionIds.length}`)
-      return parts.length > 0 ? `${parts.join(' · ')}.` : r.summary || 'Nothing to connect yet.'
+      return parts.length > 0 ? `${parts.join(' · ')}.` : 'Nothing to connect yet.'
     }
     case 'folder':
       return r.collectionId ? 'Read the folder and made a collection for it.' : 'Read the folder.'
@@ -66,6 +68,14 @@ export function runOutcome(run: RunLike): string {
           ? `Answered from ${r.sources.length} ${r.sources.length === 1 ? 'source' : 'sources'}.`
           : 'Nothing matched.'
   }
+}
+
+/** The agent's own explanation of a finished organize-style run, for the expanded entry. */
+export function runNote(run: RunLike): string {
+  const r = run.result
+  if (!r || run.status !== 'succeeded') return ''
+  if (r.task === 'organize' || r.task === 'organize_batch' || r.task === 'consolidate') return r.summary.trim()
+  return ''
 }
 
 export function runHeadline(run: Pick<RunLike, 'task' | 'status'>, latestStep?: string): string {

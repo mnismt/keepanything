@@ -48,7 +48,6 @@ const item = (overrides: Partial<Item>): Item =>
     entities: [],
     visionText: null,
     retrievalHints: [],
-    suggestedActions: [],
     aiConfidence: null,
     metadata: {},
     extractedText: null,

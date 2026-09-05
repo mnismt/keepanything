@@ -192,7 +192,6 @@ export function createItemService(deps: ItemServiceDeps): ItemService {
         entities: input.entities ?? [],
         visionText: input.visionText ?? null,
         retrievalHints: input.retrievalHints ?? [],
-        suggestedActions: input.suggestedActions ?? [],
         aiConfidence: input.aiConfidence ?? null,
         metadata: input.metadata ?? {},
         extractedText: input.extractedText ?? null,
@@ -298,14 +297,12 @@ export function createItemService(deps: ItemServiceDeps): ItemService {
         }
         before.visionText = item.visionText
         before.retrievalHints = item.retrievalHints
-        before.suggestedActions = item.suggestedActions
         before.aiConfidence = item.aiConfidence
         const vision = [understanding.visualDescription, understanding.visibleText]
           .filter((s) => s && s.trim())
           .join('\n\n')
         update.visionText = vision.length > 0 ? vision : null
         update.retrievalHints = understanding.retrievalHints
-        update.suggestedActions = understanding.suggestedActions
         update.aiConfidence = understanding.confidence
         items.update(id, update)
         audit.record({

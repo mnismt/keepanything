@@ -1,5 +1,4 @@
-import { actionById } from '../../../shared/actions'
-import type { ActionId, CommandTemplate } from '../../../shared/types'
+import type { CommandTemplate } from '../../../shared/types'
 import type { ChatMessage } from '../../ports'
 import { systemMessage, userMessage } from '../messages'
 import { IDENTITY, jsonBlock, VOICE_RULES } from './voice'
@@ -16,7 +15,6 @@ export interface CommandSeed {
 export type CommandInput =
   | { mode: 'ask'; question: string; today?: string }
   | { mode: 'template'; template: CommandTemplate; seeds: CommandSeed[]; instruction?: string; today?: string }
-  | { mode: 'action'; actionId: ActionId; item: CommandSeed; today?: string }
 
 /** Byte-stable system prompt. Dates never go here (see `today` in the user message). */
 export const COMMAND_SYSTEM_PROMPT = [
@@ -60,18 +58,6 @@ export function buildCommandMessages(input: CommandInput): ChatMessage[] {
       if (input.instruction) lines.push(`Instruction: ${input.instruction.trim()}`)
       lines.push('', jsonBlock('Selected items', input.seeds), '', 'Read every selected item before writing.')
       break
-    case 'action': {
-      const action = actionById(input.actionId)
-      lines.push(`Action: ${action.label} — ${action.description}`)
-      lines.push(action.producesNote ? 'Finish with kind "note".' : 'Finish with kind "answer".')
-      lines.push(
-        '',
-        jsonBlock('Item', input.item),
-        '',
-        'Read the item first; use the library for comparisons only when the action asks for it.'
-      )
-      break
-    }
   }
   return [systemMessage(COMMAND_SYSTEM_PROMPT), userMessage(lines.join('\n'))]
 }

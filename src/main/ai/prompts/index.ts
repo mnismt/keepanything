@@ -42,4 +42,4 @@ export {
   UNDERSTAND_SYSTEM_PROMPT,
   type UnderstandInput
 } from './understand'
-export { ACTION_CATALOG, COLLECTION_RULES, KIND_RULES, RELATIONSHIP_RULES, VOICE_RULES } from './voice'
+export { COLLECTION_RULES, KIND_RULES, RELATIONSHIP_RULES, VOICE_RULES } from './voice'

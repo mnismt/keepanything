@@ -684,10 +684,6 @@ export function createMockBridge(): KeepAnythingApi {
         }
         return respond(undefined as IpcResponseMap[C])
       }
-      case 'agent:action': {
-        const { itemId, actionId } = p as IpcRequestMap['agent:action']
-        return respond({ runId: startRun(actionId.replace(/_/g, ' '), [itemId]) } as IpcResponseMap[C])
-      }
       case 'agent:run': {
         const run = state.runs.get((p as IpcRequestMap['agent:run']).id)
         return run ? respond(run as IpcResponseMap[C]) : fail('NOT_FOUND', 'No such run.')

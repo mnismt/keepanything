@@ -261,6 +261,7 @@ export const styles = stylex.create({
     transitionDuration: motion.fast,
     transitionTimingFunction: motion.easeOut
   },
+  actionLabel: { display: 'inline-flex', alignItems: 'center', gap: space.s2, minWidth: 0 },
   actionDanger: { color: { default: colors.fg3, ':hover': colors.danger } },
   actionMeta: { fontSize: text.t11, color: colors.fg4, whiteSpace: 'nowrap' },
   actionsDivider: { height: 1, backgroundColor: colors.hairline, marginBlock: 6 },

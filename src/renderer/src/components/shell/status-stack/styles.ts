@@ -6,6 +6,11 @@ const rise = stylex.keyframes({
   to: { opacity: 1, transform: 'none' }
 })
 
+const enter = stylex.keyframes({
+  from: { opacity: 0, transform: 'translateY(3px)' },
+  to: { opacity: 1, transform: 'translateY(0)' }
+})
+
 export const styles = stylex.create({
   stack: {
     position: 'fixed',
@@ -58,5 +63,11 @@ export const styles = stylex.create({
     borderRadius: 4,
     paddingInline: 4
   },
-  steps: { display: 'flex', flexDirection: 'column', gap: 3, paddingLeft: 14, color: colors.fg3, fontSize: text.t12 }
+  steps: { display: 'flex', flexDirection: 'column', gap: 3, paddingLeft: 14, color: colors.fg3, fontSize: text.t12 },
+  stepEnter: {
+    animationName: enter,
+    animationDuration: motion.slow,
+    animationTimingFunction: motion.easeSettle,
+    animationFillMode: 'both'
+  }
 })

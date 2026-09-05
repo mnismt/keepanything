@@ -19,7 +19,6 @@ const understanding: Understanding = {
   entities: ['e1'],
   visualDescription: 'dark page',
   retrievalHints: ['hint'],
-  suggestedActions: ['summarize_argument'],
   confidence: 0.9
 }
 

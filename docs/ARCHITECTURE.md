@@ -41,7 +41,6 @@ src/
     types.ts                   Item, ItemSummary, ItemDetail, Collection*, Relationship*, AgentRun*, AgentResult, SearchHit, Candidate, Settings, JobProgress, CaptureResult …
     ipc.ts                     IPC_CHANNELS, IpcRequest<C>/IpcResponse<C> maps, IPC_EVENTS payloads, IpcErrorCode, error envelope
     status.ts                  PROCESSING_STATUSES, isFailed(), USER_STAGES, STATUS_LABEL/STAGE_LABEL copy, transition table next(status, stage, outcome)
-    actions.ts                 ITEM_ACTIONS (id, label, appliesTo) — the closed action vocabulary shared by UI and agent
     kinds.ts                   KINDS closed vocabulary for Understanding.kind; RELATIONSHIP_TYPES with inverse/symmetric map + labels
     constants.ts               limits (folder traversal, text caps, chunking), timeouts, product copy strings
     media.ts                   toMediaUrl(root, relPath, version) → `ka-media://local/<root>/<encoded>?v=<version>`
@@ -104,7 +103,7 @@ src/
     components/
       shell/      Sidebar  Toolbar  StatusStack  DropOverlay  LocalStatusFooter
       library/    MasonryGrid (JS-positioned)  ItemCard + bodies (Image, Video, Url, Github, Pdf, Text, Folder, Note, File)  ItemRow  EmptyState  TrashHeader
-      detail/     ItemDetail (hero, Understanding [editable], Related, Collections, Actions, footer)  NoteView  AgentActivity ("How this was organized")
+      detail/     ItemDetail (hero, Understanding [editable], Related, Collections, Actions, footer)  NoteView  AgentActivity ("Activity")
       palette/    CommandPalette (cmdk; local hits first; Ask row rules)  AskResult (evidence header + sources)  RunProgress
       selection/  SelectionBar
       collections/ CollectionsGrid  CollectionCard  CollectionHeader  NewCollectionDialog  RenameInline
@@ -152,7 +151,6 @@ items (
   topics TEXT NOT NULL DEFAULT '[]', entities TEXT NOT NULL DEFAULT '[]',
   vision_text TEXT,               -- visualDescription + visibleText from vision
   retrieval_hints TEXT NOT NULL DEFAULT '[]',
-  suggested_actions TEXT NOT NULL DEFAULT '[]',   -- ids from shared/actions.ts
   ai_confidence REAL,
   metadata TEXT NOT NULL DEFAULT '{}',            -- og, favicon, repo stats, folder structure, exif, note sources, sourceUrl …
   extracted_text TEXT,            -- capped at CONSTANTS.maxExtractedChars
@@ -223,7 +221,6 @@ collections:rename { id, name, description? }   collections:delete { id }   coll
 relationships:create { sourceId, targetId, type, description? }     relationships:remove { id }
 search:quick      { query, limit? } → SearchHit[]           // FTS + vector fusion, no LLM, < 50 ms
 agent:command     { question, itemIds?, template?: 'compare'|'common'|'summarize'|'brief'|'extract'|'custom' } → { runId }   // Ask + multi-item + ⌘K commands
-agent:action      { itemId, actionId } → { runId }          // actionId ∈ ITEM_ACTIONS
 agent:cancel      { runId } → void
 agent:run         { id } → AgentRunDetail
 agent:undo        { auditId } → void
@@ -316,7 +313,7 @@ rejected) is recorded as an `AgentStep` (payload summaries ≤ 500 chars) and em
 ### Tasks
 - **understand** (1 structured call): inputs = title, type/subtype, metadata, capped text (~12k chars), and for images /
   URL snapshots / design files the ≤800px thumbnail (+ og image if snapshot failed) as `image_url`. Output `Understanding
-  { kind, title, summary, whyUseful, topics[], entities[], visualDescription?, visibleText?, retrievalHints[3-6], suggestedActions[], confidence }`
+  { kind, title, summary, whyUseful, topics[], entities[], visualDescription?, visibleText?, retrievalHints[3-6], confidence }`
   with specificity examples in the prompt (bad: "discusses AI"; good: "engineering article comparing inference batching
   strategies, useful as a reference for reducing GPU serving cost"). Applied via `item-service.applyUnderstanding` (honours overrides).
 - **organize** (single item, ≤5 steps) / **organize-batch** (one run per capture batch of ≥2 items, ≤10 steps): thin
@@ -416,8 +413,8 @@ missing original → file tile "Original moved or deleted", Open/Reveal disabled
 originating card; background `inert`; ←/→ prev/next; breadcrumb = navigation origin. Hero = original (image / snapshot / PDF page /
 rendered markdown / file tile). Right column: title (click-to-edit), domain/link, Understanding (click-to-edit; "Edited by you"
 marker), Why useful, Related (relationship label chips with × on hover + evidence quote when present), Collections ("Because: …",
-× on hover), Actions (quiet text list ≤4 from `ITEM_ACTIONS` defaults merged with `suggested_actions`; no pills, no sparkle icons),
-"How this was organized" → `AgentActivity` (steps in product voice), footer (captured, path, Reveal in Finder, Open, Quick Look).
+× on hover), Actions (Open, Reveal in Finder, Quick Look, Reprocess, Move to Trash),
+"Activity" → `AgentActivity` (steps in product voice), footer (captured, path, Reveal in Finder, Open, Quick Look).
 
 **Palette (⌘K, cmdk)**: empty → 5 recent items + 3 suggestions; typing → local hits first (grouped, thumbs); "Ask: …" row only
 after hits and only when the query looks like natural language (≥4 words / question word / "?") or when there are zero hits;
@@ -516,11 +513,9 @@ design; when they disagree with this list, this list describes what ships.
 
 **Agent (slice 4)**
 
-- **Item actions propose, then apply.** `agent:action` runs stage `ProposedAction`s (`add_to_collection`,
-  `create_collection`, `relate`, `tag`, `rename`, `trash`) in run memory. They are applied automatically only when the
-  run is an action run **and** `finish.confidence ≥ autoApply` (never `trash`); the rest are listed in the answer as
-  "Proposed, not applied: …" and can be applied later with `agent:applyProposals { runId }` (audited like every other
-  agent write). Ask (`agent:command`) never auto-applies.
+- **Proposals stay staged.** Command runs stage `ProposedAction`s (`add_to_collection`, `create_collection`, `relate`,
+  `tag`, `rename`, `trash`) in run memory and list them in the answer; they are applied only through
+  `agent:applyProposals { runId }` (audited like every other agent write). Nothing auto-applies.
 - **Undo is per run as well as per audit row.** `agent:undoRun { runId }` reverts every not-yet-undone audit row of a
   run in reverse order (suppressions written); `agent:undo { auditId }` remains for single facts.
   `AgentRunSummary` carries `steps` and `undoable`; the terminal `agent:run` event carries `undoable?: boolean`; both
@@ -528,7 +523,7 @@ design; when they disagree with this list, this list describes what ships.
   `appliedCount`) and applied later with `agent:applyProposals { runId } → { applied, remaining }`.
 - Sources cited by `finish` are filtered to items the run actually saw (search results, inspected/read items, seed
   items — `validSources`); the rest are dropped with a debug log, so an answer can end up with fewer sources than
-  the model claimed. `autoApplyConfidence` defaults to 0.8.
+  the model claimed.
 - No `reasoning_content` has ever been observed from GMI (79/79 probe calls, 0 in the live run); the strip-on-persist
   path is kept but nothing depends on it. See `docs/GMI_NOTES.md`.
 

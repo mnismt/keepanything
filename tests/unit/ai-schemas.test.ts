@@ -22,7 +22,6 @@ import {
   organizePlanSchema,
   understandingSchema
 } from '../../src/main/ai/schemas'
-import { ITEM_ACTIONS } from '../../src/shared/actions'
 import { KINDS } from '../../src/shared/kinds'
 
 const understandingSample = {
@@ -33,7 +32,6 @@ const understandingSample = {
   topics: ['window management', 'macos utilities', 'keyboard shortcuts'],
   entities: ['Rectangle', 'GitHub'],
   retrievalHints: ['that mac app for window tiling', 'rectangle window snap', 'macos window manager'],
-  suggestedActions: ['explain_architecture', 'read_readme'],
   confidence: 0.86
 }
 
@@ -49,14 +47,12 @@ describe('understandingSchema', () => {
       ...understandingSample,
       kind: ' macOS-App ',
       confidence: '85%',
-      suggestedActions: ['Read README', 'read_readme', 'not_an_action', 'Explain Architecture'],
       topics: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'A'],
       visualDescription: '  ',
       visibleText: 'Total $12.40'
     })
     expect(value.kind).toBe('macos_app')
     expect(value.confidence).toBe(0.85)
-    expect(value.suggestedActions).toEqual(['read_readme', 'explain_architecture'])
     expect(value.topics).toEqual(['a', 'b', 'c', 'd', 'e', 'f'])
     expect(value.visualDescription).toBeUndefined()
     expect(value.visibleText).toBe('Total $12.40')
@@ -72,7 +68,6 @@ describe('understandingSchema', () => {
       properties: Record<string, { enum?: string[]; items?: { enum?: string[] } }>
     }
     expect(json.properties.kind?.enum).toEqual([...KINDS])
-    expect(json.properties.suggestedActions?.items?.enum).toEqual(ITEM_ACTIONS.map((a) => a.id))
     expect(understandingSchema.jsonSchema).not.toHaveProperty('$schema')
   })
 })
@@ -220,7 +215,6 @@ describe('prompt builders', () => {
     expect(ORGANIZE_SYSTEM_PROMPT).toContain(COLLECTION_RULES)
     expect(COLLECTION_RULES).toMatch(/at least 3 members/)
     expect(UNDERSTAND_SYSTEM_PROMPT).toContain(KINDS.join(' | '))
-    for (const action of ITEM_ACTIONS) expect(UNDERSTAND_SYSTEM_PROMPT).toContain(action.id)
     expect(UNDERSTAND_SYSTEM_PROMPT).not.toMatch(/\d{4}-\d{2}-\d{2}/)
     expect(COMMAND_SYSTEM_PROMPT).not.toMatch(/\d{4}-\d{2}-\d{2}/)
   })
@@ -290,11 +284,5 @@ describe('prompt builders', () => {
       seeds: [{ id: 'a', title: 'A', type: 'url' }]
     })
     expect(messageText(template[1] ?? { role: 'user', content: '' })).toContain('Compare these items')
-    const action = buildCommandMessages({
-      mode: 'action',
-      actionId: 'extract_claims',
-      item: { id: 'a', title: 'A', type: 'pdf' }
-    })
-    expect(messageText(action[1] ?? { role: 'user', content: '' })).toContain('Finish with kind "note".')
   })
 })

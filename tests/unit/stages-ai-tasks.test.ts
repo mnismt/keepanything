@@ -66,7 +66,6 @@ const understanding: Understanding = {
   topics: ['llm inference', 'batching'],
   entities: ['vLLM', 'Anyscale'],
   retrievalHints: ['continuous batching article', 'cheaper inference throughput'],
-  suggestedActions: ['summarize_argument'],
   confidence: 0.82
 }
 
@@ -132,7 +131,6 @@ describe('understand stage', () => {
       topics: understanding.topics,
       entities: understanding.entities,
       retrievalHints: understanding.retrievalHints,
-      suggestedActions: ['summarize_argument'],
       aiConfidence: 0.82,
       visionText: null
     })

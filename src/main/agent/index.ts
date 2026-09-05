@@ -1,8 +1,6 @@
 /** Ask My Stuff, multi-item templates and item actions as bounded tool-loop runs streamed through `agent.run` events and persisted in `agent_runs` (labels and ids only, never prompts or content beyond a bounded excerpt). */
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import type { ActionId } from '../../shared/actions'
-import { actionById } from '../../shared/actions'
 import { LIMITS } from '../../shared/constants'
 import type { AgentCommandRequest, AgentRunEvent, IpcError, TestConnectionResult } from '../../shared/ipc'
 import { truncate } from '../../shared/text'
@@ -67,7 +65,6 @@ export interface AgentServiceDeps {
   /** Step cap (default `COMMAND_MAX_STEPS`). */
   maxSteps?: number
   /** Confidence at or above which item-action runs apply their own proposals. */
-  autoApplyConfidence?: number
 }
 
 /** The service plus the extras the bootstrap / tests use. */
@@ -101,7 +98,6 @@ export function createAgentService(deps: AgentServiceDeps): CommandAgentService 
   const logger = deps.logger.child({ scope: 'agent' })
   const ids = deps.ids ?? uuid
   const maxSteps = deps.maxSteps ?? COMMAND_MAX_STEPS
-  const autoApply = deps.autoApplyConfidence ?? 0.8
   const runs = new Map<string, RunState>()
   const provider = (): AIProvider => (typeof deps.ai === 'function' ? deps.ai() : deps.ai)
 
@@ -451,15 +447,9 @@ export function createAgentService(deps: AgentServiceDeps): CommandAgentService 
       if (!answer) answer = `Created “${note?.title ?? 'a note'}”.`
     }
 
-    // Item actions apply their own confident proposals; everything else stays staged for approval.
-    // Both are structured on the result (the UI renders the list and the Apply / Undo controls).
-    let applied = 0
-    const remaining: AgentProposal[] = []
-    const auto = state.mode === 'action' && finish.confidence >= autoApply
-    for (const p of staged) {
-      if (auto && p.kind !== 'trash' && p.confidence >= autoApply && applyProposal(state.detail.id, p)) applied++
-      else remaining.push(p)
-    }
+    // Proposals stay staged for approval; the UI renders the list with Apply / Undo controls.
+    const applied = 0
+    const remaining: AgentProposal[] = [...staged]
 
     const result: AgentResult = {
       task: 'command',
@@ -502,14 +492,6 @@ export function createAgentService(deps: AgentServiceDeps): CommandAgentService 
         seedIds,
         seedIds.length === 1 ? (seedIds[0] as string) : null
       )
-      return { runId: state.detail.id }
-    },
-    async action(itemId: string, actionId: ActionId) {
-      const item = repos.items.get(itemId)
-      if (!item || item.deletedAt) throw new KaError('NOT_FOUND', "Couldn't find that item.")
-      const action = actionById(actionId)
-      const command: CommandInput = { mode: 'action', actionId, item: seedOf(item), today: today() }
-      const state = start(command, action.label, [itemId], itemId)
       return { runId: state.detail.id }
     },
     cancel(runId) {

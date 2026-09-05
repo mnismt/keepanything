@@ -56,7 +56,6 @@ describe('mock provider structured output', () => {
     expect(value.title).toBe('rxhanson/Rectangle')
     expect(value.topics.length).toBeGreaterThan(0)
     expect(value.retrievalHints.length).toBeGreaterThanOrEqual(3)
-    expect(value.suggestedActions).toContain('explain_architecture')
     expect(value.confidence).toBeGreaterThan(0.5)
     expect(usage.promptTokens).toBeGreaterThan(0)
     const again = await provider.generateStructured(understandingSchema, req)
@@ -182,19 +181,6 @@ describe('mock provider tool flow', () => {
     const payload = commandFinishSchema.parse(JSON.parse(res.message.tool_calls?.[0]?.function.arguments ?? '{}'))
     expect(payload.sources).toEqual([])
     expect(payload.answer).toMatch(/Couldn't find anything/)
-  })
-
-  it('produces a note for note-producing actions', async () => {
-    const messages = buildCommandMessages({
-      mode: 'action',
-      actionId: 'extract_claims',
-      item: { id: 'a', title: 'Paper', type: 'pdf' }
-    })
-    const res = await provider.chat({ messages, ...forceFinish(finish), task: 'command' })
-    const payload = commandFinishSchema.parse(JSON.parse(res.message.tool_calls?.[0]?.function.arguments ?? '{}'))
-    expect(payload.kind).toBe('note')
-    expect(payload.noteMarkdown).toContain('Paper [1]')
-    expect(payload.sources[0]?.itemId).toBe('a')
   })
 })
 

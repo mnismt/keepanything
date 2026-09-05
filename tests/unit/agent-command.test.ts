@@ -425,58 +425,6 @@ describe('agent command loop', () => {
     expect(h.repos.relationships.forItem(vllm.id)).toHaveLength(0)
     expect(h.repos.suppressions.has('collection_member', `${collection.id}:${vllm.id}`)).toBe(true)
   })
-
-  it('auto-applies confident proposals for item actions', async () => {
-    const { vllm, paged } = await seed()
-    const provider = createScriptedProvider([
-      toolCallResponse([{ name: 'read_document', args: { id: vllm.id } }]),
-      toolCallResponse([
-        {
-          name: 'propose_actions',
-          args: {
-            actions: [
-              {
-                kind: 'relate',
-                sourceId: vllm.id,
-                targetId: paged.id,
-                type: 'references',
-                description: 'Implements.',
-                confidence: 0.95
-              }
-            ]
-          }
-        }
-      ]),
-      toolCallResponse([
-        {
-          name: 'finish',
-          args: {
-            kind: 'answer',
-            answer: 'Explained.',
-            sources: [{ itemId: vllm.id, role: 'primary', why: 'w' }],
-            cues: {},
-            confidence: 0.9
-          }
-        }
-      ])
-    ])
-    const agent = agentWith(provider)
-    const { runId } = await agent.action(vllm.id, 'explain_architecture')
-    await settled(agent)
-    expect(events()[0]?.itemId).toBe(vllm.id)
-    expect(h.repos.relationships.forItem(vllm.id)[0]?.agentRunId).toBe(runId)
-    const last = events().at(-1)
-    const result = last?.result
-    if (result?.task !== 'command') throw new Error('no result')
-    expect(result.answer).toBe('Explained.')
-    expect(result.appliedCount).toBe(1)
-    expect(result.proposals).toEqual([])
-    expect(last?.undoable).toBe(true)
-    expect(agent.undoRun(runId)).toBe(1)
-    expect(h.repos.relationships.forItem(vllm.id)).toHaveLength(0)
-    expect(JSON.stringify(provider.calls[0]?.messages)).toMatch(/Explain architecture/)
-    await expect(agent.action('ghost', 'explain_architecture')).rejects.toBeInstanceOf(KaError)
-  })
 })
 
 describe('tool handlers', () => {

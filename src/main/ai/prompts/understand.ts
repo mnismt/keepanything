@@ -3,7 +3,7 @@ import { LIMITS } from '../../../shared/constants'
 import type { ItemSubtype, ItemType } from '../../../shared/types'
 import type { ChatMessage, ChatRequest, ContentPart } from '../../ports'
 import { imagePart, systemMessage, textPart, userMessage } from '../messages'
-import { ACTION_CATALOG, clipText, IDENTITY, jsonBlock, KIND_RULES, VOICE_RULES } from './voice'
+import { clipText, IDENTITY, jsonBlock, KIND_RULES, VOICE_RULES } from './voice'
 
 export interface UnderstandInput {
   title: string
@@ -42,7 +42,6 @@ export const UNDERSTAND_SYSTEM_PROMPT = [
   '- entities: named products, people, companies, repos, places that appear in the material.',
   '- visualDescription, visibleText: only when an image is attached (see below); otherwise omit them.',
   '- retrievalHints: 3–6 phrases someone might type months later ("that mac app for window tiling", "vllm batching article"). Include synonyms and the plain-language version of jargon.',
-  `- suggestedActions: 0–4 ids from this catalogue that make sense for this item:\n${ACTION_CATALOG}`,
   '- confidence: 0–1, how sure you are about kind and summary given the material.',
   '',
   'When an image is attached: describe what it shows (layout, subject, UI, colours, mood) in visualDescription and transcribe legible text into visibleText. Read the image before deciding kind: a screenshot of a product page is a screenshot unless the item itself is that page.'

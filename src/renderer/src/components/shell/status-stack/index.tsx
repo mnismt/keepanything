@@ -14,7 +14,7 @@ import { type RunState, selectActiveRuns, useRuns } from '../../../state/runs'
 import { useToasts } from '../../../state/toasts'
 import { useUi } from '../../../state/ui'
 import { shared } from '../../../styles/shared'
-import { Dot, ToastStack } from '../../common'
+import { Dot, RevealText, ToastStack } from '../../common'
 import { styles } from './styles'
 
 function active(j: JobProgress): boolean {
@@ -104,7 +104,7 @@ function RunEntry({ run }: { run: RunState }): React.JSX.Element {
     <div {...stylex.props(styles.entry)}>
       <div {...stylex.props(styles.line)}>
         <Dot tone="processing" />
-        <span {...stylex.props(styles.lineText, shared.ellipsis)}>{runTitle(run)}</span>
+        <RevealText style={[styles.lineText, shared.ellipsis]} text={runTitle(run)} />
         {run.task === 'command' ? (
           <button type="button" {...stylex.props(shared.hoverFade, styles.action)} onClick={() => openRun(run.runId)}>
             Show
@@ -121,8 +121,8 @@ function RunEntry({ run }: { run: RunState }): React.JSX.Element {
       {last ? (
         <div {...stylex.props(styles.steps)}>
           {run.steps.slice(-3).map((s) => (
-            <span key={s.n} {...stylex.props(shared.ellipsis)}>
-              {s.label}
+            <span key={s.n} {...stylex.props(shared.ellipsis, styles.stepEnter)}>
+              <RevealText text={s.label} reveal durationMs={420} />
             </span>
           ))}
         </div>

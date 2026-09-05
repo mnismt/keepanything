@@ -42,7 +42,6 @@ CREATE TABLE IF NOT EXISTS items (
   entities TEXT NOT NULL DEFAULT '[]',            -- JSON string[]
   vision_text TEXT,                               -- visualDescription + visibleText from vision
   retrieval_hints TEXT NOT NULL DEFAULT '[]',     -- JSON string[]
-  suggested_actions TEXT NOT NULL DEFAULT '[]',   -- JSON ActionId[] (shared/actions.ts)
   ai_confidence REAL,
   metadata TEXT NOT NULL DEFAULT '{}',            -- JSON: og, favicon, repo stats, folder structure, exif, note sources, sourceUrl...
   extracted_text TEXT,                            -- capped at LIMITS.maxExtractedChars

@@ -1,4 +1,5 @@
 import * as stylex from '@stylexjs/stylex'
+import { Pencil, Trash2 } from 'lucide-react'
 import { useCollections } from '../../../state/collections'
 import { useUi } from '../../../state/ui'
 import { InlineEdit } from '../../common'
@@ -42,13 +43,15 @@ export function CollectionHeader({ collectionId }: { collectionId: string }): Re
           {...stylex.props(styles.quiet)}
           onClick={() => pushModal({ kind: 'dialog', id: 'renameCollection', collectionId: c.id })}
         >
+          <Pencil size={12} strokeWidth={1.75} aria-hidden />
           Rename
         </button>
         <button
           type="button"
-          {...stylex.props(styles.quiet)}
+          {...stylex.props(styles.quiet, styles.danger)}
           onClick={() => pushModal({ kind: 'dialog', id: 'deleteCollection', collectionId: c.id })}
         >
+          <Trash2 size={12} strokeWidth={1.75} aria-hidden />
           Delete
         </button>
       </div>

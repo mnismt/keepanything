@@ -99,7 +99,6 @@ export function understandingPatch(
     .join('\n\n')
   patch.visionText = vision.length > 0 ? vision : null
   patch.retrievalHints = understanding.retrievalHints
-  patch.suggestedActions = understanding.suggestedActions
   patch.aiConfidence = understanding.confidence
   return { patch, skipped }
 }

@@ -1,6 +1,11 @@
 import * as stylex from '@stylexjs/stylex'
 import { colors, motion, radii, space, text } from '../../../styles/tokens.stylex'
 
+const enter = stylex.keyframes({
+  from: { opacity: 0, transform: 'translateY(3px)' },
+  to: { opacity: 1, transform: 'translateY(0)' }
+})
+
 export const styles = stylex.create({
   list: { display: 'flex', flexDirection: 'column', gap: 2 },
   entry: {
@@ -18,6 +23,7 @@ export const styles = stylex.create({
     transitionTimingFunction: motion.easeOut
   },
   rail: { display: 'flex', justifyContent: 'center', paddingTop: 6 },
+  body: { display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 },
   head: { display: 'flex', alignItems: 'baseline', gap: space.s2, minWidth: 0 },
   headRow: { display: 'flex', alignItems: 'baseline', gap: space.s2, minWidth: 0 },
   title: { color: colors.fg1 },
@@ -39,7 +45,6 @@ export const styles = stylex.create({
   },
   outcome: { fontSize: text.t12, color: colors.fg3, lineHeight: 1.5 },
   steps: {
-    gridColumn: 2,
     display: 'flex',
     flexDirection: 'column',
     gap: 4,
@@ -50,6 +55,19 @@ export const styles = stylex.create({
     borderLeftColor: colors.hairline
   },
   step: { display: 'flex', alignItems: 'baseline', gap: space.s2, fontSize: text.t12, color: colors.fg2 },
+  stepEnter: (delayMs: number) => ({
+    animationName: enter,
+    animationDuration: motion.slow,
+    animationTimingFunction: motion.easeSettle,
+    animationDelay: `${delayMs}ms`,
+    animationFillMode: 'both'
+  }),
+  outcomeEnter: {
+    animationName: enter,
+    animationDuration: motion.slow,
+    animationTimingFunction: motion.easeSettle,
+    animationFillMode: 'both'
+  },
   stepTool: { color: colors.fg4, minWidth: 64, flexShrink: 0 },
   stepLabel: { flexGrow: 1, minWidth: 0 },
   stepRejected: { color: colors.fg4, textDecorationLine: 'line-through' },
