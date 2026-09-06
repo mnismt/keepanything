@@ -152,7 +152,11 @@ export function ShelfView(): React.JSX.Element {
   const right = edge === 'right'
   return (
     <div
-      {...stylex.props(styles.dock, visible ? styles.dockIn : right ? styles.dockOutRight : styles.dockOutLeft)}
+      {...stylex.props(
+        styles.dock,
+        right ? styles.dockOriginRight : styles.dockOriginLeft,
+        visible ? styles.dockIn : right ? styles.dockOutRight : styles.dockOutLeft
+      )}
       data-edge={edge}
       onDragOver={(e) => {
         if (isInternalDrag(e.dataTransfer) || !hasExternalPayload(e.dataTransfer)) return
@@ -223,9 +227,7 @@ export function ShelfView(): React.JSX.Element {
         </div>
         <div {...stylex.props(styles.list)} aria-label="Kept from the shelf">
           {items.length === 0 ? (
-            <p {...stylex.props(styles.empty)}>
-              Drop files, links or text here while you work. They land in your library right away.
-            </p>
+            <p {...stylex.props(styles.empty)}>Drop files, links or text here while you work.</p>
           ) : null}
           {items.map((i) => {
             const working = !isTerminal(i.processingStatus)

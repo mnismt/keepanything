@@ -31,31 +31,36 @@ export const styles = stylex.create({
     left: 0,
     willChange: 'transform, opacity'
   },
+  // The notch grows out of the bezel and is pulled back into it: scale anchored to the screen edge,
+  // never the centre, so the fillets stay welded there for the whole travel.
+  dockOriginRight: { transformOrigin: 'right center' },
+  dockOriginLeft: { transformOrigin: 'left center' },
   dockIn: {
-    transform: 'translateX(0)',
+    transform: 'translateX(0) scaleX(1)',
     opacity: 1,
     transitionProperty: 'transform, opacity',
-    transitionDuration: `${motion.glide}, ${motion.base}`,
+    // Opaque long before it stops moving: it arrives as a solid object, not a fade-up.
+    transitionDuration: `${motion.glide}, ${motion.fast}`,
     transitionTimingFunction: `${motion.easeSettle}, ${motion.easeOut}`
   },
+  // Exit budget is SHELF_EXIT_MS (260ms) — main hides the window at that mark. The fade is held
+  // back to the last stretch so the panel is seen leaving rather than dissolving in place.
   dockOutRight: {
-    transform: 'translateX(100%)',
+    transform: 'translateX(100%) scaleX(0.82)',
     opacity: 0,
     transitionProperty: 'transform, opacity',
-    transitionDuration: `${motion.slow}, ${motion.slow}`,
-    transitionTimingFunction: `${motion.easeLeave}, ${motion.easeInOut}`
+    transitionDuration: `${motion.slow}, ${motion.fast}`,
+    transitionTimingFunction: `${motion.easeLeave}, ${motion.easeOut}`,
+    transitionDelay: { default: '0ms, 140ms', [media.reducedMotion]: '0ms' }
   },
   dockOutLeft: {
-    transform: 'translateX(-100%)',
+    transform: 'translateX(-100%) scaleX(0.82)',
     opacity: 0,
     transitionProperty: 'transform, opacity',
-    transitionDuration: `${motion.slow}, ${motion.slow}`,
-    transitionTimingFunction: `${motion.easeLeave}, ${motion.easeInOut}`
+    transitionDuration: `${motion.slow}, ${motion.fast}`,
+    transitionTimingFunction: `${motion.easeLeave}, ${motion.easeOut}`,
+    transitionDelay: { default: '0ms, 140ms', [media.reducedMotion]: '0ms' }
   },
-  // Hovered by a drag: the notch reaches out of the edge to meet the pointer. Scaled from the
-  // edge rather than translated, so the fillets stay welded to the bezel.
-  dockLeanRight: { transform: 'scaleX(1.025)', transformOrigin: 'right center' },
-  dockLeanLeft: { transform: 'scaleX(1.025)', transformOrigin: 'left center' },
   shape: {
     position: 'absolute',
     top: 0,
@@ -107,19 +112,20 @@ export const styles = stylex.create({
     transitionTimingFunction: `${motion.easeSettle}, ${motion.easeOut}`,
     transitionDelay: STAGGER
   },
+  // Mirror of the entry stagger: the content leaves first and the shell closes behind it.
   bodyOutRight: {
-    transform: 'translateX(16px)',
+    transform: 'translateX(10px)',
     opacity: 0,
     transitionProperty: 'transform, opacity',
-    transitionDuration: `${motion.base}, ${motion.fast}`,
-    transitionTimingFunction: `${motion.easeLeave}, ${motion.easeInOut}`
+    transitionDuration: `${motion.fast}, ${motion.fast}`,
+    transitionTimingFunction: `${motion.easeLeave}, ${motion.easeOut}`
   },
   bodyOutLeft: {
-    transform: 'translateX(-16px)',
+    transform: 'translateX(-10px)',
     opacity: 0,
     transitionProperty: 'transform, opacity',
-    transitionDuration: `${motion.base}, ${motion.fast}`,
-    transitionTimingFunction: `${motion.easeLeave}, ${motion.easeInOut}`
+    transitionDuration: `${motion.fast}, ${motion.fast}`,
+    transitionTimingFunction: `${motion.easeLeave}, ${motion.easeOut}`
   },
   // No wordmark: the panel says what to do with it, not what it is called. The strip is the slot
   // for the flash and Clear.
@@ -168,6 +174,7 @@ export const styles = stylex.create({
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: space.s2,
     marginInline: space.s2,
     marginBottom: space.s2,
@@ -181,6 +188,8 @@ export const styles = stylex.create({
     transitionProperty: 'color, background-color, box-shadow, transform',
     transitionDuration: `${motion.slow}, ${motion.slow}, ${motion.glide}, ${motion.glide}`,
     transitionTimingFunction: `${motion.easeOut}, ${motion.easeOut}, ${motion.easeSettle}, ${motion.easeSettle}`,
+    // Takes whatever the tile list leaves: an empty shelf is one big drop target.
+    flexGrow: 1,
     flexShrink: 0
   },
   targetOver: {
@@ -269,7 +278,8 @@ export const styles = stylex.create({
   },
   peekLabel: { fontSize: text.t12, fontWeight: weight.medium, color: colors.fg1, whiteSpace: 'nowrap' },
   list: {
-    flexGrow: 1,
+    flexShrink: 1,
+    minHeight: 0,
     overflowY: 'auto',
     paddingInline: space.s2,
     paddingBottom: space.s2,
@@ -327,7 +337,7 @@ export const styles = stylex.create({
     transitionTimingFunction: motion.easeOut
   },
   empty: {
-    paddingBlock: space.s4,
+    paddingBlock: space.s3,
     paddingInline: space.s3,
     textAlign: 'center',
     fontSize: text.t12,
