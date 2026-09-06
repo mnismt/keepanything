@@ -10,6 +10,7 @@ import {
   type OrganizePlan,
   organizePlanSchema
 } from '../../ai'
+import { nameMemberKey } from '../../core/audit'
 import { isKaError } from '../../core/errors'
 import type { Clock, Logger, StageContext, StagePatch } from '../../ports'
 import {
@@ -236,7 +237,8 @@ export function applyPlan(
       }
       const nameKey = normalizeName(proposal.name)
       const eligible = members.filter(
-        (m) => !repos.suppressions.has('collection_member', `name:${nameKey}:${m.itemId}`) && repos.items.get(m.itemId)
+        (m) =>
+          !repos.suppressions.has('collection_member', nameMemberKey(nameKey, m.itemId)) && repos.items.get(m.itemId)
       )
       if (eligible.length < LIMITS.minNewCollectionMembers) {
         reject(`new collection "${proposal.name}": only ${eligible.length} eligible members`)

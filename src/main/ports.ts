@@ -78,8 +78,6 @@ export interface DomainEventMap {
   'item.trashed': ItemsChangedEvent
   'item.restored': ItemsChangedEvent
   'item.deleted': ItemsChangedEvent
-  /** An item reached a settled status or was (re)indexed. */
-  'item.indexed': { itemId: string }
   'job.progress': JobProgress
   'agent.run': AgentRunEvent
   'collections.changed': Record<string, never>

@@ -47,8 +47,6 @@ export interface TransitionResult {
   progress: JobProgress
   /** Items that reached `READY`/`PARTIAL` in this transition. */
   settledIds: string[]
-  /** Items whose `index` stage finished. */
-  indexedIds: string[]
   enqueued: Job[]
   /** True when the job was dropped because its item is gone. */
   cancelled: boolean
@@ -109,7 +107,6 @@ export function createStateApplier(deps: StateDeps): StateApplier {
     itemIds: [],
     progress: progressOf(job, jobStatus, status),
     settledIds: [],
-    indexedIds: [],
     enqueued: [],
     cancelled
   })
@@ -196,7 +193,6 @@ export function createStateApplier(deps: StateDeps): StateApplier {
       itemIds: [item.id],
       progress: progressOf(job, jobStatus === 'queued' ? 'queued' : jobStatus, status, message),
       settledIds: settled,
-      indexedIds: job.stage === 'index' && jobStatus === 'done' ? [item.id] : [],
       enqueued,
       cancelled: false
     }
@@ -233,7 +229,6 @@ export function createStateApplier(deps: StateDeps): StateApplier {
       itemIds: touched,
       progress: progressOf(job, jobStatus, null, message),
       settledIds: settled,
-      indexedIds: [],
       enqueued: [],
       cancelled: false
     }

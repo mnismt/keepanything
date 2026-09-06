@@ -41,6 +41,11 @@ export function membershipKey(collectionId: string, itemId: string): string {
   return `${collectionId}:${itemId}`
 }
 
+/** Second `collection_member` suppression key: survives the collection being deleted and re-created under the same name. */
+export function nameMemberKey(nameKey: string, itemId: string): string {
+  return `name:${nameKey}:${itemId}`
+}
+
 /** Audit writes and undo. */
 export interface AuditService {
   record(input: AuditInput): AuditEntry
@@ -103,7 +108,7 @@ export function createAuditService(deps: AuditDeps): AuditService {
         const collection = repos.collections.get(entry.entityId) ?? after?.collection ?? null
         if (isAgentFact(entry) && collection) {
           for (const m of repos.collections.members(collection.id)) {
-            repos.suppressions.add('collection_member', `name:${collection.nameKey}:${m.itemId}`, now)
+            repos.suppressions.add('collection_member', nameMemberKey(collection.nameKey, m.itemId), now)
           }
         }
         repos.collections.delete(entry.entityId)
@@ -142,7 +147,8 @@ export function createAuditService(deps: AuditDeps): AuditService {
         if (isAgentFact(entry)) {
           repos.suppressions.add('collection_member', membershipKey(after.collectionId, after.itemId), now)
           const collection = repos.collections.get(after.collectionId)
-          if (collection) repos.suppressions.add('collection_member', `name:${collection.nameKey}:${after.itemId}`, now)
+          if (collection)
+            repos.suppressions.add('collection_member', nameMemberKey(collection.nameKey, after.itemId), now)
         }
         emitCollections()
         emitItems('updated', [after.itemId])
@@ -156,7 +162,7 @@ export function createAuditService(deps: AuditDeps): AuditService {
           throw new KaError('NOT_FOUND', 'That collection or item is gone.')
         if (!repos.collections.getMember(before.collectionId, before.itemId)) repos.collections.addMember(before)
         repos.suppressions.remove('collection_member', membershipKey(before.collectionId, before.itemId))
-        repos.suppressions.remove('collection_member', `name:${collection.nameKey}:${before.itemId}`)
+        repos.suppressions.remove('collection_member', nameMemberKey(collection.nameKey, before.itemId))
         emitCollections()
         emitItems('updated', [before.itemId])
         return

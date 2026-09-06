@@ -115,7 +115,6 @@ describe('scheduler', () => {
     ])
     const progress = h.eventsNamed('job.progress')
     expect(progress.some((p) => p.message === NOT_AVAILABLE_MESSAGE)).toBe(true)
-    expect(h.eventsNamed('item.indexed').map((e) => e.itemId)).toContain(item.id)
     await s.stop()
   })
 

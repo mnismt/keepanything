@@ -9,7 +9,7 @@ import type {
 import type { Clock, EventBus } from '../ports'
 import type { Db } from '../storage/db'
 import type { Repositories } from '../storage/repositories'
-import { AUDIT_ACTIONS, type AuditService, membershipKey } from './audit'
+import { AUDIT_ACTIONS, type AuditService, membershipKey, nameMemberKey } from './audit'
 import { KaError } from './errors'
 import { type IdGenerator, uuid } from './ids'
 
@@ -107,7 +107,7 @@ export function createCollectionService(deps: CollectionServiceDeps): Collection
 
   const isSuppressed = (collection: Collection, itemId: string): boolean =>
     suppressions.has('collection_member', membershipKey(collection.id, itemId)) ||
-    suppressions.has('collection_member', `name:${collection.nameKey}:${itemId}`)
+    suppressions.has('collection_member', nameMemberKey(collection.nameKey, itemId))
 
   return {
     create(input) {
@@ -203,7 +203,7 @@ export function createCollectionService(deps: CollectionServiceDeps): Collection
           }
           if (opts.actor === 'user') {
             suppressions.remove('collection_member', membershipKey(id, m.itemId))
-            suppressions.remove('collection_member', `name:${collection.nameKey}:${m.itemId}`)
+            suppressions.remove('collection_member', nameMemberKey(collection.nameKey, m.itemId))
           } else if (isSuppressed(collection, m.itemId)) {
             result.skipped.push({ itemId: m.itemId, reason: 'suppressed' })
             continue
@@ -244,7 +244,7 @@ export function createCollectionService(deps: CollectionServiceDeps): Collection
         collections.removeMember(id, itemId)
         if (opts.actor === 'user') {
           suppressions.add('collection_member', membershipKey(id, itemId), now)
-          suppressions.add('collection_member', `name:${collection.nameKey}:${itemId}`, now)
+          suppressions.add('collection_member', nameMemberKey(collection.nameKey, itemId), now)
         }
         audit.record({
           actor: opts.actor,

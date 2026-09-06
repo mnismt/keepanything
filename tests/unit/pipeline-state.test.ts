@@ -85,7 +85,6 @@ describe('state applier', () => {
 
     const index = claimStage(item, 'index')
     const r3 = h.state.applyResult(index, { outcome: 'ok' })
-    expect(r3.indexedIds).toEqual([item.id])
     expect(r3.enqueued.map((j) => j.stage)).toEqual(['relate'])
 
     const relate = claimStage(item, 'relate')

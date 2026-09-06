@@ -95,7 +95,6 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
       const summaries = repos.items.summaries(repos.items.getMany(result.itemIds))
       events.emit('item.updated', { reason: 'updated', ids: result.itemIds, summaries })
     }
-    for (const id of new Set([...result.indexedIds, ...result.settledIds])) events.emit('item.indexed', { itemId: id })
   }
 
   const schedulePoll = (ms: number): void => {
