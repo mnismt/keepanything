@@ -39,8 +39,6 @@ const svg = `
   <rect x="80" y="534" width="1040" height="1" fill="rgba(255,255,255,0.12)"/>
   <text x="80" y="574" font-family="-apple-system, 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif"
         font-size="20" fill="rgba(239,233,225,0.64)">A local-first library for your Mac.</text>
-  <text x="1120" y="574" text-anchor="end" font-family="-apple-system, 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif"
-        font-size="20" fill="rgba(239,233,225,0.3)">macOS · Apple Silicon · Free</text>
 </svg>`
 
 const html = `<!doctype html><style>
