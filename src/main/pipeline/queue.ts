@@ -3,7 +3,7 @@ import type { Item, Job, JobProgress, Stage } from '../../shared/types'
 import { type IdGenerator, uuid } from '../core/ids'
 import type { Clock } from '../ports'
 import type { JobRepo } from '../storage/repositories'
-import { initialStages, STAGE_LANE, stagePriority, stagesFrom } from './graph'
+import { initialStages, STAGE_LANE, stagePriority, stagesFor, stagesFrom } from './graph'
 
 export interface EnqueueInput {
   itemId?: string | null
@@ -87,9 +87,12 @@ export function createQueue(deps: QueueDeps): Queue {
     enqueueStages,
     enqueueInitial: (item) => enqueueStages(item, initialStages(item.type)),
     enqueueFrom(item, from) {
+      // Old done rows would make `nextStages` skip the downstream stages of a re-run.
+      const rerun = from ? stagesFrom(item.type, from) : stagesFor(item.type)
+      jobs.forgetStages(item.id, rerun)
       if (!from) return enqueueStages(item, initialStages(item.type))
       // Only `from` itself is enqueued; its downstream stages follow through the graph as it finishes.
-      return stagesFrom(item.type, from).length > 0 ? enqueueStages(item, [from]) : []
+      return rerun.length > 0 ? enqueueStages(item, [from]) : []
     },
     cancelForItems: (itemIds) => jobs.cancelForItems(itemIds, clock.nowIso()),
     resetCrashed: () => jobs.resetRunning(LIMITS.maxAttempts, clock.nowIso()),

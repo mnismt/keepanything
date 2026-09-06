@@ -113,6 +113,32 @@ describe('item service', () => {
     expect(h.items.reprocessAll('index')).toBe(1)
   })
 
+  it('reprocess forgets finished downstream jobs so the graph runs them again', () => {
+    const item = h.item({ type: 'url', processingStatus: 'READY', url: 'https://a.b' })
+    const now = h.clock.nowIso()
+    for (const stage of ['extract', 'snapshot', 'embed', 'understand', 'index', 'relate'] as const) {
+      const job = h.repos.jobs.insert({
+        id: `j-${stage}`,
+        itemId: item.id,
+        batchId: null,
+        stage,
+        lane: 'io',
+        priority: 0,
+        status: 'queued',
+        attempts: 1,
+        runAfter: null,
+        lastError: null,
+        createdAt: now,
+        updatedAt: now
+      })
+      h.repos.jobs.finish(job!.id, 'done', now)
+    }
+    h.items.reprocess(item.id)
+    expect([...h.repos.jobs.finishedStages(item.id)]).toEqual([])
+    h.items.reprocess(item.id, 'understand')
+    expect([...h.repos.jobs.finishedStages(item.id)].sort()).toEqual([])
+  })
+
   it('builds item detail with relationships, collections and children', () => {
     const folder = h.item({ type: 'folder', title: 'F' })
     const child = h.item({ parentItemId: folder.id })

@@ -38,6 +38,8 @@ export interface JobRepo {
   setRunAfter(id: string, runAfter: string | null, nowIso: string): void
   /** Cancel every queued/running job of the items. Returns the cancelled jobs. */
   cancelForItems(itemIds: readonly string[], nowIso: string): Job[]
+  /** Drop finished rows of `stages` so `finishedStages` stops treating a re-run stage as done. */
+  forgetStages(itemId: string, stages: readonly Stage[]): void
   /** `running` -> `queued` when `attempts < maxAttempts`, else `failed 'crashed'`. */
   resetRunning(maxAttempts: number, nowIso: string): { requeued: number; failed: number }
   /** Active (queued|running) jobs of one item. */
@@ -136,6 +138,13 @@ export function createJobRepo(db: Db): JobRepo {
         db.prepare("UPDATE jobs SET status = 'cancelled', updated_at = ? WHERE id = ?").run(nowIso, job.id)
       }
       return jobs
+    },
+    forgetStages(itemId, stages) {
+      if (stages.length === 0) return
+      db.prepare(
+        `DELETE FROM jobs WHERE item_id = ? AND stage IN (${placeholders(stages.length)})
+         AND status IN ('done', 'failed', 'cancelled')`
+      ).run(itemId, ...stages)
     },
     resetRunning(maxAttempts, nowIso) {
       const requeued = db
