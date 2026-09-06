@@ -1,0 +1,5 @@
+allowBuilds:
+  esbuild: true
+  lightningcss: true
+  "@stylexjs/babel-plugin": true
+  "@stylexjs/shared": true

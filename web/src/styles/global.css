@@ -1,0 +1,109 @@
+/* The only plain CSS on the site: reset + @font-face, all inside `@layer reset` so StyleX's priority layers win (ADR 011). Literal colours mirror tokens.stylex.ts. */
+@layer reset;
+
+@font-face {
+  font-family: 'Instrument Serif';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/InstrumentSerif-Regular.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Instrument Serif';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/InstrumentSerif-Italic.ttf') format('truetype');
+}
+
+@layer reset {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    color-scheme: light dark;
+  }
+
+  body {
+    margin: 0;
+    background: #141210;
+    color: #efe9e1;
+  }
+
+  @media (prefers-color-scheme: light) {
+    body {
+      background: #f7f4ee;
+      color: #1d1a17;
+    }
+  }
+
+  p,
+  h1,
+  h2,
+  h3,
+  h4,
+  figure {
+    margin: 0;
+    font-weight: inherit;
+    font-size: inherit;
+  }
+
+  ul,
+  ol {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  img,
+  svg {
+    display: block;
+    max-width: 100%;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  button {
+    font: inherit;
+    color: inherit;
+    background: none;
+    border: 0;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+  }
+
+  :focus {
+    outline: none;
+  }
+
+  :focus-visible {
+    outline: 2px solid #d9a35a;
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: rgba(217, 163, 90, 0.16);
+  }
+
+  @media (prefers-color-scheme: light) {
+    :focus-visible {
+      outline-color: #b8813a;
+    }
+    ::selection {
+      background: rgba(184, 129, 58, 0.16);
+    }
+  }
+}

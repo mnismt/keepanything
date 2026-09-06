@@ -1,0 +1,1 @@
+../../../src/renderer/src/styles/shared.ts
