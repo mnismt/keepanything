@@ -46,6 +46,7 @@ export interface HandlerDeps {
   embeddings?: EmbeddingProvider
   /** Probe the configured provider. */
   testConnection?: () => Promise<TestConnectionResult>
+  resetData?: (senderId: number) => Promise<void>
   /** Called after settings change so the scheduler can pause/resume the ai lane. */
   onSettingsChanged?: () => void
 }

@@ -187,6 +187,7 @@ export const REQUEST_SCHEMAS = {
   'agent:undoRun': z.object({ runId: id }).strict() satisfies z.ZodType<IpcRequest<'agent:undoRun'>>,
   'agent:applyProposals': z.object({ runId: id }).strict() satisfies z.ZodType<IpcRequest<'agent:applyProposals'>>,
   'settings:get': empty satisfies z.ZodType<IpcRequest<'settings:get'>>,
+  'settings:resetData': empty satisfies z.ZodType<IpcRequest<'settings:resetData'>>,
   'settings:update': z
     .object({
       apiKey: text(500).optional(),

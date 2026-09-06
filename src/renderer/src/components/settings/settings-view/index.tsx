@@ -123,6 +123,8 @@ export function SettingsView(): React.JSX.Element {
   const [model, setModel] = useState(settings?.model ?? DEFAULT_MODEL)
   const [baseUrl, setBaseUrl] = useState(settings?.baseUrl ?? DEFAULT_BASE_URL)
   const [confirmReprocess, setConfirmReprocess] = useState(false)
+  const [resetting, setResetting] = useState(false)
+  const [resetError, setResetError] = useState<string | null>(null)
   const sheetRef = useRef<HTMLDivElement>(null)
 
   const selectedProvider: AiProviderId = settings?.provider ?? 'gmi'
@@ -414,6 +416,40 @@ export function SettingsView(): React.JSX.Element {
         </Section>
 
         <Section title="Danger zone">
+          <div {...stylex.props(styles.dangerBox)}>
+            <span {...stylex.props(styles.dangerText)} id="reset-data-description">
+              <span {...stylex.props(styles.dangerTitle)}>Reset data</span>
+              Remove all items, activity logs, app-managed files, notes and saved settings, including API keys. Original
+              files outside the library are kept. The app will restart. This cannot be undone.
+            </span>
+            <Button
+              variant="danger"
+              small
+              disabled={resetting}
+              aria-describedby="reset-data-description"
+              aria-busy={resetting}
+              onClick={async () => {
+                setResetting(true)
+                setResetError(null)
+                try {
+                  const result = await invoke('settings:resetData', undefined)
+                  if (!result.ok) setResetError(describeError(result.error))
+                } catch {
+                  setResetError("Couldn't reset data. Please try again.")
+                } finally {
+                  setResetting(false)
+                }
+              }}
+            >
+              <Trash2 size={14} strokeWidth={1.5} aria-hidden="true" />
+              Reset data
+            </Button>
+          </div>
+          {resetError ? (
+            <p role="alert" {...stylex.props(styles.privacyCol, styles.bad)}>
+              {resetError}
+            </p>
+          ) : null}
           <div {...stylex.props(styles.dangerBox)}>
             <span {...stylex.props(styles.dangerText)}>
               <span {...stylex.props(styles.dangerTitle)}>Reprocess everything</span>

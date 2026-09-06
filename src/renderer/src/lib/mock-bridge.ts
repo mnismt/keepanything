@@ -693,6 +693,8 @@ export function createMockBridge(): KeepAnythingApi {
       }
       case 'settings:get':
         return respond(state.settings as IpcResponseMap[C])
+      case 'settings:resetData':
+        return fail('NOT_IMPLEMENTED', 'Reset data is only available in the desktop app.')
       case 'settings:update': {
         const patch = p as IpcRequestMap['settings:update']
         const next: Settings = { ...state.settings }

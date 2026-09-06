@@ -1,5 +1,5 @@
 import { join } from 'node:path'
-import { app, ipcMain, protocol, utilityProcess } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, protocol, session, utilityProcess, webContents } from 'electron'
 import { MEDIA_SCHEME } from '../shared/constants'
 import type { TestConnectionResult } from '../shared/ipc'
 import { createAgentService } from './agent'
@@ -43,6 +43,7 @@ import { type Db, openDatabase } from './storage/db'
 import { createObjectStore } from './storage/object-store'
 import { buildPaths, ensureLibraryDirs } from './storage/paths'
 import { createRepositories } from './storage/repositories'
+import { applyPendingDataReset, finishDataReset, requestDataReset } from './storage/reset-data'
 
 /**
  * Bootstrap: scheme registration -> dev userData -> single instance -> whenReady ->
@@ -79,6 +80,13 @@ async function bootstrap(): Promise<void> {
     app.isPackaged ? join(process.resourcesPath, 'models') : join(app.getAppPath(), 'build/models')
   )
   ensureLibraryDirs(paths)
+
+  if (applyPendingDataReset(paths.userData)) {
+    await session.defaultSession.clearStorageData()
+    await session.defaultSession.clearCache()
+    finishDataReset(paths.userData)
+    ensureLibraryDirs(paths)
+  }
 
   const envDefaults = readEnvDefaults(process.env)
   const fileSink = createFileSink(paths.logsDir)
@@ -247,6 +255,7 @@ async function bootstrap(): Promise<void> {
   }
 
   const desktop = createDesktopActions(windows, repos)
+  let resetting = false
   const handlers = createHandlers({
     items,
     collections,
@@ -267,6 +276,32 @@ async function bootstrap(): Promise<void> {
     ai: () => stageDeps.ai as AIProvider,
     embeddings,
     testConnection,
+    resetData: async (senderId) => {
+      if (resetting) return
+      const sender = webContents.fromId(senderId)
+      const parent = sender && BrowserWindow.fromWebContents(sender)
+      if (!parent) return
+      resetting = true
+      try {
+        const result = await dialog.showMessageBox(parent, {
+          type: 'warning',
+          buttons: ['Cancel', 'Reset data'],
+          defaultId: 0,
+          cancelId: 0,
+          title: 'Reset data',
+          message: 'Reset everything in KeepAnything?',
+          detail:
+            'This permanently removes all library items, collections, activity logs, app-managed copies, notes, caches, saved settings and API keys. Original files and folders outside the library are untouched. This cannot be undone. The app will restart.',
+          noLink: true
+        })
+        if (result.response !== 1) return
+        requestDataReset(paths.userData)
+        app.relaunch()
+        setImmediate(() => app.quit())
+      } finally {
+        resetting = false
+      }
+    },
     onSettingsChanged: syncAiLane
   })
   createRouter({

@@ -86,6 +86,7 @@ export const IPC_CHANNELS = {
   agentUndoRun: 'agent:undoRun',
   agentApplyProposals: 'agent:applyProposals',
   settingsGet: 'settings:get',
+  settingsResetData: 'settings:resetData',
   settingsUpdate: 'settings:update',
   settingsTestConnection: 'settings:testConnection',
   systemStats: 'system:stats',
@@ -258,6 +259,7 @@ export interface IpcRequestMap {
   /** Apply the staged proposals of a command run. */
   'agent:applyProposals': { runId: string }
   'settings:get': void
+  'settings:resetData': void
   'settings:update': SettingsPatch
   'settings:testConnection': void
   'system:stats': void
@@ -307,6 +309,7 @@ export interface IpcResponseMap {
   'agent:undoRun': { undone: number }
   'agent:applyProposals': { applied: number; remaining: AgentProposal[] }
   'settings:get': Settings
+  'settings:resetData': void
   'settings:update': Settings
   'settings:testConnection': TestConnectionResult
   'system:stats': SystemStats

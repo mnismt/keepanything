@@ -244,6 +244,7 @@ agent:undo        { auditId } → void
 agent:undoRun     { runId } → { undone: number }        // reverts every un-undone audit row of the run, newest first
 agent:applyProposals { runId } → { applied: number; remaining: AgentProposal[] }   // applies staged proposals through the services (audit rows); proposals persist in agent_runs.result JSON
 settings:get () → Settings (key masked)   settings:update (patch) → Settings   settings:testConnection () → { ok, model, latencyMs }
+settings:resetData () → void // native confirmation, writes reset marker and restarts; next startup removes app-owned library data, logs and config before opening services, clears Electron storage/cache, then removes marker. Originals outside the library and runtime models are preserved. Environment defaults still apply.
 system:stats () → { items, connections, collections, processing, aiStatus: 'off'|'connected'|'offline'|'unconfigured' }
 system:contextMenu { kind: 'item'|'items'|'collection'|'background', ids, collectionId? } → { action?: string }
 system:openExternal { url }        system:chooseFiles () → { paths }        system:revealLibrary () → void   // shell.showItemInFolder of the library dir
