@@ -1,15 +1,15 @@
 import * as stylex from '@stylexjs/stylex'
 import { Check, Copy, FolderOpen, KeyRound, PlugZap, RotateCw, Trash2, X } from 'lucide-react'
 import { type ReactNode, useEffect, useRef, useState } from 'react'
-import { DEFAULT_BASE_URL, DEFAULT_MODEL } from '../../../../../shared/constants'
-import type { CaptureMode, Theme } from '../../../../../shared/types'
+import { AI_PROVIDER_DEFAULTS, DEFAULT_BASE_URL, DEFAULT_MODEL } from '../../../../../shared/constants'
+import type { AiProviderId, CaptureMode, Theme } from '../../../../../shared/types'
 import { describeError, invoke } from '../../../lib/ipc-client'
 import { useSettings } from '../../../state/settings'
 import { useToasts } from '../../../state/toasts'
 import { useUi } from '../../../state/ui'
 import { shared } from '../../../styles/shared'
 import { Button } from '../../common'
-import { GmiCloudLogo } from '../provider-logo'
+import { GmiCloudLogo, OpenRouterLogo } from '../provider-logo'
 import { styles } from './styles'
 
 function Row({ label, children }: { label: string; children: ReactNode }): React.JSX.Element {
@@ -25,7 +25,7 @@ function Section({ title, sub, children }: { title: string; sub?: string; childr
   return (
     <section {...stylex.props(styles.section)} aria-label={title}>
       <div {...stylex.props(styles.sectionHead)}>
-        <h3 {...stylex.props(shared.eyebrow)}>{title}</h3>
+        <span {...stylex.props(shared.eyebrow)}>{title}</span>
         {sub ? <span {...stylex.props(styles.sectionSub)}>{sub}</span> : null}
       </div>
       <div {...stylex.props(styles.card)}>{children}</div>
@@ -41,21 +41,21 @@ function Seg<T extends string>({
 }: {
   value: T
   options: ReadonlyArray<{ value: T; label: string }>
-  onChange: (v: T) => void
+  onChange: (next: T) => void
   label: string
 }): React.JSX.Element {
   return (
-    <div {...stylex.props(styles.seg)} role="radiogroup" aria-label={label}>
-      {options.map((o) => (
+    <div role="radiogroup" aria-label={label} {...stylex.props(styles.seg)}>
+      {options.map((option) => (
         <button
-          key={o.value}
+          key={option.value}
           type="button"
           role="radio"
-          aria-checked={o.value === value}
-          {...stylex.props(styles.segBtn, o.value === value && styles.segOn)}
-          onClick={() => onChange(o.value)}
+          aria-checked={option.value === value}
+          {...stylex.props(styles.segBtn, option.value === value && styles.segOn)}
+          onClick={() => onChange(option.value)}
         >
-          {o.label}
+          {option.label}
         </button>
       ))}
     </div>
@@ -73,10 +73,32 @@ const IMPORT_MODES = [
   { value: 'reference', label: 'Reference in place' }
 ] as const satisfies ReadonlyArray<{ value: CaptureMode; label: string }>
 
-const UNDERSTANDING = [
-  { value: 'gmi', label: 'On' },
-  { value: 'off', label: 'Off' }
-] as const
+const PROVIDERS = [
+  { value: 'gmi', label: 'GMI Cloud' },
+  { value: 'openrouter', label: 'OpenRouter' }
+] as const satisfies ReadonlyArray<{ value: AiProviderId; label: string }>
+
+const PROVIDER_META: Record<
+  AiProviderId,
+  { name: string; sub: string; keyPlaceholder: string; keyAria: string; modelPlaceholder: string; modelHint: string }
+> = {
+  gmi: {
+    name: 'GMI Cloud',
+    sub: 'MiniMax reasoning via OpenAI-compatible chat completions',
+    keyPlaceholder: 'Paste your GMI Cloud key',
+    keyAria: 'GMI API key',
+    modelPlaceholder: DEFAULT_MODEL,
+    modelHint: ''
+  },
+  openrouter: {
+    name: 'OpenRouter',
+    sub: 'OpenAI-compatible chat completions via OpenRouter',
+    keyPlaceholder: 'Paste your OpenRouter key',
+    keyAria: 'OpenRouter API key',
+    modelPlaceholder: AI_PROVIDER_DEFAULTS.openrouter.model,
+    modelHint: 'Any OpenRouter model ID that supports tools and image input. Usage is billed by OpenRouter.'
+  }
+}
 
 /**
  * The plain key is never rendered back: only `apiKeyMasked` from main.
@@ -98,10 +120,15 @@ export function SettingsView(): React.JSX.Element {
   const [confirmReprocess, setConfirmReprocess] = useState(false)
   const sheetRef = useRef<HTMLDivElement>(null)
 
+  const selectedProvider: AiProviderId = settings?.provider ?? 'gmi'
+  const providerMeta = PROVIDER_META[selectedProvider]
+
   useEffect(() => {
     if (settings) {
       setModel(settings.model)
       setBaseUrl(settings.baseUrl)
+      setKey('')
+      setEditingKey(false)
     }
   }, [settings])
   useEffect(() => sheetRef.current?.querySelector<HTMLElement>('button, input, select')?.focus(), [])
@@ -109,7 +136,7 @@ export function SettingsView(): React.JSX.Element {
   const saveKey = async (): Promise<void> => {
     const trimmed = key.trim()
     if (!trimmed) return
-    const r = await update({ apiKey: trimmed, aiMode: 'gmi' })
+    const r = await update({ apiKey: trimmed, ai: 'on' })
     setKey('')
     if (r.ok) {
       setEditingKey(false)
@@ -142,7 +169,6 @@ export function SettingsView(): React.JSX.Element {
 
   const hasKey = settings?.hasApiKey ?? false
   const showKeyField = editingKey || !hasKey
-  const understanding = settings?.aiMode === 'gmi' ? 'gmi' : 'off'
 
   const status = !hasKey
     ? { tone: null, text: 'No key yet' }
@@ -153,6 +179,8 @@ export function SettingsView(): React.JSX.Element {
         : lastTest
           ? { tone: styles.dotBad, text: 'Not reachable' }
           : { tone: null, text: 'Key saved' }
+
+  const disableTest = testing || !hasKey
 
   const embeddings = settings
     ? settings.embeddings.provider === 'minilm'
@@ -180,18 +208,26 @@ export function SettingsView(): React.JSX.Element {
         </div>
 
         <Section title="Provider" sub="Used only to understand what you keep">
+          <Row label="Provider">
+            <div {...stylex.props(styles.control)}>
+              <Seg
+                label="Provider"
+                value={selectedProvider}
+                options={PROVIDERS}
+                onChange={(v) => void commit({ provider: v })}
+              />
+            </div>
+          </Row>
           <div {...stylex.props(styles.provider)}>
             <span {...stylex.props(styles.providerMark)}>
-              <GmiCloudLogo mark height={16} />
+              {selectedProvider === 'gmi' ? <GmiCloudLogo mark height={16} /> : <OpenRouterLogo height={14} />}
             </span>
             <div {...stylex.props(styles.providerText)}>
               <span {...stylex.props(styles.providerName)}>
-                GMI Cloud
-                <span {...stylex.props(styles.badge)}>Default</span>
+                {providerMeta.name}
+                {selectedProvider === 'gmi' ? <span {...stylex.props(styles.badge)}>Default</span> : null}
               </span>
-              <span {...stylex.props(styles.providerSub)}>
-                MiniMax reasoning via OpenAI-compatible chat completions
-              </span>
+              <span {...stylex.props(styles.providerSub)}>{providerMeta.sub}</span>
             </div>
             <span {...stylex.props(styles.status)} aria-live="polite">
               <span {...stylex.props(styles.dot, status.tone)} />
@@ -207,11 +243,11 @@ export function SettingsView(): React.JSX.Element {
                   type="password"
                   autoComplete="off"
                   spellCheck={false}
-                  placeholder={hasKey ? 'Paste a new key to replace it' : 'Paste your GMI Cloud key'}
+                  placeholder={hasKey ? 'Paste a new key to replace it' : providerMeta.keyPlaceholder}
                   value={key}
                   onChange={(e) => setKey(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && void saveKey()}
-                  aria-label="GMI API key"
+                  aria-label={providerMeta.keyAria}
                 />
                 <Button small onClick={() => void saveKey()} disabled={!key.trim()}>
                   <Check size={14} strokeWidth={1.5} />
@@ -234,7 +270,7 @@ export function SettingsView(): React.JSX.Element {
             ) : (
               <div {...stylex.props(styles.control)}>
                 <span {...stylex.props(styles.masked)}>••••••••{settings?.apiKeyMasked?.slice(-4) ?? ''}</span>
-                <Button variant="quiet" small onClick={() => void testConnection()} disabled={testing}>
+                <Button variant="quiet" small onClick={() => void testConnection()} disabled={disableTest}>
                   <PlugZap size={14} strokeWidth={1.5} />
                   Test
                 </Button>
@@ -274,23 +310,13 @@ export function SettingsView(): React.JSX.Element {
                 {...stylex.props(styles.field, styles.mono)}
                 value={model}
                 spellCheck={false}
+                placeholder={providerMeta.modelPlaceholder}
                 onChange={(e) => setModel(e.target.value)}
-                onBlur={() => model.trim() && model.trim() !== settings?.model && void commit({ model: model.trim() })}
+                onBlur={() => model.trim() !== settings?.model && void commit({ model: model.trim() })}
                 aria-label="Model"
               />
             </div>
-          </Row>
-          <Row label="Understanding">
-            <div {...stylex.props(styles.control)}>
-              {/* env-forced `mock` has no option; it shows as Off */}
-              <Seg
-                label="Understanding"
-                value={understanding}
-                options={UNDERSTANDING}
-                onChange={(v) => void commit({ aiMode: v })}
-              />
-            </div>
-            <span {...stylex.props(styles.hint)}>Off keeps everything but never sends anything to the provider.</span>
+            {providerMeta.modelHint ? <span {...stylex.props(styles.hint)}>{providerMeta.modelHint}</span> : null}
           </Row>
         </Section>
 
@@ -376,6 +402,9 @@ export function SettingsView(): React.JSX.Element {
               <h4 {...stylex.props(shared.eyebrow, styles.privacyHead)}>Sent to the provider</h4>
               Only while understanding: a trimmed excerpt of one item at a time (or a downscaled image), plus one-line
               summaries of related items. Never the whole library.
+              {selectedProvider === 'openrouter' ? (
+                <> Requests go through OpenRouter to the selected model's upstream provider.</>
+              ) : null}
             </div>
           </div>
         </Section>

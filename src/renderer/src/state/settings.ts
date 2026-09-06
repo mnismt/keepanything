@@ -37,6 +37,10 @@ export const useSettings = create<SettingsState>((set, get) => ({
   },
 
   async update(patch) {
+    // Anything that changes which endpoint or key is used invalidates the last probe; main discards a stale one.
+    if ('provider' in patch || 'model' in patch || 'baseUrl' in patch || 'apiKey' in patch || patch.clearApiKey) {
+      set({ lastTest: null })
+    }
     const result = await invoke('settings:update', patch)
     if (result.ok) set({ settings: result.data })
     return result

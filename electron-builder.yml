@@ -1,8 +1,9 @@
 # Electron Builder configuration (macOS, Apple Silicon only).
-# Unsigned on purpose: `identity: null` disables code signing. See README for Gatekeeper notes.
-appId: com.doanlabs.keepanything
+# Signed with the Developer ID in the login keychain and notarized when APPLE_KEYCHAIN_PROFILE
+# (or APPLE_ID + APPLE_APP_SPECIFIC_PASSWORD + APPLE_TEAM_ID) is set. See README for setup.
+appId: com.mnismt.keepanything
 productName: KeepAnything
-copyright: Copyright © 2026 doan-labs
+copyright: Copyright © 2026 mnismt
 electronLanguages: [en]
 directories:
   output: release
@@ -34,11 +35,11 @@ mac:
   target:
     - target: dmg
       arch: [arm64]
-  identity: null
-  hardenedRuntime: false
+  hardenedRuntime: true
+  # `spctl --assess` runs right after signing, before notarization, so it would always fail here.
   gatekeeperAssess: false
   darkModeSupport: true
   extendInfo:
-    NSHumanReadableCopyright: Copyright © 2026 doan-labs
+    NSHumanReadableCopyright: Copyright © 2026 mnismt
 dmg:
   sign: false

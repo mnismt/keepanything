@@ -19,7 +19,7 @@ The reasoning behind these, one file per decision: `docs/decisions/` (see its RE
 | --- | --- | --- |
 | Desktop shell | **Electron 44** with the existing toolchain (electron-vite 5, React 19, TS 5.9 strict, Vitest, Playwright, electron-builder) | Working pipeline in repo; Tauri = Rust rewrite with no product upside. |
 | Database | **`node:sqlite`** `DatabaseSync` (SQLite 3.53, FTS5 + JSON1) | Verified inside Electron 44 (Node 24.19). Zero native deps. Unit tests run on system Node ≥ 24. |
-| Reasoning model | **`MiniMaxAI/MiniMax-M3`** via GMI Cloud, OpenAI-compatible `POST https://api.gmi-serving.com/v1/chat/completions` | Free tier. Verified: tool calling works, vision works (`image_url` data URIs), 1M ctx. `response_format: json_schema` is **not enforced** (fenced JSON comes back) → extract + zod + retry. |
+| Reasoning model | **`MiniMaxAI/MiniMax-M3`** via GMI Cloud (default), OpenAI-compatible `POST https://api.gmi-serving.com/v1/chat/completions`. Same transport also targets **OpenRouter** (`https://openrouter.ai/api/v1`, default model `minimax/minimax-m3:free`, native `tool_choice`, errors embedded in HTTP 200 handled, 402 = credits). Per-provider key + profile in `config.json` v2 (`settings.providers.{gmi,openrouter}`), one `ai: on\|off` switch and one `provider` selection. | Free tier. Verified: tool calling works, vision works (`image_url` data URIs), 1M ctx. `response_format: json_schema` is **not enforced** (fenced JSON comes back) → extract + zod + retry. |
 | Embeddings | **Local** `@huggingface/transformers` `Xenova/all-MiniLM-L6-v2` (q8, 384-d) running in a **utilityProcess worker**. Model files shipped with the app (`build/models`, fetched by a script) and seeded into `<userData>/models`; remote download only as fallback. Deterministic hashed TF-IDF vector (`local-hash`, 384-d) as a last-resort fallback. | GMI has no embeddings endpoint. MiniLM verified in Electron. |
 | Vector search | In-memory normalized `Float32Array` matrix in main (loaded from `embeddings` BLOBs at startup, appended on upsert); dot products per query; filtered by `model` | ~23 MB at 15k×384; sub-10 ms queries. |
 | Full-text search | SQLite **FTS5**, normal content-storing table `items_fts` with `item_id UNINDEXED`, `tokenize='porter unicode61 remove_diacritics 2'`, `prefix='2 3'`, synced explicitly by the item repository (DELETE+INSERT in the same transaction) | Contentless/external-content variants break DELETE / snippet / rowid stability. |
@@ -505,10 +505,10 @@ Multi-item: `SelectionBar` "3 selected · Compare · What do these have in commo
 → `agent:command` with template + itemIds; on `note` result open the note (or toast "Created … · Show").
 
 **StatusStack** (bottom-right): "Saved." is frame one of the same entry; >1 in flight collapses to "Keeping 7 items · 3 understood";
-final line only from real results ("Found 4 related things · Added to mnismt" + Undo). `toasts` store: max 3, 6 s unless hovered,
+final line only from real results ("Linked to 4 things · Added to mnismt" + Undo). `toasts` store: max 3, 6 s unless hovered,
 actions Undo/Show/Retry, ⌘Z → newest undoable.
 
-**Settings** (sheet): GMI key (masked, encrypted at rest, "Test connection"), model, import mode, theme, library location + Reveal,
+**Settings** (sheet): provider (GMI Cloud / OpenRouter), API key per provider (masked, encrypted at rest, "Test connection"), base URL, model, import mode, theme, library location + Reveal,
 privacy panel (what is stored locally vs sent to GMI and when), embeddings status (model present/downloading), Reprocess all, danger zone.
 
 ---

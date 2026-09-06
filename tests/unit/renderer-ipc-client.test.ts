@@ -35,7 +35,9 @@ describe('envelope unwrapping', () => {
   })
 
   it('describes errors in product voice', () => {
-    expect(describeError({ code: 'AI_NOT_CONFIGURED', message: '' })).toBe('Connect GMI in Settings to do this.')
+    expect(describeError({ code: 'AI_NOT_CONFIGURED', message: '' })).toBe(
+      'Connect an AI provider in Settings to do this.'
+    )
     expect(describeError({ code: 'OFFLINE', message: '' })).toContain('offline')
     expect(describeError({ code: 'INTERNAL', message: 'boom' })).toBe('boom')
     expect(describeError({ code: 'INTERNAL', message: '' })).toBe('Something went wrong.')

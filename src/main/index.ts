@@ -86,14 +86,9 @@ async function bootstrap(): Promise<void> {
   const logger: Logger = createLogger({
     level: debugMode ? 'debug' : 'info',
     sinks,
-    secrets: envDefaults.apiKey ? [envDefaults.apiKey] : []
+    secrets: Object.values(envDefaults.providers ?? {}).flatMap((p) => (p.apiKey ? [p.apiKey] : []))
   })
-  logger.info('starting', {
-    version: app.getVersion(),
-    userData: paths.userData,
-    dev: isDev,
-    e2e: e2eMode
-  })
+  logger.info('starting', { version: app.getVersion(), userData: paths.userData, dev: isDev, e2e: e2eMode })
 
   const envMode = envAiMode()
   const settings = createConfig(paths, envMode ? { ...envDefaults, aiMode: envMode } : envDefaults, logger)
@@ -101,7 +96,6 @@ async function bootstrap(): Promise<void> {
   const db: Db = openDatabase(paths.dbFile)
   db.migrate()
   logger.info('database ready', { schemaVersion: db.schemaVersion() })
-
   const clock = systemClock
   const repos = createRepositories(db)
   const events = createEventBus(logger)
@@ -126,6 +120,7 @@ async function bootstrap(): Promise<void> {
     const current = settings.get()
     return createAiProvider({
       mode: current.aiMode,
+      provider: current.provider,
       apiKey: settings.apiKey(),
       baseUrl: current.baseUrl,
       model: current.model,
@@ -222,22 +217,32 @@ async function bootstrap(): Promise<void> {
 
   /** `settings:testConnection`: one tiny completion against the configured provider. */
   const testConnection = async (): Promise<TestConnectionResult> => {
-    const ai = stageDeps.ai as AIProvider
+    const aiAtStart = stageDeps.ai as AIProvider
     const started = Date.now()
     try {
-      const response = await ai.chat({
+      const response = await aiAtStart.chat({
         messages: [{ role: 'user', content: 'Reply with the single word OK.' }],
         maxTokens: 16,
         timeoutMs: 20_000,
         task: 'test_connection'
       })
-      settings.setAiStatus(null)
+      if ((stageDeps.ai as AIProvider) === aiAtStart) {
+        settings.setAiStatus(null)
+      }
       return { ok: true, model: response.model, latencyMs: Date.now() - started }
     } catch (error) {
-      const message = isKaError(error) ? error.message : "Couldn't reach the provider."
-      if (isKaError(error) && (error.code === 'OFFLINE' || error.code === 'AI_UNAVAILABLE'))
-        settings.setAiStatus('offline')
-      return { ok: false, model: ai.model, latencyMs: Date.now() - started, error: message }
+      if ((stageDeps.ai as AIProvider) === aiAtStart) {
+        const message = isKaError(error) ? error.message : "Couldn't reach the provider."
+        if (isKaError(error) && (error.code === 'OFFLINE' || error.code === 'AI_UNAVAILABLE'))
+          settings.setAiStatus('offline')
+        return { ok: false, model: aiAtStart.model, latencyMs: Date.now() - started, error: message }
+      }
+      return {
+        ok: false,
+        model: aiAtStart.model,
+        latencyMs: Date.now() - started,
+        error: 'Provider switched mid-test.'
+      }
     }
   }
 

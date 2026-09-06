@@ -1,4 +1,5 @@
-import { DEFAULT_BASE_URL, DEFAULT_MODEL, LIMITS } from '../../shared/constants'
+import { AI_PROVIDER_DEFAULTS, AI_PROVIDER_LABEL, LIMITS } from '../../shared/constants'
+import type { AiProviderId } from '../../shared/types'
 import { KaError } from '../core/errors'
 import type {
   AIProvider,
@@ -20,7 +21,9 @@ import { STRUCTURED_MAX_TOKENS, withStructured } from './structured'
 /** Injected sleep so retry tests never wait. Rejects when `signal` aborts. */
 export type SleepFn = (ms: number, signal?: AbortSignal) => Promise<void>
 
-export interface GmiProviderOptions {
+export interface OpenAiCompatibleProviderOptions {
+  /** Selects request/response behaviour (auth header, error mapping, tool-choice shape, provider id). */
+  provider: AiProviderId
   apiKey: string
   baseUrl?: string
   model?: string
@@ -49,45 +52,55 @@ export const RETRY_DELAYS_MS: readonly number[] = [2_000, 6_000, 15_000]
 /** `retry-after` is honoured only up to this (GMI says 60 s, the outage is transient). */
 export const RETRY_AFTER_CAP_MS = 15_000
 
-const defaultSleep: SleepFn = (ms, signal) =>
-  new Promise((resolve, reject) => {
-    if (signal?.aborted) {
-      reject(signal.reason instanceof Error ? signal.reason : new Error('aborted'))
-      return
-    }
-    const timer = setTimeout(() => {
-      signal?.removeEventListener('abort', onAbort)
-      resolve()
-    }, ms)
-    function onAbort(): void {
-      clearTimeout(timer)
-      reject(signal?.reason instanceof Error ? signal.reason : new Error('aborted'))
-    }
-    signal?.addEventListener('abort', onAbort, { once: true })
+const defaultSleep: SleepFn = (ms, signal) => {
+  if (signal?.aborted) {
+    return Promise.reject(signal.reason instanceof Error ? signal.reason : new Error('aborted'))
+  }
+  let resolve!: () => void
+  let reject!: (reason: unknown) => void
+  const promise = new Promise<void>((res, rej) => {
+    resolve = res
+    reject = rej
   })
+  const timer = setTimeout(() => {
+    signal?.removeEventListener('abort', onAbort)
+    resolve()
+  }, ms)
+  function onAbort(): void {
+    clearTimeout(timer)
+    reject(signal?.reason instanceof Error ? signal.reason : new Error('aborted'))
+  }
+  signal?.addEventListener('abort', onAbort, { once: true })
+  return promise
+}
 
 const systemClock: Clock = { now: () => new Date(), nowIso: () => new Date().toISOString() }
 
 /** Wire body of one request (OpenAI chat completions). */
-export interface GmiRequestBody {
+export interface OpenAiCompatibleRequestBody {
   model: string
   messages: ChatMessage[]
   max_tokens: number
   temperature: number
   top_p?: number
   tools?: ToolSpec[]
-  tool_choice?: 'auto' | 'required'
+  tool_choice?: ToolChoice
 }
 
 /**
- * Emulate tool choices the server ignores: a named choice becomes "only that tool +
- * required", `'none'` sends no tools at all. `'auto'`/`'required'` pass through.
+ * Resolve the wire `tools`/`tool_choice` for the active provider. GMI ignores object tool choices
+ * and rejects `'none'` while expecting tools to still be sent, so we emulate those cases. OpenRouter
+ * forwards the native OpenAI shape verbatim and omits `tools` entirely when `toolChoice === 'none'`.
  */
 export function resolveTools(
+  provider: AiProviderId,
   tools: ToolSpec[] | undefined,
   toolChoice: ToolChoice | undefined
-): Pick<GmiRequestBody, 'tools' | 'tool_choice'> {
+): Pick<OpenAiCompatibleRequestBody, 'tools' | 'tool_choice'> {
   if (!tools || tools.length === 0 || toolChoice === 'none') return {}
+  if (provider === 'openrouter') {
+    return { tools, tool_choice: toolChoice ?? 'auto' }
+  }
   if (typeof toolChoice === 'object') {
     const named = tools.filter((tool) => tool.function.name === toolChoice.function.name)
     return { tools: named.length > 0 ? named : tools, tool_choice: 'required' }
@@ -127,8 +140,16 @@ interface WireResponse {
   id?: unknown
   model?: unknown
   choices?: {
-    message?: { role?: unknown; content?: unknown; tool_calls?: unknown; reasoning_content?: unknown }
+    message?: {
+      role?: unknown
+      content?: unknown
+      tool_calls?: unknown
+      reasoning?: unknown
+      reasoning_content?: unknown
+      reasoning_details?: unknown
+    }
     finish_reason?: unknown
+    error?: { message?: unknown; code?: unknown }
   }[]
   usage?: {
     prompt_tokens?: unknown
@@ -143,7 +164,12 @@ function asNumber(value: unknown, fallback = 0): number {
   return typeof value === 'number' && Number.isFinite(value) ? value : fallback
 }
 
-/** Normalise the wire message into `AssistantMessage` (think blocks stripped, `''` + tools -> null). */
+/**
+ * Normalise the wire message into `AssistantMessage` (think blocks stripped, `''` + tools -> null,
+ * opaque reasoning fields copied verbatim). `reasoning` and `reasoning_content` are kept as strings;
+ * `reasoning_details` is an opaque array (e.g. encrypted reasoning signatures) that survives a tool
+ * round trip unchanged.
+ */
 export function normalizeAssistantMessage(
   message: NonNullable<WireResponse['choices']>[number]['message']
 ): AssistantMessage {
@@ -170,6 +196,12 @@ export function normalizeAssistantMessage(
   if (typeof message?.reasoning_content === 'string' && message.reasoning_content.length > 0) {
     out.reasoning_content = message.reasoning_content
   }
+  if (typeof message?.reasoning === 'string' && message.reasoning.length > 0) {
+    out.reasoning = message.reasoning
+  }
+  if (Array.isArray(message?.reasoning_details)) {
+    out.reasoning_details = message.reasoning_details
+  }
   return out
 }
 
@@ -185,10 +217,32 @@ class RetryableError extends Error {
   }
 }
 
-export function createGmiProvider(opts: GmiProviderOptions): AIProvider {
-  const baseUrl = (opts.baseUrl ?? DEFAULT_BASE_URL).replace(/\/+$/, '')
-  const model = opts.model ?? DEFAULT_MODEL
-  const logger = opts.logger.child({ provider: 'gmi', model })
+/** Reasoning text is billed as input if echoed; only the opaque `reasoning_details` must round-trip. */
+function forWire(message: ChatMessage): ChatMessage {
+  if (message.role !== 'assistant') return message
+  const { reasoning: _r, reasoning_content: _rc, ...rest } = message
+  return rest
+}
+
+/** OpenRouter sometimes returns `code` as a number, sometimes as a string; coerce to number when possible. */
+function errorCodeNumber(error: { code?: unknown } | null | undefined): number | null {
+  if (!error) return null
+  const code = error.code
+  if (typeof code === 'number' && Number.isFinite(code)) return code
+  if (typeof code === 'string') {
+    const parsed = Number(code)
+    if (Number.isFinite(parsed)) return parsed
+  }
+  return null
+}
+
+export function createOpenAiCompatibleProvider(opts: OpenAiCompatibleProviderOptions): AIProvider {
+  const provider = opts.provider
+  const label = AI_PROVIDER_LABEL[provider]
+  const fallback = AI_PROVIDER_DEFAULTS[provider]
+  const baseUrl = (opts.baseUrl ?? fallback.baseUrl).replace(/\/+$/, '')
+  const model = opts.model ?? fallback.model
+  const logger = opts.logger.child({ provider, model })
   const clock = opts.clock ?? systemClock
   const fetchImpl = opts.fetchImpl ?? globalThis.fetch
   const sleep = opts.sleep ?? defaultSleep
@@ -199,26 +253,27 @@ export function createGmiProvider(opts: GmiProviderOptions): AIProvider {
   const defaultTemperature = opts.defaultTemperature ?? DEFAULT_TEMPERATURE
   const endpoint = `${baseUrl}/chat/completions`
 
-  if (!opts.apiKey) throw new KaError('AI_NOT_CONFIGURED', 'GMI API key is missing.')
+  if (!opts.apiKey) throw new KaError('AI_NOT_CONFIGURED', `${label} API key is missing.`)
+  if (!model.trim()) throw new KaError('AI_NOT_CONFIGURED', 'Enter a model ID in Settings.')
   const authorization = `Bearer ${opts.apiKey}`
 
-  function buildBody(req: ChatRequest, messages: ChatMessage[]): GmiRequestBody {
+  function buildBody(req: ChatRequest, messages: ChatMessage[]): OpenAiCompatibleRequestBody {
     const temperature = req.temperature ?? (req.task ? temperatures[req.task] : undefined) ?? defaultTemperature
-    const body: GmiRequestBody = {
+    const body: OpenAiCompatibleRequestBody = {
       model,
-      messages,
+      messages: messages.map(forWire),
       max_tokens: req.maxTokens ?? STRUCTURED_MAX_TOKENS,
       temperature: Math.min(2, Math.max(0, temperature)),
-      ...resolveTools(req.tools, req.toolChoice)
+      ...resolveTools(provider, req.tools, req.toolChoice)
     }
     if (req.topP !== undefined) body.top_p = req.topP
     return body
   }
 
   async function attemptOnce(
-    body: GmiRequestBody,
+    body: OpenAiCompatibleRequestBody,
     req: ChatRequest
-  ): Promise<{ json: WireResponse; requestId: string | null; latencyMs: number }> {
+  ): Promise<{ json: WireResponse; requestId: string | null; latencyMs: number; status: number }> {
     const controller = new AbortController()
     const timer = setTimeout(() => controller.abort(new Error('timeout')), req.timeoutMs ?? timeoutMs)
     const signal = req.signal ? AbortSignal.any([req.signal, controller.signal]) : controller.signal
@@ -239,7 +294,7 @@ export function createGmiProvider(opts: GmiProviderOptions): AIProvider {
     }
     clearTimeout(timer)
     const latencyMs = Date.now() - started
-    const requestId = response.headers.get('x-gmi-request-id')
+    const requestId = provider === 'openrouter' ? null : response.headers.get('x-gmi-request-id')
     const text = await response.text()
     let json: WireResponse = {}
     try {
@@ -259,16 +314,23 @@ export function createGmiProvider(opts: GmiProviderOptions): AIProvider {
           parseRetryAfter(response.headers.get('retry-after'), clock.now())
         )
       }
-      if (status === 401 || status === 403) {
-        throw new KaError('AI_NOT_CONFIGURED', 'GMI rejected the API key. Check it in Settings.', {
-          status,
-          requestId,
-          message
-        })
+      const detail = { status, requestId, message }
+      if (status === 401) {
+        throw new KaError('AI_NOT_CONFIGURED', `${label} rejected the API key. Check it in Settings.`, detail)
+      }
+      if (status === 402) {
+        throw new KaError('AI_UNAVAILABLE', `${label} reports insufficient credits. Add credits and try again.`, detail)
+      }
+      if (status === 403) {
+        throw new KaError(
+          'AI_UNAVAILABLE',
+          `${label} denied this request. Check account permissions and content restrictions.`,
+          detail
+        )
       }
       throw new ImageAwareHttpError(status, message, requestId)
     }
-    return { json, requestId, latencyMs }
+    return { json, requestId, latencyMs, status: response.status }
   }
 
   async function chat(req: ChatRequest): Promise<ChatResponse> {
@@ -290,8 +352,17 @@ export function createGmiProvider(opts: GmiProviderOptions): AIProvider {
       attempts++
       const body = buildBody(req, messages)
       try {
-        const { json, requestId, latencyMs } = await attemptOnce(body, req)
+        const { json, requestId, latencyMs, status } = await attemptOnce(body, req)
         const choice = json.choices?.[0]
+        // OpenRouter reports upstream failures inside a 200 body; transient codes get the normal backoff.
+        const embedded = json.error ?? choice?.error
+        if (embedded || choice?.finish_reason === 'error') {
+          const code = errorCodeNumber(embedded)
+          const message =
+            typeof embedded?.message === 'string' ? embedded.message : `${label} returned an error response.`
+          if (code === 429 || (code !== null && code >= 500)) throw new RetryableError(message, 'http', code)
+          throw new KaError('AI_UNAVAILABLE', message, { status, ...(code !== null ? { code } : {}) })
+        }
         if (!choice?.message) {
           throw new RetryableError('Malformed response: no choices[0].message.', 'http', 200)
         }
@@ -320,8 +391,9 @@ export function createGmiProvider(opts: GmiProviderOptions): AIProvider {
           imagesDropped,
           toolCalls: message.tool_calls?.map((call) => call.function.name)
         })
+        const id = typeof json.id === 'string' ? json.id : undefined
         return {
-          id: typeof json.id === 'string' ? json.id : undefined,
+          id,
           model: typeof json.model === 'string' ? json.model : model,
           message,
           finishReason,
@@ -347,10 +419,10 @@ export function createGmiProvider(opts: GmiProviderOptions): AIProvider {
           const code = error.kind === 'network' ? 'OFFLINE' : 'AI_UNAVAILABLE'
           const text =
             error.kind === 'network'
-              ? "Couldn't reach GMI. Check the connection."
+              ? `Couldn't reach ${label}. Check the connection.`
               : error.kind === 'timeout'
                 ? 'The model did not answer in time.'
-                : 'GMI is busy right now. Try again in a moment.'
+                : `${label} is busy right now. Try again in a moment.`
           logger.warn('ai.chat.failed', {
             task,
             kind: error.kind,
@@ -382,7 +454,7 @@ export function createGmiProvider(opts: GmiProviderOptions): AIProvider {
     }
   }
 
-  return withStructured({ id: 'gmi', model, chat })
+  return withStructured({ id: provider, model, chat })
 }
 
 /** Non-retryable 4xx other than auth; `chat` turns it into an image-less retry when images were sent. */

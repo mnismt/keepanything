@@ -567,6 +567,7 @@ export const FIXTURE_RELATIONSHIPS: Relationship[] = [
 
 export const FIXTURE_SETTINGS: Settings = {
   aiMode: 'mock',
+  provider: 'gmi',
   model: DEFAULT_MODEL,
   baseUrl: DEFAULT_BASE_URL,
   hasApiKey: false,

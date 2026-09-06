@@ -18,6 +18,7 @@ import { createHarness, type Harness } from './helpers/harness'
 
 const settings: Settings = {
   aiMode: 'mock',
+  provider: 'gmi',
   model: 'm',
   baseUrl: 'https://x',
   hasApiKey: false,

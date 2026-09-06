@@ -707,18 +707,19 @@ export function createMockBridge(): KeepAnythingApi {
       case 'settings:update': {
         const patch = p as IpcRequestMap['settings:update']
         const next: Settings = { ...state.settings }
+        if (patch.provider) next.provider = patch.provider
         if (patch.apiKey) {
           next.hasApiKey = true
           next.apiKeyMasked = `${patch.apiKey.slice(0, 3)}…${patch.apiKey.slice(-4)}`
-          next.aiMode = 'gmi'
         }
         if (patch.clearApiKey) {
           next.hasApiKey = false
           next.apiKeyMasked = null
         }
-        if (patch.aiMode) next.aiMode = patch.aiMode
-        if (patch.model) next.model = patch.model
-        if (patch.baseUrl) next.baseUrl = patch.baseUrl
+        if (patch.ai) next.aiMode = patch.ai === 'off' ? 'off' : next.provider
+        else if (patch.provider && next.aiMode !== 'off' && next.aiMode !== 'mock') next.aiMode = next.provider
+        if (patch.model !== undefined) next.model = patch.model
+        if (patch.baseUrl !== undefined) next.baseUrl = patch.baseUrl
         if (patch.importMode) next.importMode = patch.importMode
         if (patch.theme) next.theme = patch.theme
         state.settings = next

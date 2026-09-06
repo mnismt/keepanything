@@ -78,7 +78,7 @@ describe('organizePlanSchema', () => {
       relationships: [
         { sourceId: 'a', targetId: 'b', type: 'Alternative To', description: 'Both tile windows.', confidence: 0.8 }
       ],
-      summary: 'Found 1 related thing.',
+      summary: 'Linked to 1 thing.',
       confidence: 0.7
     })
     expect(plan.relationships[0]?.type).toBe('alternative_to')
@@ -150,16 +150,16 @@ describe('folderUnderstandingSchema', () => {
   it('round-trips with nested understanding and nullable collection', () => {
     const value = folderUnderstandingSchema.parse({
       understanding: { ...understandingSample, kind: 'other' },
-      purpose: 'Working files for the Doan Labs brand refresh.',
+      purpose: 'Working files for the mnismt brand refresh.',
       keyFiles: [{ path: 'brief.md', why: 'The brief.' }],
       collection: {
-        name: 'Doan Labs visual direction',
-        description: 'Brand exploration files, moodboards and type tests for the Doan Labs refresh.',
+        name: 'mnismt visual direction',
+        description: 'Brand exploration files, moodboards and type tests for the mnismt refresh.',
         confidence: 0.7
       }
     })
     expect(value.understanding.kind).toBe('other')
-    expect(value.collection?.name).toBe('Doan Labs visual direction')
+    expect(value.collection?.name).toBe('mnismt visual direction')
     const bare = folderUnderstandingSchema.parse({ understanding: understandingSample, purpose: 'p' })
     expect(bare.collection).toBeNull()
     expect(bare.keyFiles).toEqual([])

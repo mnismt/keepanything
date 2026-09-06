@@ -48,7 +48,7 @@
       "query": "the website with the globe animation",
       "style": "natural",
       "cues": { "types": ["url"] },
-      "expected": ["md-doan-labs-design"],
+      "expected": ["md-mnismt-design"],
       "note": "Type cue says url but the only globe content is a markdown note; type cues must stay soft boosts, not filters."
     },
     {

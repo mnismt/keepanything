@@ -18,8 +18,9 @@ Non-goals: cloud sync, accounts, telemetry, auto-update, Windows/Linux, scraping
 
 - Electron 44 (Node 24), electron-vite 5 (main / preload / renderer / worker bundles), Vite 7, React 19,
   TypeScript 5.9 strict with `noUncheckedIndexedAccess`.
-- AI: GMI Cloud `POST /v1/chat/completions`, model `MiniMaxAI/MiniMax-M3`. Structured output is
-  fenced-JSON extraction + zod + one retry; `response_format` is not relied on. Notes in `docs/GMI_NOTES.md`.
+- AI: one OpenAI-compatible transport (`ai/openai-compatible.ts`) with two selectable providers: GMI Cloud
+  (default, model `MiniMaxAI/MiniMax-M3`) and OpenRouter (default model `minimax/minimax-m3:free`). Structured
+  output is fenced-JSON extraction + zod + one retry; `response_format` is not relied on. Notes in `docs/GMI_NOTES.md`.
 - Embeddings: `@huggingface/transformers` running `Xenova/all-MiniLM-L6-v2` (q8, 384-d) in a
   `utilityProcess` worker; hashed TF-IDF fallback when the model is missing.
 - UI: StyleX (`@stylexjs/stylex` + `@stylexjs/unplugin` in the renderer Vite config, before the React
@@ -28,7 +29,8 @@ Non-goals: cloud sync, accounts, telemetry, auto-update, Windows/Linux, scraping
   `assets/fonts/`) for editorial headlines only. `@scritto/react` (`<Scritto value=... />`) for values
   that change in place (live counters, statuses); it renders each glyph in its own span, so only short
   labels, never prose. Static text stays plain.
-- Tests: Vitest (unit), Playwright `_electron` (smoke). Packaging: electron-builder, unsigned arm64.
+- Tests: Vitest (unit), Playwright `_electron` (smoke). Packaging: electron-builder, arm64, Developer ID
+  signed + notarized (`APPLE_KEYCHAIN_PROFILE`; see README).
 - Package manager: pnpm only. Never npm or yarn. Commit `pnpm-lock.yaml`.
 
 ## Commands
@@ -47,18 +49,20 @@ Non-goals: cloud sync, accounts, telemetry, auto-update, Windows/Linux, scraping
 | Retrieval eval over `tests/fixtures/corpus/eval-queries.json` | `pnpm run eval:retrieval` |
 | Fill an empty dev library with placeholder content | `pnpm run seed:library` |
 | Comment hygiene metrics (`--list` ranks docs that only restate the identifier) | `pnpm run audit:comments` |
-| Package unsigned arm64 `.app` to `release/` | `pnpm run package:mac` |
+| Package signed arm64 `.app` to `release/` | `pnpm run package:mac` |
+| Signed + notarized `.dmg` | `APPLE_KEYCHAIN_PROFILE=keepanything pnpm run package:mac:dmg` |
 
 Before finishing any change: `pnpm run typecheck && pnpm run test`. Run the screenshot script when
 touching layout or CSS and look at the image.
 
 Environment flags (see `.env.example`): `KEEPANYTHING_GMI_API_KEY`, `KEEPANYTHING_GMI_BASE_URL`,
-`KEEPANYTHING_MODEL`, `KEEPANYTHING_AI=gmi|mock|off`, `KEEPANYTHING_E2E=1` (test profile + test hooks),
+`KEEPANYTHING_MODEL`, `KEEPANYTHING_OPENROUTER_{API_KEY,BASE_URL,MODEL}`, `KEEPANYTHING_AI=gmi|openrouter|mock|off`,
+`KEEPANYTHING_E2E=1` (test profile + test hooks),
 `KEEPANYTHING_DEBUG=1`. Dev and packaged builds never share a library: dev uses `<userData>/dev`.
 
 ## Secrets
 
-The GMI API key lives only in the gitignored `.env` (or in the encrypted settings store written via
+Provider API keys live only in the gitignored `.env` (or in the encrypted settings store written via
 the Settings screen). Never commit it, print it, echo it from scripts, write it into docs or fixtures,
 or paste it into prompts. The logger redacts key-like values.
 
@@ -83,16 +87,25 @@ web/            Marketing site. Separate project, see below.
 
 ### web/
 
-The public website: TanStack Start (file-based routing, SSR) + Tailwind v4 + Vite 8 + React 19.
-It is a standalone project, not a pnpm workspace member: its own `package.json`, `pnpm-lock.yaml`,
-`node_modules` and `pnpm-workspace.yaml`. Run pnpm from inside `web/` (`pnpm dev`, `pnpm build`,
-`pnpm typecheck`). The root forwards one script, `web:dev`; installs and builds stay separate so
-electron-builder never sees the site's dependency tree. The two projects share nothing but the repo
-and the root `biome.json`, which formats both. Deploy with the host's root directory set to `web/`.
-If the site ever needs something from `src/shared/`, add a pnpm workspace then, not Turborepo.
+The public website: TanStack Start (SSR) + Vite 8 + React 19 + StyleX
+(`@stylexjs/stylex` + `@stylexjs/unplugin`, `useCSSLayers: true`; mirrors the renderer's config in
+`electron.vite.config.ts`). Standalone project — its own `package.json`, lockfile, `node_modules`,
+`pnpm-workspace.yaml`. Run pnpm from inside `web/` (`pnpm dev`, `pnpm build`, `pnpm typecheck`).
+Root forwards one script, `web:dev`; installs/builds stay separate so electron-builder never sees
+the site's tree. Deploy with the host root at `web/`. If the site ever needs `src/shared/`, add a
+pnpm workspace then, not Turborepo.
+
+#### Shared StyleX tokens
+
+`web/src/styles/tokens.stylex.ts` and `shared.ts` are symlinks to `src/renderer/src/styles/`.
+`themes.ts` is a real file: the desktop version imports `Theme` from `src/shared/types`; the web
+inlines that one type. `global.css` is a real file too: same `@layer reset` rules, font paths
+point at `web/public/fonts/`. New token or theme field → update `tokens.stylex.ts` (auto) and
+`themes.ts` (manual). No Tailwind in `web/`; StyleX tokens are the contract.
 
 ## Conventions
 - Use kebab-case for source filenames, including React components and hooks; keep conventional `index.ts(x)` barrels and required compound suffixes such as `*.stylex.ts`.
+
 - Comment only what the signature cannot say: units, defaults, invariants, external quirks, and why the
   obvious approach was not taken. No doc comment that restates the identifier. No section-divider banners.
   A file header that only says what the file is: delete it. One that records an external constraint that

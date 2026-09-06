@@ -201,7 +201,7 @@ not AI theatre (no fake thinking animations, no streaming for show). 8 Original 
 infrastructure.
 
 ## 31. Voice
-Understated personality. Good: "Keep anything." "We'll figure out the rest." "Saved." "Found 4 related things."
+Understated personality. Good: "Keep anything." "We'll figure out the rest." "Saved." "Linked to 4 things."
 "This looks like part of your MiniMax research." "Still figuring this one out." "Couldn't read this page, but the link
 is safe." Bad: "Harness the power of AI…", "Unlock your second brain", "revolutionary AI".
 

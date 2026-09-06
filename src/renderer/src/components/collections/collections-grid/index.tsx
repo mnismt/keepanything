@@ -1,15 +1,15 @@
 import * as stylex from '@stylexjs/stylex'
 import { Layers, Plus } from 'lucide-react'
-import { type FormEvent, useEffect, useRef, useState } from 'react'
+import { type FormEvent, type KeyboardEvent, useEffect, useRef, useState } from 'react'
 import type { CollectionSummary } from '../../../../../shared/types'
-import { count } from '../../../lib/format'
-import { describeError, invoke } from '../../../lib/ipc-client'
+import { count, shortcut } from '../../../lib/format'
+import { describeError, invoke, platform } from '../../../lib/ipc-client'
 import { useCollections } from '../../../state/collections'
 import { useLibrary } from '../../../state/library'
 import { useToasts } from '../../../state/toasts'
 import { useUi } from '../../../state/ui'
 import { shared } from '../../../styles/shared'
-import { Button, MenuTrigger, Thumb } from '../../common'
+import { Button, Kbd, MenuTrigger, Thumb } from '../../common'
 import { styles } from './styles'
 
 function CollectionCard({ c, onOpen }: { c: CollectionSummary; onOpen: () => void }): React.JSX.Element {
@@ -104,7 +104,8 @@ export function CollectionDialog({
   mode: 'new' | 'rename' | 'delete'
   collectionId?: string
 }): React.JSX.Element {
-  const existing = useCollections((s) => (collectionId ? s.list.find((c) => c.id === collectionId) : undefined))
+  const all = useCollections((s) => s.list)
+  const existing = collectionId ? all.find((c) => c.id === collectionId) : undefined
   const create = useCollections((s) => s.create)
   const rename = useCollections((s) => s.rename)
   const remove = useCollections((s) => s.remove)
@@ -117,12 +118,49 @@ export function CollectionDialog({
   const [name, setName] = useState(existing?.name ?? '')
   const [description, setDescription] = useState(existing?.description ?? '')
   const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [discarding, setDiscarding] = useState(false)
   const ref = useRef<HTMLInputElement>(null)
   useEffect(() => ref.current?.focus(), [])
 
+  const dirty = name !== (existing?.name ?? '') || description !== (existing?.description ?? '')
+  const close = (): void => {
+    if (dirty && mode !== 'delete') setDiscarding(true)
+    else pop()
+  }
+
+  const validate = (trimmed: string): string | null => {
+    if (!trimmed) return 'Give it a name.'
+    const clash = all.find(
+      (c) => c.id !== collectionId && c.name.localeCompare(trimmed, undefined, { sensitivity: 'accent' }) === 0
+    )
+    return clash ? `You already have a collection called “${clash.name}”.` : null
+  }
+
+  const onKeyDown = (e: KeyboardEvent<HTMLFormElement>): void => {
+    if (e.key === 'Escape') {
+      e.preventDefault()
+      e.stopPropagation()
+      discarding ? pop() : close()
+    } else if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault()
+      e.stopPropagation()
+      e.currentTarget.requestSubmit()
+    }
+  }
+
   const submit = async (e: FormEvent): Promise<void> => {
     e.preventDefault()
+    if (busy) return
     const trimmed = name.trim()
+    if (mode !== 'delete') {
+      const problem = validate(trimmed)
+      if (problem) {
+        setError(problem)
+        ref.current?.focus()
+        return
+      }
+    }
     setBusy(true)
     if (mode === 'delete' && collectionId) {
       const ok = await remove(collectionId)
@@ -132,13 +170,13 @@ export function CollectionDialog({
         }
         push({ text: `Deleted ${existing?.name ?? 'the collection'}.`, detail: 'Its items are still in your library.' })
       }
-    } else if (!trimmed) {
-      setBusy(false)
-      return
     } else if (mode === 'new') {
       const r = await create(trimmed, description.trim() || undefined)
-      if (!r.ok) push({ text: describeError(r.error) })
-      else {
+      if (!r.ok) {
+        setBusy(false)
+        setError(describeError(r.error))
+        return
+      } else {
         setSection('collection', r.data.id)
         setView('collection', r.data.id)
       }
@@ -149,13 +187,13 @@ export function CollectionDialog({
     pop()
   }
 
-  const title = mode === 'new' ? 'New collection' : mode === 'rename' ? 'Rename collection' : 'Delete collection?'
+  const title = mode === 'new' ? 'New collection' : mode === 'rename' ? 'Edit collection' : 'Delete collection?'
 
   return (
     <div
       {...stylex.props(styles.dialog)}
       role="presentation"
-      onMouseDown={(e) => e.target === e.currentTarget && pop()}
+      onMouseDown={(e) => e.target === e.currentTarget && close()}
     >
       <form
         {...stylex.props(styles.sheet)}
@@ -163,6 +201,7 @@ export function CollectionDialog({
         aria-modal="true"
         aria-label={title}
         onSubmit={(e) => void submit(e)}
+        onKeyDown={onKeyDown}
       >
         <h2 {...stylex.props(styles.sheetTitle)}>{title}</h2>
         {mode === 'delete' ? (
@@ -175,11 +214,21 @@ export function CollectionDialog({
               <span {...stylex.props(styles.label)}>Name</span>
               <input
                 ref={ref}
-                {...stylex.props(styles.input)}
+                {...stylex.props(styles.input, error !== null && styles.inputInvalid)}
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e) => {
+                  setName(e.target.value)
+                  setError(null)
+                }}
                 placeholder="Something you keep coming back to"
+                aria-invalid={error !== null}
+                aria-describedby={error ? 'collection-name-error' : undefined}
               />
+              {error && (
+                <span id="collection-name-error" role="alert" {...stylex.props(styles.fieldError)}>
+                  {error}
+                </span>
+              )}
             </label>
             <label {...stylex.props(styles.field)}>
               <span {...stylex.props(styles.label)}>Description (optional)</span>
@@ -196,20 +245,32 @@ export function CollectionDialog({
             </label>
           </>
         )}
-        <div {...stylex.props(styles.row)}>
-          <Button variant="quiet" onClick={() => pop()}>
-            Cancel
-          </Button>
-          {mode === 'delete' ? (
-            <Button variant="danger" type="submit" disabled={busy}>
-              Delete
+        {discarding ? (
+          <div {...stylex.props(styles.row)}>
+            <span {...stylex.props(styles.danger, styles.rowNote)}>Discard what you typed?</span>
+            <Button variant="quiet" onClick={() => setDiscarding(false)} autoFocus>
+              Keep editing
             </Button>
-          ) : (
-            <Button variant="primary" type="submit" disabled={busy || !name.trim()}>
-              {mode === 'new' ? 'Create' : 'Rename'}
+            <Button variant="danger" onClick={() => pop()}>
+              Discard <Kbd>esc</Kbd>
             </Button>
-          )}
-        </div>
+          </div>
+        ) : (
+          <div {...stylex.props(styles.row)}>
+            <Button variant="quiet" onClick={close}>
+              Cancel <Kbd>esc</Kbd>
+            </Button>
+            {mode === 'delete' ? (
+              <Button variant="danger" type="submit" disabled={busy}>
+                Delete <Kbd>{shortcut('⌘↩', platform())}</Kbd>
+              </Button>
+            ) : (
+              <Button variant="primary" type="submit" disabled={busy}>
+                {mode === 'new' ? 'Create' : 'Save'} <Kbd style={styles.kbdOnPrimary}>{shortcut('⌘↩', platform())}</Kbd>
+              </Button>
+            )}
+          </div>
+        )}
       </form>
     </div>
   )

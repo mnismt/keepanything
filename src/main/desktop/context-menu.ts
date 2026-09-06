@@ -100,7 +100,7 @@ export function buildContextMenu(input: ContextMenuInput): MenuEntry[] {
     }
     case 'collection':
       return [
-        { label: 'Rename', action: 'rename-collection' },
+        { label: 'Edit', action: 'rename-collection' },
         { type: 'separator' },
         { label: 'Delete Collection', action: 'delete-collection' }
       ]

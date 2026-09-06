@@ -147,7 +147,7 @@ export function SelectionBar(): React.JSX.Element | null {
                 key={c.template}
                 small
                 variant="quiet"
-                title={aiOff ? 'Connect GMI in Settings to do this.' : c.question}
+                title={aiOff ? 'Connect an AI provider in Settings to do this.' : c.question}
                 disabled={aiOff}
                 onClick={() => void startSelectionCommand(c.template, ids)}
               >

@@ -1,18 +1,23 @@
 export * from './embeddings'
+export * from './messages'
+export { createMockProvider, type MockProviderOptions } from './mock-provider'
 export {
-  createGmiProvider,
+  createOpenAiCompatibleProvider,
   DEFAULT_TASK_TEMPERATURES,
   DEFAULT_TEMPERATURE,
-  type GmiProviderOptions,
+  type OpenAiCompatibleProviderOptions,
+  type OpenAiCompatibleRequestBody,
   RETRY_AFTER_CAP_MS,
   RETRY_DELAYS_MS,
   resolveTools,
   type SleepFn
-} from './gmi-minimax'
-export * from './messages'
-export { createMockProvider, type MockProviderOptions } from './mock-provider'
+} from './openai-compatible'
 export * from './prompts'
-export { type CreateAiProviderOptions, createAiProvider, createOffProvider } from './provider'
+export {
+  type CreateAiProviderOptions,
+  createAiProvider,
+  createOffProvider
+} from './provider'
 export * from './schemas'
 export {
   createScriptedProvider,

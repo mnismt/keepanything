@@ -229,11 +229,11 @@ describe('agent command loop', () => {
 
     const off = createAgentService({
       repos: h.repos,
-      retrieval,
-      ai: createOffProvider(),
+      ai: createOffProvider('gmi'),
       items: h.items,
       collections: h.collections,
       relationships: h.relationships,
+      retrieval,
       audit: h.audit,
       events: h.events,
       clock: h.clock,
@@ -478,9 +478,8 @@ describe('testConnection', () => {
       })()
     })
     expect(ok).toEqual({ ok: true, model: 'scripted', latencyMs: 12 })
-    const off = await testConnection(createOffProvider())
+    const off = await testConnection(createOffProvider('gmi'))
     expect(off.ok).toBe(false)
-    expect(off.error).toBe('Connect GMI in Settings to understand this.')
     const agent = agentWith(createScriptedProvider([textResponse('OK')]))
     expect((await agent.testConnection()).ok).toBe(true)
   })

@@ -4,7 +4,7 @@
  */
 
 import { describe, expect, it } from 'vitest'
-import { createGmiProvider } from '../../src/main/ai/gmi-minimax'
+import { createOpenAiCompatibleProvider } from '../../src/main/ai/openai-compatible'
 import { buildUnderstandRequest } from '../../src/main/ai/prompts'
 import { understandingSchema } from '../../src/main/ai/schemas'
 import type { Logger } from '../../src/main/ports'
@@ -24,7 +24,13 @@ const logger: Logger = {
 
 describe.skipIf(!apiKey)('GMI live (gated on KEEPANYTHING_GMI_API_KEY)', () => {
   it('understands a short item with one structured call', async () => {
-    const provider = createGmiProvider({ apiKey: apiKey as string, baseUrl, model, logger })
+    const provider = createOpenAiCompatibleProvider({
+      provider: 'gmi',
+      apiKey: apiKey as string,
+      baseUrl,
+      model,
+      logger
+    })
     const req = buildUnderstandRequest({
       title: 'Rectangle: Move and resize windows on macOS with keyboard shortcuts and snap areas',
       type: 'url',

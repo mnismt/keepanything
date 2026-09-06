@@ -7,8 +7,16 @@
 
 import { LIMITS } from '../../shared/constants'
 import { KaError } from '../core/errors'
-import type { AIProvider, ChatMessage, ChatRequest, ChatResponse, StructuredSchema, Usage } from '../ports'
-import { appendToLastUserMessage, assistantMessage, hasUnclosedThink, stripThink, userMessage } from './messages'
+import type {
+  AIProvider,
+  AssistantMessage,
+  ChatMessage,
+  ChatRequest,
+  ChatResponse,
+  StructuredSchema,
+  Usage
+} from '../ports'
+import { appendToLastUserMessage, hasUnclosedThink, stripThink, userMessage } from './messages'
 import { formatZodError } from './schemas/common'
 
 /** Default `max_tokens` for structured calls (≥ 8k). */
@@ -292,9 +300,14 @@ export async function generateStructured<T>(
 
     lastError = failure
     if (validationRetries-- > 0) {
+      // Echo the assistant message back so opaque reasoning survives the validation retry.
+      const echoed: AssistantMessage = {
+        ...response.message,
+        content: content.length > 0 ? content : '(empty)'
+      }
       messages = [
         ...messages,
-        assistantMessage(content.length > 0 ? content : '(empty)'),
+        echoed,
         userMessage(`The JSON was invalid: ${failure}\nReturn the corrected JSON object only.`)
       ]
       continue

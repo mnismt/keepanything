@@ -40,8 +40,8 @@ describe('constants', () => {
   it('keeps the lane and copy contract', () => {
     expect(LIMITS.lanes).toEqual({ io: 2, embed: 1, ai: 1 })
     expect(LIMITS.retryBackoffMs).toEqual([30_000, 120_000, 600_000])
-    expect(COPY.foundRelated(4)).toBe('Found 4 related things.')
-    expect(COPY.foundRelated(1)).toBe('Found 1 related thing.')
+    expect(COPY.foundRelated(4)).toBe('Linked to 4 things.')
+    expect(COPY.foundRelated(1)).toBe('Linked to 1 thing.')
     expect(COPY.alreadyKept('3 weeks ago')).toBe('Already kept · 3 weeks ago')
     expect(COPY.noMatches('x')).toBe('Nothing matches "x".')
   })

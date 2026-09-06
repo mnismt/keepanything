@@ -475,8 +475,7 @@ export async function runRelate(ctx: StageContext): Promise<StagePatch> {
     run.step({
       tool: 'find_candidates',
       kind: 'search',
-      label:
-        candidates.length === 0 ? 'Looking for related things' : `Comparing with ${candidates.length} related things`,
+      label: candidates.length === 0 ? 'Looking for similar things' : `Checking ${candidates.length} similar things`,
       itemIds: candidates.map((c) => c.id),
       status: 'ok'
     })
@@ -641,7 +640,7 @@ export async function runOrganizeBatch(ctx: StageContext): Promise<StagePatch> {
     run.step({
       tool: 'find_candidates',
       kind: 'search',
-      label: `Comparing ${subjects.length} new items with ${candidates.length} related things`,
+      label: `Checking ${subjects.length} new items against ${candidates.length} similar things`,
       itemIds: subjects.map((i) => i.id),
       status: 'ok'
     })

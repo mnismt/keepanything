@@ -56,7 +56,13 @@ describe('request schemas', () => {
     accepts('agent:undoRun', { runId: 'r1' })
     accepts('agent:applyProposals', { runId: 'r1' })
     accepts('system:revealLibrary', undefined)
-    accepts('settings:update', { apiKey: 'k', aiMode: 'gmi', theme: 'dark', baseUrl: 'https://api.gmi-serving.com/v1' })
+    accepts('settings:update', {
+      apiKey: 'k',
+      ai: 'on',
+      provider: 'gmi',
+      theme: 'dark',
+      baseUrl: 'https://api.gmi-serving.com/v1'
+    })
     accepts('settings:get', undefined)
     accepts('system:contextMenu', { kind: 'items', ids: ['a', 'b'] })
     accepts('system:openExternal', { url: 'https://x.y' })

@@ -1,7 +1,6 @@
 import type { AgentStep, AgentUsage } from '../../shared/types'
 import {
   AGENT_MAX_TOKENS,
-  assistantMessage,
   type CommandFinish,
   commandFinishSchema,
   estimateTokens,
@@ -136,14 +135,15 @@ export async function runToolLoop(opts: ToolLoopOptions): Promise<ToolLoopResult
     if (calls.length === 0) {
       if (!nudged) {
         nudged = true
-        messages.push(assistantMessage(response.message.content ?? ''), userMessage(NO_TOOL_CALL_MESSAGE))
+        // Echo the full assistant message back so opaque reasoning survives the nudge.
+        messages.push(response.message, userMessage(NO_TOOL_CALL_MESSAGE))
         step--
         continue
       }
       throw new KaError('AI_UNAVAILABLE', 'The model answered without delivering a result.')
     }
-
-    messages.push(assistantMessage(response.message.content, calls))
+    // Echo the full assistant message back so opaque reasoning survives the tool round trip.
+    messages.push(response.message)
     const finishCall = calls.find((c) => c.function.name === FINISH_TOOL_NAME)
     const others = calls.filter((c) => c !== finishCall)
 

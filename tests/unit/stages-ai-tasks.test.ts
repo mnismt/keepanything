@@ -154,7 +154,7 @@ describe('understand stage', () => {
 
   it('rethrows AI_NOT_CONFIGURED so the scheduler parks the job', async () => {
     const item = h.item({ title: 'Parked' })
-    await expect(run('understand', createOffProvider(), { itemId: item.id })).rejects.toSatisfy(
+    await expect(run('understand', createOffProvider('gmi'), { itemId: item.id })).rejects.toSatisfy(
       (e: unknown) => isKaError(e) && e.code === 'AI_NOT_CONFIGURED'
     )
     expect(h.repos.agentRuns.latestForItem(item.id, 5)[0]?.status).toBe('failed')

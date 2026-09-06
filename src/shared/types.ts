@@ -635,8 +635,11 @@ export interface CaptureResult {
   batchId: string
 }
 
+/** Stable identifier of an OpenAI-compatible provider. */
+export type AiProviderId = 'gmi' | 'openrouter'
+
 /** Which AI provider drives the agent. */
-export type AiMode = 'gmi' | 'mock' | 'off'
+export type AiMode = AiProviderId | 'mock' | 'off'
 
 /** Runtime AI connectivity as shown in the footer. */
 export type AiStatus = 'off' | 'connected' | 'offline' | 'unconfigured'
@@ -653,6 +656,8 @@ export type EmbeddingProviderId = 'minilm' | 'local-hash' | 'none'
 /** `settings:get` payload. Never contains the plain API key. */
 export interface Settings {
   aiMode: AiMode
+  /** The OpenAI-compatible provider whose model/key/baseUrl are exposed by the flat fields. */
+  provider: AiProviderId
   model: string
   baseUrl: string
   hasApiKey: boolean
@@ -673,7 +678,10 @@ export interface Settings {
 export interface SettingsPatch {
   apiKey?: string
   clearApiKey?: boolean
-  aiMode?: AiMode
+  /** On/off switch; the live mode is `provider` when on. */
+  ai?: 'on' | 'off'
+  /** Selects whose profile and key the other fields apply to; defaults to the current selection. */
+  provider?: AiProviderId
   model?: string
   baseUrl?: string
   importMode?: CaptureMode

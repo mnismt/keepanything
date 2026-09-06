@@ -87,21 +87,21 @@ describe('run descriptions', () => {
         status: 'succeeded',
         result: { task: 'organize', itemId: 'i', relationshipIds: ['r1', 'r2'], collectionIds: ['c'], summary: 's' }
       })
-    ).toBe('Found 2 related things · Added to 1 collection.')
+    ).toBe('Linked to 2 things · Added to 1 collection.')
     expect(
       runOutcome({
         task: 'organize',
         status: 'succeeded',
         result: { task: 'organize', itemId: 'i', relationshipIds: [], collectionIds: [], summary: '' }
       })
-    ).toBe('Nothing to connect yet.')
+    ).toBe("Nothing similar yet. It'll link up as you keep more.")
     expect(
       runOutcome({
         task: 'organize',
         status: 'succeeded',
         result: { task: 'organize', itemId: 'i', relationshipIds: [], collectionIds: [], summary: 'A long story.' }
       })
-    ).toBe('Nothing to connect yet.')
+    ).toBe("Nothing similar yet. It'll link up as you keep more.")
     expect(
       runNote({
         task: 'organize',

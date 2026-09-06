@@ -22,7 +22,7 @@ describe('truncate', () => {
 
 describe('slugify', () => {
   it('produces lowercase dash-separated ASCII', () => {
-    expect(slugify('Doan Labs — Visual Direction!')).toBe('doan-labs-visual-direction')
+    expect(slugify('mnismt — Visual Direction!')).toBe('mnismt-visual-direction')
     expect(slugify('  Résumé 2026.pdf ')).toBe('resume-2026-pdf')
     expect(slugify('---')).toBe('')
   })
@@ -30,7 +30,7 @@ describe('slugify', () => {
 
 describe('normalizeName', () => {
   it('lowercases, strips punctuation and collapses whitespace', () => {
-    expect(normalizeName('  Doan Labs:  Visual   Direction!! ')).toBe('doan labs visual direction')
+    expect(normalizeName('  mnismt:  Visual   Direction!! ')).toBe('mnismt visual direction')
     expect(normalizeName('MiniMax-Hackathon')).toBe('minimax hackathon')
     expect(normalizeName('Things to Read')).toBe(normalizeName('things   to read'))
     expect(normalizeName('Ｍacos Apps')).toBe('macos apps')

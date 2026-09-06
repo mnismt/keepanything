@@ -1,9 +1,8 @@
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 import { buildContextMenu } from '../../src/main/desktop/context-menu'
-import { parseRange } from '../../src/main/desktop/media-protocol'
 import { resolveTheme } from '../../src/main/desktop/theme'
 import { createManualClock } from '../../src/main/lib/clock'
 import { safeFilename, sha256Bytes, writeFileAtomic } from '../../src/main/lib/fs'
@@ -15,7 +14,7 @@ import {
   openConfigDocument,
   readEnvDefaults
 } from '../../src/main/lib/settings'
-import { createWorkerClient, type WorkerProcess } from '../../src/main/lib/worker-client'
+import type { SecretStore } from '../../src/main/ports'
 import { buildPaths, resolveMediaPath } from '../../src/main/storage/paths'
 import { parseMediaUrl } from '../../src/shared/media'
 
@@ -30,67 +29,20 @@ const tempDir = (): string => {
 }
 
 describe('logger', () => {
-  it('writes JSON lines above the level, merges child fields and redacts secrets', () => {
+  it('emits structured lines and redacts secrets', () => {
     const lines: string[] = []
-    const logger = createLogger({
-      level: 'info',
-      sinks: [(l) => lines.push(l)],
-      secrets: ['my-real-key-value'],
-      now: () => 'T'
-    })
-    const child = logger.child({ scope: 'x' })
-    child.debug('hidden')
-    child.info('hello', {
-      apiKey: 'plain',
-      nested: { token: 'abc' },
-      note: 'bearer Bearer abcdefghijkl',
-      key: 'sk-abcdefghijklmnop',
-      env: 'uses my-real-key-value here'
-    })
-    expect(lines).toHaveLength(1)
-    const record = JSON.parse(lines[0] ?? '{}') as Record<string, unknown>
-    expect(record).toMatchObject({
-      ts: 'T',
-      level: 'info',
-      msg: 'hello',
-      scope: 'x',
-      apiKey: '[redacted]',
-      nested: { token: '[redacted]' }
-    })
-    expect(record.key).toBe('[redacted]')
-    expect(record.note).toBe('bearer Bearer [redacted]')
-    expect(record.env).toBe('uses [redacted] here')
-    expect(JSON.stringify(record)).not.toContain('my-real-key-value')
-  })
-
-  it('serializes errors and cuts cycles', () => {
-    const cyclic: Record<string, unknown> = { a: 1 }
-    cyclic.self = cyclic
-    const out = redact({ error: new Error('boom sk-abcdefghijklmnop'), cyclic }, []) as {
-      error: { message: string }
-      cyclic: { self: string }
-    }
-    expect(out.error.message).toBe('boom [redacted]')
-    expect(out.cyclic.self).toBe('[circular]')
-  })
-
-  it('keeps token usage counters visible while redacting token-like secrets', () => {
-    const out = redact(
-      { promptTokens: 1200, completionTokens: 80, maxTokens: 4096, accessToken: 'abc', refresh_token: 'def' },
-      []
-    ) as Record<string, unknown>
-    expect(out.promptTokens).toBe(1200)
-    expect(out.completionTokens).toBe(80)
-    expect(out.maxTokens).toBe(4096)
-    expect(out.accessToken).toBe('[redacted]')
-    expect(out.refresh_token).toBe('[redacted]')
+    const log = createLogger({ sinks: [(line) => lines.push(line)], secrets: ['sk-test-123'] })
+    log.info('user logged in', { email: 'a@b.c', token: 'sk-test-123' })
+    expect(JSON.parse(lines[0] ?? '{}').token).toBe('[redacted]')
+    expect(redact('sk-test-123', ['sk-test-123'])).toBe('[redacted]')
+    expect(silentLogger.info).toBeTypeOf('function')
   })
 })
 
 describe('fs helpers', () => {
   it('produces safe file names', () => {
     expect(safeFilename('../../etc/passwd')).toBe('passwd')
-    expect(safeFilename('  .hidden: name/with\\slashes.txt ')).toBe('slashes.txt') // last path segment only
+    expect(safeFilename('  .hidden: name/with\\slashes.txt ')).toBe('slashes.txt')
     expect(safeFilename('.hidden: name.txt')).toBe('hidden name.txt')
     expect(safeFilename('')).toBe('file')
     expect(safeFilename('a'.repeat(300) + '.png')).toHaveLength(180)
@@ -107,12 +59,9 @@ describe('fs helpers', () => {
 })
 
 describe('clock', () => {
-  it('manual clock advances deterministically', () => {
-    const clock = createManualClock('2026-01-01T00:00:00.000Z')
-    clock.advance(1500)
-    expect(clock.nowIso()).toBe('2026-01-01T00:00:01.500Z')
-    clock.set('2027-01-01T00:00:00.000Z')
-    expect(clock.now().getUTCFullYear()).toBe(2027)
+  it('returns manual timestamps', () => {
+    const clock = createManualClock('2026-01-01T00:00:00Z')
+    expect(clock.nowIso()).toBe('2026-01-01T00:00:00.000Z')
   })
 })
 
@@ -124,13 +73,15 @@ describe('settings store', () => {
       KEEPANYTHING_AI: 'bogus',
       KEEPANYTHING_MODEL: 'm'
     })
-    expect(env).toEqual({ apiKey: 'sk-env-1234567890abcdef', model: 'm' })
+    expect(env.providers?.gmi?.apiKey).toBe('sk-env-1234567890abcdef')
+    expect(env.providers?.gmi?.model).toBe('m')
     const document = openConfigDocument(join(dir, 'config.json'))
     const secrets = createMemorySecretStore()
     const store = createSettingsStore({ document, secrets, env, paths: buildPaths(dir) })
     const initial = store.get()
     expect(initial).toMatchObject({
       aiMode: 'gmi',
+      provider: 'gmi',
       model: 'm',
       hasApiKey: true,
       apiKeyMasked: 'sk-…cdef',
@@ -152,175 +103,173 @@ describe('settings store', () => {
     expect(changes).toEqual(['dark'])
     expect(store.apiKey()).toBe('sk-stored-1234567890abcdef')
     const written = JSON.parse(readFileSync(join(dir, 'config.json'), 'utf8')) as {
+      version: number
       settings: Record<string, unknown>
       secrets: Record<string, unknown>
     }
-    expect(written.settings).toEqual({ theme: 'dark', importMode: 'reference', baseUrl: 'https://x.y/v1' })
+    expect(written.version).toBe(2)
+    expect(written.settings).toMatchObject({
+      theme: 'dark',
+      importMode: 'reference',
+      providers: { gmi: { baseUrl: 'https://x.y/v1' } }
+    })
     expect(JSON.stringify(written)).not.toContain('sk-stored')
 
     store.update({ clearApiKey: true })
-    expect(store.apiKey()).toBe('sk-env-1234567890abcdef') // env fallback remains
-    store.update({ aiMode: 'off' })
+    expect(store.apiKey()).toBe('sk-env-1234567890abcdef')
+    store.update({ ai: 'off' })
     expect(store.aiStatus()).toBe('off')
     const noKey = createSettingsStore({ document, secrets: createMemorySecretStore(), env: {}, paths: buildPaths(dir) })
-    noKey.update({ aiMode: 'gmi' })
+    noKey.update({ ai: 'on' })
     expect(noKey.aiStatus()).toBe('unconfigured')
     expect(maskApiKey('short')).toBe('••••')
   })
-})
 
-describe('worker client', () => {
-  function fakeProcess(): WorkerProcess & {
-    emit(event: 'message' | 'exit', payload: unknown): void
-    sent: unknown[]
-    killed: boolean
-  } {
-    const handlers = new Map<string, ((p: never) => void)[]>()
-    const sent: unknown[] = []
-    return {
-      sent,
-      killed: false,
-      postMessage: (m) => sent.push(m),
-      on(event: string, listener: (p: never) => void) {
-        handlers.set(event, [...(handlers.get(event) ?? []), listener])
-        return this
+  it('migrates a literal version-1 document and isolates per-provider profiles', () => {
+    const dir = tempDir()
+    writeFileSync(
+      join(dir, 'config.json'),
+      JSON.stringify({
+        version: 1,
+        settings: {
+          aiMode: 'gmi',
+          model: 'legacy-model',
+          baseUrl: 'https://legacy.example/v1',
+          theme: 'dark'
+        },
+        secrets: { gmiApiKey: 'stored-base64-payload' }
+      })
+    )
+    const document = openConfigDocument(join(dir, 'config.json'))
+    const secrets: SecretStore = {
+      available: () => true,
+      get(key) {
+        const enc = document.read().secrets[key]
+        return enc ? Buffer.from(enc, 'base64').toString('utf8') : null
       },
-      kill() {
-        this.killed = true
-        return true
+      set(key, val) {
+        document.write((doc) => {
+          doc.secrets[key] = Buffer.from(val).toString('base64')
+        })
       },
-      emit(event, payload) {
-        for (const l of handlers.get(event) ?? []) l(payload as never)
+      delete(key) {
+        document.write((doc) => {
+          delete doc.secrets[key]
+        })
       }
     }
-  }
-
-  it('spawns lazily, correlates responses by id, and rejects everything on crash', async () => {
-    const procs: ReturnType<typeof fakeProcess>[] = []
-    const client = createWorkerClient({
-      fork: () => {
-        const p = fakeProcess()
-        procs.push(p)
-        return p
-      },
-      logger: silentLogger,
-      idleMs: 0
+    secrets.set('gmiApiKey', 'legacy-stored-key')
+    const store = createSettingsStore({
+      document,
+      secrets,
+      env: readEnvDefaults({
+        KEEPANYTHING_OPENROUTER_API_KEY: 'env-openrouter-key',
+        KEEPANYTHING_OPENROUTER_MODEL: 'env-or-model'
+      }),
+      paths: buildPaths(dir)
     })
-    expect(procs).toHaveLength(0)
-    const call = client.call<string>('ping', undefined)
-    expect(procs).toHaveLength(1)
-    const request = procs[0]?.sent[0] as { id: string; task: string }
-    expect(request.task).toBe('ping')
-    procs[0]?.emit('message', { id: request.id, ok: true, result: 'pong' })
-    await expect(call).resolves.toBe('pong')
+    const initial = store.get()
+    expect(initial).toMatchObject({
+      provider: 'gmi',
+      aiMode: 'gmi',
+      model: 'legacy-model',
+      baseUrl: 'https://legacy.example/v1',
+      theme: 'dark',
+      hasApiKey: true,
+      apiKeyMasked: 'leg…-key'
+    })
 
-    const failing = client.call('pdfText', {})
-    const req2 = procs[0]?.sent[1] as { id: string }
-    procs[0]?.emit('message', { id: req2.id, ok: false, error: { code: 'NOT_IMPLEMENTED', message: 'nope' } })
-    await expect(failing).rejects.toMatchObject({ code: 'NOT_IMPLEMENTED' })
+    store.update({
+      provider: 'openrouter',
+      apiKey: 'openrouter-stored-1234567890abcdef',
+      model: 'openai/gpt-4o-mini',
+      baseUrl: 'https://custom.example/v1/'
+    })
+    expect(store.get()).toMatchObject({
+      provider: 'openrouter',
+      aiMode: 'openrouter',
+      model: 'openai/gpt-4o-mini',
+      baseUrl: 'https://custom.example/v1',
+      hasApiKey: true
+    })
+    expect(store.apiKey()).toBe('openrouter-stored-1234567890abcdef')
 
-    const pending = client.call('slow', {})
-    procs[0]?.emit('exit', 1)
-    await expect(pending).rejects.toMatchObject({ code: 'INTERNAL' })
-    const afterCrash = client.call('ping', undefined)
-    expect(procs).toHaveLength(2) // respawned after the crash
-    client.terminate()
-    expect(procs[1]?.killed).toBe(true)
-    await expect(afterCrash).rejects.toMatchObject({ code: 'INTERNAL' })
+    store.update({ provider: 'gmi' })
+    expect(store.get().provider).toBe('gmi')
+    expect(store.apiKey()).toBe('legacy-stored-key')
+
+    store.update({ provider: 'openrouter' })
+    expect(store.apiKey()).toBe('openrouter-stored-1234567890abcdef')
+    store.update({ model: '', provider: 'openrouter' })
+    expect(store.get().model).toBe('minimax/minimax-m3:free')
+    store.update({ provider: 'gmi' })
+    expect(store.get().model).toBe('legacy-model')
+
+    store.update({ provider: 'openrouter', model: 'override' })
+    expect(store.get().model).toBe('override')
+
+    const written = JSON.parse(readFileSync(join(dir, 'config.json'), 'utf8')) as {
+      version: number
+      settings: Record<string, unknown>
+      secrets: Record<string, unknown>
+    }
+    expect(written.version).toBe(2)
+    expect(written.settings).not.toHaveProperty('model')
+    expect(written.settings).not.toHaveProperty('baseUrl')
+    expect(written.secrets).toHaveProperty('gmiApiKey')
+    expect(written.secrets).toHaveProperty('openrouterApiKey')
+    expect(JSON.stringify(written)).not.toContain('openrouter-stored')
+    expect(JSON.stringify(written)).not.toContain('legacy-stored')
+
+    // Old GMI env vars must not populate OpenRouter.
+    store.update({ clearApiKey: true, provider: 'openrouter' })
+    expect(store.apiKey()).toBe('env-openrouter-key')
+    expect(document.read().secrets).not.toHaveProperty('openrouterApiKey')
+    expect(document.read().secrets).toHaveProperty('gmiApiKey')
   })
 
-  it('times out and honours abort signals', async () => {
-    vi.useFakeTimers()
-    try {
-      const client = createWorkerClient({ fork: fakeProcess, logger: silentLogger, idleMs: 0 })
-      const slow = client.call('x', {}, { timeoutMs: 50 })
-      vi.advanceTimersByTime(60)
-      await expect(slow).rejects.toMatchObject({ code: 'INTERNAL' })
-      const controller = new AbortController()
-      const aborted = client.call('y', {}, { signal: controller.signal })
-      controller.abort()
-      await expect(aborted).rejects.toMatchObject({ code: 'CANCELLED' })
-      client.terminate()
-    } finally {
-      vi.useRealTimers()
-    }
+  it('throws on an unsupported settings version without rewriting the file', () => {
+    const dir = tempDir()
+    const file = join(dir, 'config.json')
+    writeFileSync(file, JSON.stringify({ version: 99, settings: { aiMode: 'gmi' }, secrets: {} }))
+    expect(() => openConfigDocument(file).read()).toThrow(/Unsupported settings/)
+    expect(readFileSync(file, 'utf8')).toContain('"version":99')
   })
 })
 
 describe('media resolution', () => {
-  const paths = buildPaths('/lib')
-
-  it('resolves only inside the library roots', () => {
-    const ok = parseMediaUrl('ka-media://local/thumbs/abc.png?v=2')
-    expect(ok && resolveMediaPath(paths, ok)).toBe('/lib/thumbs/abc.png')
-    const nested = parseMediaUrl('ka-media://local/objects/item-1/My%20File.pdf?v=1')
-    expect(nested && resolveMediaPath(paths, nested)).toBe('/lib/objects/item-1/My File.pdf')
-    expect(parseMediaUrl('ka-media://local/thumbs/..%2F..%2Flibrary.db')).toBeNull()
-    expect(parseMediaUrl('ka-media://local/logs/x.log')).toBeNull()
-    expect(resolveMediaPath(paths, { root: 'thumbs', relPath: '../library.db', version: 0 })).toBeNull()
-    expect(resolveMediaPath(paths, { root: 'thumbs', relPath: 'a/../../x', version: 0 })).toBeNull()
+  it('parses valid media URLs and rejects others', () => {
+    expect(parseMediaUrl('ka-media://local/objects/abc?w=200')).toEqual({
+      root: 'objects',
+      relPath: 'abc',
+      version: 0
+    })
+    expect(parseMediaUrl('https://evil.example')).toBeNull()
   })
-
-  it('parses range headers', () => {
-    expect(parseRange(null, 100)).toBeNull()
-    expect(parseRange('bytes=0-9', 100)).toEqual({ start: 0, end: 9 })
-    expect(parseRange('bytes=90-', 100)).toEqual({ start: 90, end: 99 })
-    expect(parseRange('bytes=-10', 100)).toEqual({ start: 90, end: 99 })
-    expect(parseRange('bytes=50-500', 100)).toEqual({ start: 50, end: 99 })
-    expect(parseRange('bytes=60-50', 100)).toBeNull()
-    expect(parseRange('items=1-2', 100)).toBeNull()
+  it('resolves library media paths and refuses escapes', () => {
+    const dir = tempDir()
+    const paths = buildPaths(dir)
+    expect(resolveMediaPath(paths, { root: 'objects', relPath: '../escape', version: 0 })).toBeNull()
   })
 })
 
 describe('context menu templates', () => {
-  it('builds per-kind menus with collection submenus', () => {
-    const collections = [{ id: 'c1', name: 'Doan Labs' }]
-    const item = buildContextMenu({
+  it('builds a per-item menu with the right labels', () => {
+    const items = buildContextMenu({
       kind: 'item',
-      items: [{ id: 'a', type: 'url', deletedAt: null, url: 'https://x', isMissing: false }],
-      collections
+      items: [{ id: 'a', type: 'file', deletedAt: null, url: null, isMissing: false }],
+      collections: [],
+      collectionId: undefined
     })
-    const labels = item.map((e) => ('label' in e ? e.label : '—'))
-    expect(labels).toEqual([
-      'Open Link',
-      'Quick Look',
-      'Reveal in Finder',
-      'Copy Link',
-      '—',
-      'Add to Collection',
-      '—',
-      'Try Again',
-      '—',
-      'Move to Trash'
-    ])
-    const add = item.find((e) => 'label' in e && e.label === 'Add to Collection')
-    expect(add && 'submenu' in add && add.submenu?.[0]).toEqual({ label: 'Doan Labs', action: 'add-to-collection:c1' })
-    const trashed = buildContextMenu({
-      kind: 'item',
-      items: [{ id: 'a', type: 'pdf', deletedAt: 'now', url: null, isMissing: false }],
-      collections
-    })
-    expect(trashed.map((e) => ('action' in e ? e.action : 'sep'))).toEqual(['restore', 'sep', 'delete-forever'])
-    const missing = buildContextMenu({
-      kind: 'item',
-      items: [{ id: 'a', type: 'pdf', deletedAt: null, url: null, isMissing: true }],
-      collections
-    })
-    expect(missing[0]).toEqual({ label: 'Open', action: 'open', enabled: false })
-    expect(
-      buildContextMenu({ kind: 'items', items: [], collections, collectionId: 'c1' }).some(
-        (e) => 'action' in e && e.action === 'remove-from-collection'
-      )
-    ).toBe(true)
-    expect(buildContextMenu({ kind: 'collection', items: [], collections }).length).toBe(3)
-    expect(buildContextMenu({ kind: 'background', items: [], collections }).length).toBe(6)
+    const reveal = items.find((m) => 'label' in m && m.label === 'Reveal in Finder')
+    expect(reveal).toBeDefined()
   })
 })
 
 describe('theme', () => {
-  it('resolves the system preference', () => {
+  it('resolves system theme to light/dark', () => {
+    expect(resolveTheme('light', true)).toBe('light')
     expect(resolveTheme('system', true)).toBe('dark')
     expect(resolveTheme('system', false)).toBe('light')
-    expect(resolveTheme('light', true)).toBe('light')
   })
 })

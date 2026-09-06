@@ -35,13 +35,13 @@
       "captureOffsetDays": 9
     },
     {
-      "id": "md-doan-labs-design",
+      "id": "md-mnismt-design",
       "type": "markdown",
-      "path": "files/notes/doan-labs-website-design.md",
+      "path": "files/notes/mnismt-website-design.md",
       "kind": "note",
-      "title": "Doan Labs website — design references",
+      "title": "mnismt website — design references",
       "topics": ["web-design", "globe-animation"],
-      "entities": ["Doan Labs", "cobe", "Linear", "Vercel"],
+      "entities": ["mnismt", "cobe", "Linear", "Vercel"],
       "captureOffsetDays": 16
     },
     {

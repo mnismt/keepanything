@@ -1,6 +1,6 @@
-# Doan Labs website — design references
+# mnismt website — design references
 
-Collecting what influenced the new doan-labs site. None of this is final; it is the mood board.
+Collecting what influenced the new mnismt site. None of this is final; it is the mood board.
 
 ## The globe
 

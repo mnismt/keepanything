@@ -236,8 +236,8 @@ export function mockOrganizePlan(userText: string): OrganizePlan {
       n === 0
         ? 'Kept on its own for now; nothing else in the library is about this yet.'
         : n === 1
-          ? 'Found 1 related thing.'
-          : `Found ${n} related things.`,
+          ? 'Linked to 1 thing.'
+          : `Linked to ${n} things.`,
     confidence: n === 0 ? 0.6 : 0.7
   }
 }

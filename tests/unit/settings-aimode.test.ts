@@ -19,12 +19,13 @@ afterEach(() => {
 const storeIn = (
   dir: string,
   env: Parameters<typeof createSettingsStore>[0]['env'],
-  stored?: 'gmi' | 'mock' | 'off'
+  stored?: 'gmi' | 'openrouter' | 'mock' | 'off'
 ) => {
   const document = openConfigDocument(join(dir, 'config.json'))
   if (stored)
+    // Written in the v1 shape on purpose: the normaliser must migrate it.
     document.write((doc) => {
-      doc.settings.aiMode = stored
+      ;(doc.settings as Record<string, unknown>).aiMode = stored
     })
   return createSettingsStore({ document, secrets: createMemorySecretStore(), env, paths: buildPaths(dir) })
 }
@@ -40,8 +41,27 @@ describe('aiMode: env-only mock', () => {
     expect(readEnvDefaults({ KEEPANYTHING_AI: 'bogus' }).aiMode).toBeUndefined()
   })
 
+  it('readEnvDefaults keeps each provider env block separate', () => {
+    expect(
+      readEnvDefaults({
+        KEEPANYTHING_GMI_API_KEY: 'gm',
+        KEEPANYTHING_GMI_BASE_URL: 'https://g',
+        KEEPANYTHING_MODEL: 'gm',
+        KEEPANYTHING_OPENROUTER_API_KEY: 'or',
+        KEEPANYTHING_OPENROUTER_BASE_URL: 'https://or',
+        KEEPANYTHING_OPENROUTER_MODEL: 'or-m'
+      })
+    ).toEqual({
+      providers: {
+        gmi: { apiKey: 'gm', baseUrl: 'https://g', model: 'gm' },
+        openrouter: { apiKey: 'or', baseUrl: 'https://or', model: 'or-m' }
+      }
+    })
+    expect(readEnvDefaults({ KEEPANYTHING_OPENROUTER_API_KEY: 'or' }).providers?.gmi).toBeUndefined()
+  })
+
   it('isAiMode accepts every runtime mode', () => {
-    expect(['gmi', 'mock', 'off'].every(isAiMode)).toBe(true)
+    expect(['gmi', 'openrouter', 'mock', 'off'].every(isAiMode)).toBe(true)
     expect(isAiMode('bogus')).toBe(false)
   })
 

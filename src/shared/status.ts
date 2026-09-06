@@ -53,7 +53,7 @@ export interface UserStage {
 export const USER_STAGES: readonly UserStage[] = [
   { id: 'reading', label: 'Reading', statuses: ['EXTRACTING', 'EXTRACTED', 'EMBEDDING'] },
   { id: 'understanding', label: 'Understanding', statuses: ['UNDERSTANDING'] },
-  { id: 'connecting', label: 'Finding connections', statuses: ['RELATING'] }
+  { id: 'connecting', label: 'Looking for similar things', statuses: ['RELATING'] }
 ]
 
 /** The user-facing stage a status belongs to, or null for settled/failed/waiting/captured states. */
@@ -68,7 +68,7 @@ export const STATUS_LABEL: Record<ProcessingStatus, string> = {
   EXTRACTED: 'Reading',
   EMBEDDING: 'Reading',
   UNDERSTANDING: 'Understanding',
-  RELATING: 'Finding connections',
+  RELATING: 'Looking for similar things',
   READY: '',
   PARTIAL: 'Kept. Partly understood.',
   EXTRACTION_FAILED: "Couldn't read this, but it's kept.",
@@ -84,7 +84,7 @@ export const STAGE_LABEL: Record<Stage, string> = {
   embed: 'Indexing',
   index: 'Indexing',
   understand: 'Understanding',
-  relate: 'Finding connections',
+  relate: 'Looking for similar things',
   organize_batch: 'Organizing',
   consolidate: 'Tidying collections'
 }

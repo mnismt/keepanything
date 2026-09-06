@@ -15,7 +15,7 @@ export function CollectionHeader({ collectionId }: { collectionId: string }): Re
   return (
     <div {...stylex.props(styles.header)}>
       {agentMade && c.description ? (
-        <p {...stylex.props(styles.reason)}>
+        <p {...stylex.props(styles.reason, styles.reasonGrow)}>
           <span {...stylex.props(styles.reasonLead)}>Why these belong together · </span>
           {c.description}
         </p>
@@ -24,7 +24,7 @@ export function CollectionHeader({ collectionId }: { collectionId: string }): Re
           value={c.description ?? ''}
           label="collection description"
           placeholder="Add a line about what this is for"
-          style={styles.reason}
+          style={styles.reasonGrow}
           onSave={(next) => void rename(c.id, c.name, next)}
         />
       )}
@@ -35,7 +35,7 @@ export function CollectionHeader({ collectionId }: { collectionId: string }): Re
           onClick={() => pushModal({ kind: 'dialog', id: 'renameCollection', collectionId: c.id })}
         >
           <Pencil size={12} strokeWidth={1.75} aria-hidden />
-          Rename
+          Edit
         </button>
         <button
           type="button"

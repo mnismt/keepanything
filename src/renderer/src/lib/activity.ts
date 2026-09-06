@@ -19,7 +19,7 @@ export function runTitle(run: Pick<RunLike, 'task' | 'status'>): string {
       return running ? 'Understanding' : 'Understood'
     case 'organize':
     case 'organize_batch':
-      return running ? 'Finding connections' : 'Organized'
+      return running ? 'Looking for similar things' : 'Organized'
     case 'consolidate':
       return running ? 'Tidying collections' : 'Tidied collections'
     case 'folder':
@@ -49,7 +49,7 @@ export function runOutcome(run: RunLike): string {
       const parts: string[] = []
       if (r.relationshipIds.length > 0)
         parts.push(
-          r.relationshipIds.length === 1 ? 'Found 1 related thing' : `Found ${r.relationshipIds.length} related things`
+          r.relationshipIds.length === 1 ? 'Linked to 1 thing' : `Linked to ${r.relationshipIds.length} things`
         )
       if (r.collectionIds.length > 0)
         parts.push(
@@ -57,7 +57,7 @@ export function runOutcome(run: RunLike): string {
         )
       if (r.task === 'consolidate' && r.renamedCollectionIds.length > 0)
         parts.push(`Renamed ${r.renamedCollectionIds.length}`)
-      return parts.length > 0 ? `${parts.join(' · ')}.` : 'Nothing to connect yet.'
+      return parts.length > 0 ? `${parts.join(' · ')}.` : "Nothing similar yet. It'll link up as you keep more."
     }
     case 'folder':
       return r.collectionId ? 'Read the folder and made a collection for it.' : 'Read the folder.'

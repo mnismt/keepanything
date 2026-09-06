@@ -26,7 +26,7 @@ export const styles = stylex.create({
     pointerEvents: { default: 'auto', ':disabled': 'none' }
   },
   primary: {
-    backgroundColor: { default: colors.fg1, ':hover': colors.fg1 },
+    backgroundColor: { default: colors.accent, ':hover': colors.accent },
     color: colors.bg0,
     borderColor: { default: 'transparent', ':hover': 'transparent' },
     opacity: { default: 1, ':hover': 0.92, ':disabled': 0.45 }

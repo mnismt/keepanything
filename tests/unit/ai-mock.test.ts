@@ -95,7 +95,7 @@ describe('mock provider structured output', () => {
     expect(value.relationships[0]?.type).toBe('same_project')
     expect(value.addToCollections[0]).toMatchObject({ collectionId: 'c1', itemId: 'new' })
     expect(value.newCollections).toEqual([])
-    expect(value.summary).toBe('Found 1 related thing.')
+    expect(value.summary).toBe('Linked to 1 thing.')
   })
 
   it('links batch siblings that share a topic', async () => {
@@ -186,14 +186,45 @@ describe('mock provider tool flow', () => {
 
 describe('createAiProvider', () => {
   it('returns providers by mode and the off provider when unconfigured', async () => {
-    expect(createAiProvider({ mode: 'mock', logger }).id).toBe('mock')
-    expect(createAiProvider({ mode: 'off', logger }).id).toBe('off')
-    expect(createAiProvider({ mode: 'gmi', logger }).id).toBe('off')
-    expect(createAiProvider({ mode: 'gmi', apiKey: 'k', logger, fetchImpl: async () => new Response('{}') }).id).toBe(
-      'gmi'
-    )
-    await expect(createOffProvider().chat({ messages: [] })).rejects.toSatisfy(
+    expect(createAiProvider({ mode: 'mock', provider: 'gmi', logger }).id).toBe('mock')
+    expect(createAiProvider({ mode: 'off', provider: 'gmi', logger }).id).toBe('off')
+    expect(createAiProvider({ mode: 'gmi', provider: 'gmi', logger }).id).toBe('off')
+    expect(
+      createAiProvider({
+        mode: 'gmi',
+        provider: 'gmi',
+        apiKey: 'k',
+        logger,
+        fetchImpl: async () => new Response('{}')
+      }).id
+    ).toBe('gmi')
+    await expect(createOffProvider('gmi').chat({ messages: [] })).rejects.toSatisfy(
       (e: unknown) => isKaError(e) && e.code === 'AI_NOT_CONFIGURED'
     )
+  })
+
+  it('returns the unconfigured OpenRouter provider when key or model is missing', async () => {
+    const off = createAiProvider({ mode: 'openrouter', provider: 'openrouter', logger })
+    expect(off.id).toBe('off')
+    await expect(off.chat({ messages: [{ role: 'user', content: 'hi' }] })).rejects.toSatisfy(
+      (e: unknown) => isKaError(e) && e.code === 'AI_NOT_CONFIGURED'
+    )
+    const configured = createAiProvider({
+      mode: 'openrouter',
+      provider: 'openrouter',
+      apiKey: 'sk-or',
+      model: 'openai/gpt-4o-mini',
+      logger,
+      fetchImpl: async () =>
+        new Response(
+          JSON.stringify({
+            id: 'or-1',
+            choices: [{ message: { role: 'assistant', content: 'ok' }, finish_reason: 'stop' }],
+            usage: { prompt_tokens: 1, completion_tokens: 1 }
+          }),
+          { status: 200 }
+        )
+    })
+    expect(configured.id).toBe('openrouter')
   })
 })

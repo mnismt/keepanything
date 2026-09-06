@@ -37,7 +37,7 @@ export function success<T>(data: T): Result<T> {
 export function describeError(error: IpcError): string {
   switch (error.code) {
     case 'AI_NOT_CONFIGURED':
-      return 'Connect GMI in Settings to do this.'
+      return 'Connect an AI provider in Settings to do this.'
     case 'AI_UNAVAILABLE':
     case 'OFFLINE':
       return 'AI is offline right now. Your library is fine.'

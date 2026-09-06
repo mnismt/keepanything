@@ -55,20 +55,61 @@ Copy `.env.example` to `.env` (gitignored), or enter the key in Settings where i
 
 | Variable | Meaning | Default |
 | --- | --- | --- |
-| `KEEPANYTHING_GMI_API_KEY` | GMI Cloud API key | empty (AI runs in `mock` mode) |
-| `KEEPANYTHING_MODEL` | Reasoning model id | `MiniMaxAI/MiniMax-M3` |
-| `KEEPANYTHING_AI` | `gmi`, `mock` or `off` | `gmi` with a key, else `mock` |
+| `KEEPANYTHING_GMI_API_KEY` | GMI Cloud API key | empty |
+| `KEEPANYTHING_MODEL` | GMI reasoning model id | `MiniMaxAI/MiniMax-M3` |
+| `KEEPANYTHING_OPENROUTER_API_KEY` | OpenRouter API key | empty |
+| `KEEPANYTHING_OPENROUTER_MODEL` | OpenRouter model id | `minimax/minimax-m3:free` |
+| `KEEPANYTHING_AI` | `gmi`, `openrouter`, `mock` or `off` | the provider with a key, else `off` |
 Also `KEEPANYTHING_E2E=1` (separate `userData`, test hooks) and `KEEPANYTHING_DEBUG=1`. Dev runs use
 `<userData>/dev`, so dev and packaged builds never share a library.
 
-## Opening the unsigned build
+## Signing and notarizing
 
-The app is unsigned (`identity: null`), so Gatekeeper complains on first launch. Either
-right-click → **Open**, use System Settings → Privacy & Security → **Open Anyway**, or:
+One-time setup on the build machine:
+
+1. **Developer ID Application certificate.** Xcode → Settings → Accounts → the team → *Manage
+   Certificates…* → **+** → **Developer ID Application**. This installs the private key in the login
+   keychain. Verify: `security find-identity -v -p codesigning` lists
+   `Developer ID Application: <Team> (TEAMID)`.
+2. **App-specific password** for notarytool: appleid.apple.com → Sign-In and Security →
+   *App-Specific Passwords*.
+3. **Store the notary credentials in the keychain** so no secret ever lives in a file or in `.env`:
+
+   ```bash
+   xcrun notarytool store-credentials keepanything \
+     --apple-id "you@example.com" --team-id TEAMID --password xxxx-xxxx-xxxx-xxxx
+   ```
+
+Then build:
 
 ```bash
-xattr -dr com.apple.quarantine "release/mac-arm64/KeepAnything.app"
+APPLE_KEYCHAIN_PROFILE=keepanything pnpm run package:mac:dmg
 ```
+
+electron-builder signs the bundle (including the `ka-drag-watch` sidecar and the unpacked
+onnxruntime/sharp binaries) with hardened runtime, submits the `.app` to notarytool, staples the
+ticket, then builds the DMG around the stapled app. No `xattr` needed on the result.
+
+Verify:
+
+```bash
+codesign -dv --verbose=4 "release/mac-arm64/KeepAnything.app"   # Authority: Developer ID Application
+xcrun stapler validate "release/mac-arm64/KeepAnything.app"
+spctl -a -vvv -t install "release/mac-arm64/KeepAnything.app"   # accepted, source=Notarized Developer ID
+```
+
+Without `APPLE_KEYCHAIN_PROFILE` the build still signs but skips notarization (with a warning).
+
+`pnpm run package:mac` overrides the identity to ad-hoc, so it needs no certificate — that build is
+not notarized, and Gatekeeper wants a right-click → **Open** or
+`xattr -dr com.apple.quarantine "release/mac-arm64/KeepAnything.app"` if it ever picks up a quarantine
+flag.
+
+Creating a Developer ID Application certificate requires the **Account Holder** role; an Admin with
+*Certificates, Identifiers & Profiles* access still does not see it in Xcode's *Manage Certificates*
+sheet. Either the Account Holder grants cloud-managed Developer ID access in App Store Connect →
+Users and Access, or they create the certificate and export a `.p12` (with the private key) to import
+here. A `.p12` can also be passed without installing it: `CSC_LINK=/path/cert.p12 CSC_KEY_PASSWORD=…`.
 
 ## Known limitations
 

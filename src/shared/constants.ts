@@ -101,7 +101,7 @@ export const COPY = {
   tagline: 'Keep anything.',
   taglineRest: "We'll figure out the rest.",
   saved: 'Saved.',
-  foundRelated: (n: number): string => (n === 1 ? 'Found 1 related thing.' : `Found ${n} related things.`),
+  foundRelated: (n: number): string => (n === 1 ? 'Linked to 1 thing.' : `Linked to ${n} things.`),
   alreadyKept: (ago: string): string => `Already kept · ${ago}`,
   cantReadPage: "Couldn't read this page, but the link is safe.",
   stillFiguring: 'Still figuring this one out.',
@@ -114,18 +114,22 @@ export const COPY = {
   dropHere: 'Drop here',
   dropSub: 'Keep it for later',
   pasteHint: 'Paste a link (⌘V)',
-  localOnly: 'GMI',
-  localConnected: 'GMI',
-  localOffline: 'GMI',
   notUnderstood: 'Kept. Not understood yet.',
-  connectHint: 'Connect GMI in Settings to understand this.'
-} as const
+  connectHint: 'Connect an AI provider in Settings to understand this.'
+}
 
 /** Default reasoning model (GMI Cloud). */
 export const DEFAULT_MODEL = 'MiniMaxAI/MiniMax-M3'
 
-/** Default OpenAI-compatible base URL. */
+/** Default OpenAI-compatible base URL (GMI Cloud). */
 export const DEFAULT_BASE_URL = 'https://api.gmi-serving.com/v1'
+
+export const AI_PROVIDER_DEFAULTS = {
+  gmi: { model: DEFAULT_MODEL, baseUrl: DEFAULT_BASE_URL },
+  openrouter: { model: 'minimax/minimax-m3:free', baseUrl: 'https://openrouter.ai/api/v1' }
+} as const
+
+export const AI_PROVIDER_LABEL = { gmi: 'GMI', openrouter: 'OpenRouter' } as const
 
 /** Local embedding model id (Hugging Face hub layout under `models/`). */
 export const EMBEDDING_MODEL_ID = 'Xenova/all-MiniLM-L6-v2'

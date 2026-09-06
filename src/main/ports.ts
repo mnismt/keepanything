@@ -213,6 +213,10 @@ export interface AssistantMessage {
   content: string | null
   tool_calls?: ToolCall[]
   reasoning_content?: string
+  /** Plain-text reasoning alternative to `reasoning_content`. OpenRouter may emit this. */
+  reasoning?: string
+  /** Opaque, structured reasoning blocks (encrypted/signed) that must round-trip unchanged. */
+  reasoning_details?: unknown[]
 }
 
 /** Tool result fed back to the model. */
@@ -288,7 +292,7 @@ export interface StructuredSchema<T> {
   jsonSchema?: JsonObject
 }
 
-/** Reasoning model behind the agent (`ai/provider.ts`). Implementations: gmi-minimax, mock, scripted, cache. */
+/** Reasoning model behind the agent (`ai/provider.ts`). Implementations: openai-compatible (GMI, OpenRouter), mock, scripted, cache. */
 export interface AIProvider {
   /** Provider id: `gmi`, `mock`, `scripted`, `cache`. */
   readonly id: string

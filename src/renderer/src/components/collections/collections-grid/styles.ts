@@ -142,7 +142,11 @@ export const styles = stylex.create({
     '::placeholder': { color: colors.fg4 }
   },
   textarea: { height: 'auto', minHeight: 64, paddingBlock: space.s2, resize: 'vertical', lineHeight: 1.5 },
+  inputInvalid: { borderColor: { default: colors.danger, ':focus-visible': colors.danger } },
+  kbdOnPrimary: { color: 'inherit', backgroundColor: 'transparent', borderColor: 'currentColor', opacity: 0.6 },
+  fieldError: { fontSize: text.t12, color: colors.danger, lineHeight: 1.4 },
   select: { appearance: 'none' },
   row: { display: 'flex', justifyContent: 'flex-end', gap: space.s2, marginTop: space.s2 },
+  rowNote: { marginRight: 'auto', fontSize: text.t12 },
   danger: { color: colors.fg2, lineHeight: 1.5 }
 })
