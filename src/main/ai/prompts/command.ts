@@ -42,10 +42,13 @@ export const COMMAND_SYSTEM_PROMPT = [
 ].join('\n')
 
 const TEMPLATE_INSTRUCTIONS: Record<CommandTemplate, string> = {
-  compare: 'Compare these items: what each is, how they differ, when to pick which. Finish with kind "note".',
+  compare:
+    'Compare these items: what each is, how they differ, when to pick which. Finish with kind "answer"; the user may save the result as a note themselves.',
   common: 'Work out what these items have in common and what the shared context might be. Finish with kind "answer".',
-  summarize: 'Summarize this research: the question it circles, what was found, open threads. Finish with kind "note".',
-  extract: 'Extract the concrete claims, figures and decisions from these items. Finish with kind "note".',
+  summarize:
+    'Summarize this research: the question it circles, what was found, open threads. Finish with kind "answer"; the user may save the result as a note themselves.',
+  extract:
+    'Extract the concrete claims, figures and decisions from these items. Finish with kind "answer"; the user may save the result as a note themselves.',
   custom: 'Follow the instruction below using these items as the material.'
 }
 
