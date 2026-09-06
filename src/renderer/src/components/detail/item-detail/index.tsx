@@ -12,7 +12,7 @@ import {
   Trash2,
   X
 } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { COPY } from '../../../../../shared/constants'
 import { isTerminal, STATUS_LABEL } from '../../../../../shared/status'
 import type {
@@ -24,6 +24,7 @@ import type {
 import { runTitle } from '../../../lib/activity'
 import { ago, count, formatBytes, formatDuration, typeLabel } from '../../../lib/format'
 import { describeError, invoke } from '../../../lib/ipc-client'
+import { parseBlocks, type Span } from '../../../lib/markdown-lite'
 import { useCollections } from '../../../state/collections'
 import { useLibrary } from '../../../state/library'
 import { useRuns } from '../../../state/runs'
@@ -35,43 +36,81 @@ import { Button, Dot, InlineEdit, Thumb, toneForStatus } from '../../common'
 import { AgentActivity } from '../agent-activity'
 import { styles } from './styles'
 
-/** Tiny markdown renderer for note heroes: headings, bullet lists, paragraphs. No inline syntax. */
+function Spans({ spans }: { spans: readonly Span[] }): React.JSX.Element {
+  return (
+    <>
+      {spans.map((s, i) => {
+        const key = `${i}-${s.text.slice(0, 12)}`
+        if (s.strong)
+          return (
+            <strong key={key} {...stylex.props(styles.mdStrong)}>
+              {s.text}
+            </strong>
+          )
+        if (s.code)
+          return (
+            <code key={key} {...stylex.props(styles.mdCode)}>
+              {s.text}
+            </code>
+          )
+        if (s.em)
+          return (
+            <em key={key} {...stylex.props(styles.mdEm)}>
+              {s.text}
+            </em>
+          )
+        return <span key={key}>{s.text}</span>
+      })}
+    </>
+  )
+}
+
+/** Markdown renderer for note heroes: headings, bullet/numbered lists, paragraphs, inline emphasis. */
 function MarkdownLite({ source }: { source: string }): React.JSX.Element {
-  const blocks = source.replace(/\r\n/g, '\n').split(/\n{2,}/)
+  const blocks = parseBlocks(source)
   return (
     <>
       {blocks.map((block, i) => {
-        const trimmed = block.trim()
-        if (!trimmed) return null
-        const key = `${i}-${trimmed.slice(0, 12)}`
-        if (trimmed.startsWith('# '))
+        const text = block.kind === 'list' ? block.items[0]?.spans[0]?.text : block.spans[0]?.text
+        const key = `${i}-${block.kind}-${(text ?? '').slice(0, 12)}`
+        if (block.kind === 'h1') {
           return (
             <h3 key={key} {...stylex.props(styles.mdH)}>
-              {trimmed.slice(2)}
+              <Spans spans={block.spans} />
             </h3>
           )
-        if (/^#{2,6} /.test(trimmed))
+        }
+        if (block.kind === 'h2') {
           return (
             <h4 key={key} {...stylex.props(styles.mdH2)}>
-              {trimmed.replace(/^#{2,6} /, '')}
+              <Spans spans={block.spans} />
             </h4>
           )
-        const lines = trimmed.split('\n')
-        if (lines.every((l) => /^[-*] /.test(l))) {
+        }
+        if (block.kind === 'list') {
+          const ListTag = block.ordered ? 'ol' : 'ul'
+          const seen = new Map<string, number>()
           return (
-            <ul key={key} {...stylex.props(styles.mdList)}>
-              {lines.map((l, j) => (
-                // biome-ignore lint/suspicious/noArrayIndexKey: static list, never reordered
-                <li key={`${key}-${j}`} {...stylex.props(styles.mdLi)}>
-                  {l.replace(/^[-*] /, '').replace(/\[(\d+)\]/g, ' [$1]')}
-                </li>
-              ))}
-            </ul>
+            <ListTag key={key} {...stylex.props(styles.mdList, block.ordered && styles.mdListOrdered)}>
+              {block.items.map((item) => {
+                const label = item.spans.map((s) => s.text).join('')
+                const nth = (seen.get(label) ?? 0) + 1
+                seen.set(label, nth)
+                return (
+                  <li
+                    key={`${label.slice(0, 24)}#${nth}`}
+                    {...stylex.props(styles.mdLi, item.nested && styles.mdLiNested)}
+                  >
+                    <Spans spans={item.spans} />
+                  </li>
+                )
+              })}
+            </ListTag>
           )
         }
         return (
           <p key={key} {...stylex.props(styles.mdP)}>
-            {trimmed.replace(/\n/g, ' ')}
+            <Spans spans={block.spans} />
           </p>
         )
       })}

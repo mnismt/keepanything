@@ -51,24 +51,33 @@ export const styles = stylex.create({
     color: colors.ink,
     boxShadow: shadows.sheet,
     overflowY: 'auto',
-    fontFamily: fonts.serif,
-    fontSize: 19,
-    lineHeight: 1.5,
-    letterSpacing: '-0.005em'
-  },
-  heroPlain: {
     fontFamily: fonts.sans,
     fontSize: text.t15,
+    lineHeight: 1.6
+  },
+  heroPlain: {
     backgroundColor: colors.bg2,
     backdropFilter: 'blur(24px)',
     color: colors.fg2,
     whiteSpace: 'pre-wrap'
   },
-  mdH: { fontSize: 26, lineHeight: 1.2, marginBottom: space.s4, fontWeight: weight.regular },
-  mdH2: { fontSize: 20, lineHeight: 1.25, marginTop: space.s6, marginBottom: space.s3 },
+  mdH: { fontSize: 26, lineHeight: 1.2, marginBottom: space.s4, fontWeight: weight.regular, fontFamily: fonts.serif },
+  mdH2: {
+    fontSize: 20,
+    lineHeight: 1.25,
+    marginTop: space.s6,
+    marginBottom: space.s3,
+    fontFamily: fonts.serif,
+    fontWeight: weight.regular
+  },
   mdP: { marginBottom: space.s3 },
   mdList: { paddingLeft: space.s5, marginBottom: space.s3, listStyleType: 'disc' },
+  mdListOrdered: { listStyleType: 'decimal' },
   mdLi: { marginBottom: 4 },
+  mdLiNested: { marginLeft: space.s4 },
+  mdStrong: { fontWeight: weight.semibold },
+  mdEm: { fontStyle: 'italic' },
+  mdCode: { fontFamily: fonts.mono, fontSize: text.t13 },
   heroRepo: {
     width: '100%',
     maxWidth: 520,
