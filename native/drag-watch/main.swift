@@ -6,12 +6,14 @@
 // macOS publishes no "a drag session started" notification, and Electron only sees drags that
 // enter one of its own windows. What every drag session does do is write its payload to the
 // shared drag pasteboard as it begins. So: while a mouse button is held, a bumped changeCount
-// on that pasteboard means a real drag is in flight. Only `changeCount` and the type *names*
-// are ever read - never the data - so this needs no entitlement and shows no permission prompt.
+// on that pasteboard means a real drag is in flight. Only `changeCount`, the type *names* and
+// file URLs are read - never file contents - so this needs no entitlement and shows no prompt.
+// `folders` counts the dragged file URLs that are directories: Chromium reports a Finder folder
+// to the renderer as a file with an empty MIME type, so this is the only way to label it early.
 //
 // Protocol: newline-delimited JSON on stdout.
 //   {"event":"ready"}
-//   {"event":"drag-start","types":["public.file-url", ...]}
+//   {"event":"drag-start","types":["public.file-url", ...],"folders":0}
 //   {"event":"drag-end"}
 //   {"event":"tick"}                       // heartbeat, every ~2s
 //
@@ -41,6 +43,11 @@ func emit(_ payload: [String: Any]) {
 
 let pasteboard = NSPasteboard(name: .drag)
 
+func draggedFolderCount() -> Int {
+    let urls = pasteboard.readObjects(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) as? [URL] ?? []
+    return urls.filter { (try? $0.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory == true }.count
+}
+
 /// Change count sampled while no button is down: the value a fresh press is compared against.
 var restingChangeCount = pasteboard.changeCount
 /// Change count captured at the moment the current press began.
@@ -60,7 +67,11 @@ while true {
         if !wasDown { pressChangeCount = restingChangeCount }
         if !dragging && pasteboard.changeCount != pressChangeCount {
             dragging = true
-            emit(["event": "drag-start", "types": pasteboard.types?.map(\.rawValue) ?? []])
+            emit([
+                "event": "drag-start",
+                "types": pasteboard.types?.map(\.rawValue) ?? [],
+                "folders": draggedFolderCount(),
+            ])
         }
     } else {
         if dragging { emit(["event": "drag-end"]) }

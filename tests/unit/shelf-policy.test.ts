@@ -115,17 +115,19 @@ describe('parseDragWatchLine', () => {
   it('reads the sidecar protocol', () => {
     expect(parseDragWatchLine('{"event":"ready"}')).toEqual({ event: 'ready' })
     expect(parseDragWatchLine('{"event":"drag-end"}\r')).toEqual({ event: 'drag-end' })
-    expect(parseDragWatchLine('{"event":"drag-start","types":["public.file-url"]}')).toEqual({
+    expect(parseDragWatchLine('{"event":"drag-start","types":["public.file-url"],"folders":2}')).toEqual({
       event: 'drag-start',
-      types: ['public.file-url']
+      types: ['public.file-url'],
+      folders: 2
     })
   })
 
   it('keeps drag-start usable when types are missing or junk', () => {
-    expect(parseDragWatchLine('{"event":"drag-start"}')).toEqual({ event: 'drag-start', types: [] })
+    expect(parseDragWatchLine('{"event":"drag-start"}')).toEqual({ event: 'drag-start', types: [], folders: 0 })
     expect(parseDragWatchLine('{"event":"drag-start","types":[1,"ok",null]}')).toEqual({
       event: 'drag-start',
-      types: ['ok']
+      types: ['ok'],
+      folders: 0
     })
   })
 

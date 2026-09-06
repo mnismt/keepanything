@@ -322,7 +322,13 @@ async function bootstrap(): Promise<void> {
           app.isPackaged ? join(process.resourcesPath, 'native') : join(app.getAppPath(), 'build/native'),
           'ka-drag-watch'
         ),
-        { onDragStart: () => windows.armShelf(), onDragEnd: () => windows.disarmShelf() },
+        {
+          onDragStart: (_types, folders) => {
+            push.send('shelf:drag', { folders })
+            windows.armShelf()
+          },
+          onDragEnd: () => windows.disarmShelf()
+        },
         logger.child({ scope: 'drag' })
       )
 

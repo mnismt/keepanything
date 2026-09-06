@@ -5,13 +5,13 @@ import type { Logger } from '../ports'
 
 export type DragWatchEvent =
   | { event: 'ready' }
-  | { event: 'drag-start'; types: string[] }
+  | { event: 'drag-start'; types: string[]; folders: number }
   | { event: 'drag-end' }
   | { event: 'tick' }
 
 export interface DragWatchActions {
-  /** A drag session began somewhere on the desktop. */
-  onDragStart(types: readonly string[]): void
+  /** A drag session began somewhere on the desktop; `folders` is how many dragged files are directories. */
+  onDragStart(types: readonly string[], folders: number): void
   /** That drag ended (dropped or cancelled). */
   onDragEnd(): void
 }
@@ -40,11 +40,11 @@ export function parseDragWatchLine(line: string): DragWatchEvent | null {
     return null
   }
   if (typeof parsed !== 'object' || parsed === null) return null
-  const { event, types } = parsed as { event?: unknown; types?: unknown }
+  const { event, types, folders } = parsed as { event?: unknown; types?: unknown; folders?: unknown }
   if (event === 'ready' || event === 'drag-end' || event === 'tick') return { event }
   if (event === 'drag-start') {
     const list = Array.isArray(types) ? types.filter((t): t is string => typeof t === 'string') : []
-    return { event: 'drag-start', types: list }
+    return { event: 'drag-start', types: list, folders: typeof folders === 'number' && folders > 0 ? folders : 0 }
   }
   return null
 }
@@ -85,7 +85,7 @@ export function startDragWatch(binaryPath: string, actions: DragWatchActions, lo
       for (const line of lines) {
         const event = parseDragWatchLine(line)
         if (!event) continue
-        if (event.event === 'drag-start') actions.onDragStart(event.types)
+        if (event.event === 'drag-start') actions.onDragStart(event.types, event.folders)
         else if (event.event === 'drag-end') actions.onDragEnd()
         else if (event.event === 'ready') logger.debug('drag watcher ready')
       }

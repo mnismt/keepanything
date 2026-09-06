@@ -24,17 +24,19 @@ export interface DragMeta {
 /**
  * Display only: this drives the hover hint, while the intake still classifies the real drop from
  * the raw snapshot. Finder gives folders a `file` item with an empty type, the same as files of
- * unknown type, so `folder` is only reported when the sniffer says so explicitly.
+ * unknown type, so `folders` (counted by the drag sidecar, 0 without it) is how many of those
+ * empty-type items to call folders. Only the tally matters, so which ones is irrelevant.
  */
-export function peekDrag(dt: DragMeta | null): DragPeek | null {
+export function peekDrag(dt: DragMeta | null, folders = 0): DragPeek | null {
   if (!dt) return null
   const types = Array.from(dt.types)
   if (types.includes(INTERNAL_DND_MIME)) return null
   const files = Array.from(dt.items ?? []).filter((i) => i.kind === 'file')
   if (files.length > 0) {
     const tally = new Map<DragPeekKind, number>()
+    let untyped = folders
     for (const f of files) {
-      const k = kindForMime(f.type)
+      const k = f.type === '' && untyped-- > 0 ? 'folder' : kindForMime(f.type)
       tally.set(k, (tally.get(k) ?? 0) + 1)
     }
     const parts = [...tally].map(([kind, count]) => ({ kind, count })).sort((a, b) => b.count - a.count)

@@ -48,6 +48,20 @@ describe('peekDrag', () => {
     expect(peekDrag(dt(['Files'], [{ kind: 'file', type: '' }]))).toMatchObject({ kind: 'file', count: 1 })
   })
 
+  it('labels empty-type items as folders only when the sidecar counted some', () => {
+    const untyped = { kind: 'file', type: '' }
+    expect(peekDrag(dt(['Files'], [untyped]), 1)).toMatchObject({ kind: 'folder', count: 1 })
+    expect(peekDrag(dt(['Files'], [untyped, untyped]), 1)).toEqual({
+      kind: 'mixed',
+      count: 2,
+      parts: [
+        { kind: 'folder', count: 1 },
+        { kind: 'file', count: 1 }
+      ]
+    })
+    expect(peekDrag(dt(['Files'], [{ kind: 'file', type: 'application/pdf' }]), 1)).toMatchObject({ kind: 'pdf' })
+  })
+
   it('ignores internal drags and empty transfers', () => {
     expect(peekDrag(dt([INTERNAL_DND_MIME]))).toBeNull()
     expect(peekDrag(dt([]))).toBeNull()

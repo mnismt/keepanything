@@ -113,6 +113,7 @@ export const IPC_EVENTS = {
   agentRun: 'agent:run',
   shelfDropped: 'shelf:dropped',
   shelfPresence: 'shelf:presence',
+  shelfDrag: 'shelf:drag',
   settingsChanged: 'settings:changed',
   themeChanged: 'theme:changed'
 } as const
@@ -356,6 +357,8 @@ export interface IpcEventMap {
   'shelf:dropped': { result: CaptureResult }
   /** Main is about to show the shelf window, or will hide it once the exit animation has played. */
   'shelf:presence': { visible: boolean; edge: ShelfEdge }
+  /** The sidecar saw a drag begin; `folders` is how many of the dragged files are directories. */
+  'shelf:drag': { folders: number }
   'settings:changed': { settings: Settings }
   'theme:changed': { theme: ResolvedTheme }
 }

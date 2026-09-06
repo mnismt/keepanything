@@ -80,6 +80,8 @@ export function ShelfView(): React.JSX.Element {
   const [over, setOver] = useState(false)
   /** What the drag hovering the shelf looks like; null until something is over it. */
   const [peek, setPeek] = useState<DragPeek | null>(null)
+  /** Folder count from the last `shelf:drag`; stays 0 when the sidecar is not running. */
+  const draggedFolders = useRef(0)
   const [flash, setFlash] = useState<string | null>(null)
   const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -97,6 +99,9 @@ export function ShelfView(): React.JSX.Element {
         setOver(false)
         setPeek(null)
       }
+    })
+    const offDrag = on('shelf:drag', ({ folders }) => {
+      draggedFolders.current = folders
     })
     const offDropped = on('shelf:dropped', ({ result }) => {
       const ids = result.items.map((i) => i.existingId ?? i.id)
@@ -124,6 +129,7 @@ export function ShelfView(): React.JSX.Element {
     })
     return () => {
       offPresence()
+      offDrag()
       offDropped()
       offChanged()
     }
@@ -163,7 +169,7 @@ export function ShelfView(): React.JSX.Element {
         e.preventDefault()
         e.dataTransfer.dropEffect = 'copy'
         setOver(true)
-        const next = peekDrag(e.dataTransfer)
+        const next = peekDrag(e.dataTransfer, draggedFolders.current)
         setPeek((prev) =>
           prev &&
           next &&
