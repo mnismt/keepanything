@@ -275,7 +275,7 @@ export type CollectionCreator = 'user' | 'agent'
 /** Who added an item to a collection. */
 export type MembershipActor = 'user' | 'agent'
 
-/** Filters applied to agent tool calls and saved searches (dates on `captured_at`). */
+/** Filters applied to search and agent retrieval tools (dates on `captured_at`). */
 export interface SearchFilters {
   types?: ItemType[]
   subtypes?: ItemSubtype[]
@@ -297,22 +297,6 @@ export interface Collection {
   nameKey: string
   /** Free-form text the agent reads to decide whether new items belong. */
   description: string | null
-  createdBy: CollectionCreator
-  color: string | null
-  pinned: boolean
-  createdAt: string
-  updatedAt: string
-}
-
-/** `collections` row. */
-export interface Collection {
-  id: string
-  name: string
-  /** `normalizeName(name)`; unique. */
-  nameKey: string
-  description: string | null
-  type: CollectionType
-  query: DynamicQuery | null
   createdBy: CollectionCreator
   color: string | null
   pinned: boolean
