@@ -26,8 +26,7 @@ export const SELECTION_COMMANDS: readonly SelectionCommand[] = [
     min: 2,
     producesNote: false
   },
-  { template: 'summarize', label: 'Summarize', question: 'Summarize these', min: 1, producesNote: false },
-  { template: 'brief', label: 'Turn into a brief', question: 'Turn these into a brief', min: 1, producesNote: true }
+  { template: 'summarize', label: 'Summarize', question: 'Summarize these', min: 1, producesNote: false }
 ]
 
 /** Commands applicable to a selection of `count` items. */
@@ -60,7 +59,6 @@ export function templateFromMenuAction(action: string): CommandTemplate | null {
     case 'compare':
     case 'common':
     case 'summarize':
-    case 'brief':
       return action
     default:
       return null

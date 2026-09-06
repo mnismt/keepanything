@@ -237,7 +237,7 @@ collections:create { name, description? } → Collection
 collections:rename { id, name, description? }   collections:delete { id }   collections:addItems { id, itemIds }   collections:removeItem { id, itemId }
 relationships:create { sourceId, targetId, type, description? }     relationships:remove { id }
 search:quick      { query, limit? } → SearchHit[]           // FTS + vector fusion, no LLM, < 50 ms
-agent:command     { question, itemIds?, template?: 'compare'|'common'|'summarize'|'brief'|'extract'|'custom' } → { runId }   // Ask + multi-item + ⌘K commands
+agent:command     { question, itemIds?, template?: 'compare'|'common'|'summarize'|'extract'|'custom' } → { runId }   // Ask + multi-item + ⌘K commands
 agent:cancel      { runId } → void
 agent:run         { id } → AgentRunDetail
 agent:undo        { auditId } → void
@@ -501,7 +501,7 @@ after hits and only when the query looks like natural language (≥4 words / que
 Enter on Ask → `agent:command` → `RunProgress` (quiet list of completed steps from `agent:run`, static dots, referenced thumbs,
 Esc cancels) → `AskResult` inside the palette (evidence header from structured data: "Looked at 7 recent items · Read 3 ·
 Theme: inference provider cost"; answer; source cards captioned by `why`; "Save as note"). No history, no regenerate, no ratings.
-Multi-item: `SelectionBar` "3 selected · Compare · What do these have in common? · Summarize · Turn into a brief · Add to collection · Trash"
+Multi-item: `SelectionBar` "3 selected · Compare · What do these have in common? · Summarize · Add to collection · Trash"
 → `agent:command` with template + itemIds; on `note` result open the note (or toast "Created … · Show").
 
 **StatusStack** (bottom-right): "Saved." is frame one of the same entry; >1 in flight collapses to "Keeping 7 items · 3 understood";

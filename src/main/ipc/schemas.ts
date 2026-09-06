@@ -166,7 +166,7 @@ export const REQUEST_SCHEMAS = {
     .object({
       question: text(4000).min(1),
       itemIds: z.array(id).max(200).optional(),
-      template: z.enum(['compare', 'common', 'summarize', 'brief', 'extract', 'custom']).optional(),
+      template: z.enum(['compare', 'common', 'summarize', 'extract', 'custom']).optional(),
       history: z
         .array(
           z.object({

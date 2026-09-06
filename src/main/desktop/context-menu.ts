@@ -19,7 +19,6 @@ export type ContextMenuAction =
   | 'compare'
   | 'common'
   | 'summarize'
-  | 'brief'
   | 'rename-collection'
   | 'delete-collection'
   | 'remove-from-collection'
@@ -90,7 +89,6 @@ export function buildContextMenu(input: ContextMenuInput): MenuEntry[] {
         { label: 'Compare', action: 'compare' },
         { label: 'What do these have in common?', action: 'common' },
         { label: 'Summarize', action: 'summarize' },
-        { label: 'Turn into a Brief', action: 'brief' },
         { type: 'separator' },
         addToCollectionMenu(collections)
       ]

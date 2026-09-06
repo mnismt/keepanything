@@ -88,7 +88,6 @@ const TEMPLATE_OF: Record<CommandTemplate, true> = {
   compare: true,
   common: true,
   summarize: true,
-  brief: true,
   extract: true,
   custom: true
 }

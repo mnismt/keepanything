@@ -28,8 +28,8 @@ describe('follow-up command', () => {
 
 describe('selection commands', () => {
   it('offers pairwise commands only for two or more items', () => {
-    expect(commandsFor(1).map((c) => c.template)).toEqual(['summarize', 'brief'])
-    expect(commandsFor(2).map((c) => c.template)).toEqual(['compare', 'common', 'summarize', 'brief'])
+    expect(commandsFor(1).map((c) => c.template)).toEqual(['summarize'])
+    expect(commandsFor(2).map((c) => c.template)).toEqual(['compare', 'common', 'summarize'])
     expect(commandsFor(0)).toEqual([])
     expect(SELECTION_COMMANDS.every((c) => c.question.length > 0 && c.label.length > 0)).toBe(true)
   })
@@ -58,7 +58,6 @@ describe('selection commands', () => {
 
   it('maps native menu action ids to templates', () => {
     expect(templateFromMenuAction('compare')).toBe('compare')
-    expect(templateFromMenuAction('brief')).toBe('brief')
     expect(templateFromMenuAction('trash')).toBeNull()
   })
 })

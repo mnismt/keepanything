@@ -341,40 +341,29 @@ export function createMockBridge(): KeepAnythingApi {
           why: i === 0 ? 'Directly answers the question.' : 'Adds supporting numbers.'
         }))
         const cues = { topics: ['inference', 'serving cost'], types: [] as ItemSummary['type'][] }
-        let result: AgentRunDetail['result']
-        if (template === 'brief' && sources.length > 0) {
-          const note = capture(`Brief - ${question.slice(0, 40)}`, 'note', {
-            excerpt: answer,
-            kind: 'note',
-            processingStatus: 'READY',
-            understanding: 'A generated brief citing the selected items.'
-          })
-          result = { task: 'command', kind: 'note', noteId: note.id, sources: mapped, cues, confidence: 0.8 }
-        } else {
-          result = {
-            task: 'command',
-            kind: 'answer',
-            answer,
-            sources: mapped,
-            cues,
-            confidence: sources.length > 0 ? 0.78 : 0.2,
-            proposals: []
-          }
-          // Organising questions stage a change for approval, like the real agent does.
-          const target = [...state.collections.values()][0]
-          const first = sources[0]
-          if (/organi[sz]e|tidy|clean|sort/i.test(question) && target && first) {
-            result.proposals = [
-              {
-                kind: 'add_to_collection',
-                collectionId: target.id,
-                itemId: first,
-                reason: 'Same topic.',
-                confidence: 0.82,
-                label: `add “${state.items.get(first)?.title ?? first}” to “${target.name}”`
-              }
-            ]
-          }
+        const result: AgentRunDetail['result'] = {
+          task: 'command',
+          kind: 'answer',
+          answer,
+          sources: mapped,
+          cues,
+          confidence: sources.length > 0 ? 0.78 : 0.2,
+          proposals: []
+        }
+        // Organising questions stage a change for approval, like the real agent does.
+        const target = [...state.collections.values()][0]
+        const first = sources[0]
+        if (/organi[sz]e|tidy|clean|sort/i.test(question) && target && first) {
+          result.proposals = [
+            {
+              kind: 'add_to_collection',
+              collectionId: target.id,
+              itemId: first,
+              reason: 'Same topic.',
+              confidence: 0.82,
+              label: `add “${state.items.get(first)?.title ?? first}” to “${target.name}”`
+            }
+          ]
         }
         run.status = 'succeeded'
         run.completedAt = new Date().toISOString()

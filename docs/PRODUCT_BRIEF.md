@@ -86,7 +86,7 @@ Original shown prominently. Then: Understanding (concise, specific: "An engineer
 batching strategies, mainly useful as a reference for reducing GPU serving cost", never "This article discusses AI"),
 why it might be useful; Connections (related items with semantic meaning); Collections; Actions dependent on object
 type (repo: Explain architecture / Compare with saved repos / Extract useful ideas / Read README; article: Summarise
-argument / Extract claims / Compare with related / Add to research brief; image/design: Describe visual language /
+argument / Extract claims / Compare with related; image/design:
 Find similar references / Extract typography/colours/layout ideas; receipt: Extract transaction / Find related
 purchases). The model may suggest relevant actions.
 
@@ -127,9 +127,9 @@ Agentic retrieval: question → interpret memory cues → likely types/topics/ti
 → refine → answer with supporting items. Result shows the source objects, not just an AI answer.
 
 ## 18. Multi-item reasoning
-Select multiple objects: Compare these / What do these have in common? / Summarise this research / Turn these into a
-brief / Extract the key ideas / Which one should I use? / Create a note from these. Agent inspects all items,
-reasons across them, creates a new artifact inside KeepAnything with references back to sources.
+Select multiple objects: Compare these / What do these have in common? / Summarise this research / Extract the key ideas /
+Which one should I use? / Create a note from these. Agent inspects all items, reasons across them,
+creates a new artifact inside KeepAnything with references back to sources.
 
 ## 19. Automatic insight
 Not annoyingly proactive, but may notice meaningful patterns (competitor pages saved over days → "Competitive

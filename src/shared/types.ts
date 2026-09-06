@@ -464,7 +464,7 @@ export interface AgentStep {
 }
 
 /** Multi-item templates for `agent:command`. */
-export type CommandTemplate = 'compare' | 'common' | 'summarize' | 'brief' | 'extract' | 'custom'
+export type CommandTemplate = 'compare' | 'common' | 'summarize' | 'extract' | 'custom'
 
 /** A cited source in an agent answer or note. */
 export interface AgentSource {

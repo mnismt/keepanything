@@ -27,7 +27,7 @@ import {
 export const MIN_RELATIONSHIP_CONFIDENCE = 0.7
 /** At most this many new relationships per subject item and run. */
 export const MAX_RELATIONSHIPS_PER_ITEM = 5
-/** Names the brief forbids (single topic words and generic buckets). */
+/** Names the agent must not use (single topic words and generic buckets). */
 export const BAD_COLLECTION_NAMES = new Set(
   [
     'technology',

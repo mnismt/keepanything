@@ -61,7 +61,7 @@ export function userStageFor(status: ProcessingStatus): UserStage | null {
   return USER_STAGES.find((stage) => stage.statuses.includes(status)) ?? null
 }
 
-/** Card copy per status, in the brief's voice. Empty string = show nothing. */
+/** Card copy per status, in the product's voice. Empty string = show nothing. */
 export const STATUS_LABEL: Record<ProcessingStatus, string> = {
   CAPTURED: 'Saved.',
   EXTRACTING: 'Reading',

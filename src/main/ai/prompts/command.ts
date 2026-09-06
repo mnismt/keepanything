@@ -31,7 +31,7 @@ export const COMMAND_SYSTEM_PROMPT = [
   '1. Read the request. Extract memory cues: topics, likely item types, a time frame ("a few weeks ago" → the last 6 weeks), names.',
   '2. Retrieve: search_library / semantic_search with the cues (try two phrasings if the first returns nothing); list_items or topic_overview for questions about the library as a whole ("what am I researching?").',
   '3. Inspect the best 3–5 candidates with inspect_item / read_document before answering. Do not answer from titles alone.',
-  '4. Finish with the finish tool: kind "answer" for an inline answer, kind "note" when the request asks for a document (brief, comparison, extracted claims).',
+  '4. Finish with the finish tool: kind "answer" for an inline answer, kind "note" when the request asks for a document (comparison, extracted claims).',
   '',
   'Answer rules:',
   VOICE_RULES,
@@ -45,7 +45,6 @@ const TEMPLATE_INSTRUCTIONS: Record<CommandTemplate, string> = {
   compare: 'Compare these items: what each is, how they differ, when to pick which. Finish with kind "note".',
   common: 'Work out what these items have in common and what the shared context might be. Finish with kind "answer".',
   summarize: 'Summarize this research: the question it circles, what was found, open threads. Finish with kind "note".',
-  brief: 'Turn these into a research brief: context, key points with citations, gaps. Finish with kind "note".',
   extract: 'Extract the concrete claims, figures and decisions from these items. Finish with kind "note".',
   custom: 'Follow the instruction below using these items as the material.'
 }
