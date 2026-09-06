@@ -1,6 +1,6 @@
 import * as stylex from '@stylexjs/stylex'
 import { createFileRoute } from '@tanstack/react-router'
-import { Brand, Button, Icon, Shot } from '../components'
+import { Brand, Button, Icon, MiniMaxWeek, Shot } from '../components'
 import type { IconName } from '../components/icon'
 import { shared } from '../styles/shared'
 import { colors, fonts, radii, space, text, weight } from '../styles/tokens.stylex'
@@ -192,10 +192,13 @@ const styles = stylex.create({
     paddingBlock: { default: 160, [MOBILE]: 96 }
   },
   footer: {
+    position: 'relative',
     display: 'flex',
+    flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'space-between',
     columnGap: space.s6,
+    rowGap: space.s4,
     paddingBlock: space.s8,
     borderTopWidth: 1,
     borderTopStyle: 'solid',
@@ -203,15 +206,47 @@ const styles = stylex.create({
     fontSize: text.t13,
     color: colors.fg4
   },
+  footerSide: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    columnGap: space.s4
+  },
+  authorCenter: {
+    position: 'absolute',
+    insetBlockStart: '50%',
+    insetInlineStart: '50%',
+    transform: 'translate(-50%, -50%)',
+    display: 'inline-flex',
+    alignItems: 'center',
+    columnGap: space.s3,
+    fontSize: text.t13,
+    color: { default: colors.fg4, ':hover': colors.fg1 },
+    textDecoration: 'none'
+  },
+  authorAvatar: {
+    width: 28,
+    height: 28,
+    borderRadius: '50%',
+    objectFit: 'cover',
+    borderWidth: 1,
+    borderStyle: 'solid',
+    borderColor: colors.hairline
+  },
+  authorHandle: {
+    fontWeight: weight.medium,
+    color: colors.fg1,
+    letterSpacing: 0.1
+  },
   link: {
     display: 'inline-flex',
     alignItems: 'center',
     columnGap: space.s2,
     color: { default: colors.fg4, ':hover': colors.fg1 }
   },
-  author: {
-    fontWeight: weight.medium,
-    color: 'inherit'
+  brandRow: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    columnGap: space.s4
   }
 })
 
@@ -236,7 +271,12 @@ function Home() {
   return (
     <>
       <header {...stylex.props(styles.wrap, styles.nav)}>
-        <Brand />
+        <span {...stylex.props(styles.brandRow)}>
+          <Brand />
+          <span {...stylex.props(styles.navQuiet)}>
+            <MiniMaxWeek label={false} />
+          </span>
+        </span>
         <nav {...stylex.props(styles.navLinks)}>
           <span {...stylex.props(styles.navQuiet)}>
             <Button href={GITHUB} icon="github">
@@ -288,12 +328,26 @@ function Home() {
         </section>
       </main>
       <footer {...stylex.props(styles.wrap, styles.footer)}>
-        <Brand />
-        <a href={AUTHOR} target="_blank" rel="noopener noreferrer" {...stylex.props(shared.hoverFade, styles.link)}>
-          <Icon name="user" size={14} />
-          <strong {...stylex.props(styles.author)}>@capythanh</strong>
+        <span {...stylex.props(styles.footerSide)}>
+          <Brand />
+          <MiniMaxWeek />
+        </span>
+        <a
+          href={AUTHOR}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="@capythanh on X"
+          {...stylex.props(shared.hoverFade, styles.authorCenter)}
+        >
+          <img {...stylex.props(styles.authorAvatar)} src="/avatars/capythanh.jpg" alt="" />
+          <strong {...stylex.props(styles.authorHandle)}>@capythanh</strong>
         </a>
-        <a href={GITHUB} target="_blank" rel="noopener noreferrer" {...stylex.props(shared.hoverFade, styles.link)}>
+        <a
+          href={GITHUB}
+          target="_blank"
+          rel="noopener noreferrer"
+          {...stylex.props(shared.hoverFade, styles.link, styles.footerSide)}
+        >
           <Icon name="github" size={14} />
           GitHub
         </a>
