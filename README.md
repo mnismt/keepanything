@@ -17,6 +17,16 @@ a utility process · Vitest + Playwright · pnpm only.
 - [`docs/GMI_NOTES.md`](docs/GMI_NOTES.md) — provider latency, tokens, quirks
 - [`AGENTS.md`](AGENTS.md) — contributor conventions
 
+## Install
+
+Download the latest `.dmg` or `.zip` from [Releases](https://github.com/mnismt/keepanything/releases/latest)
+and drag `KeepAnything.app` into `/Applications`. The build is not notarized, so macOS marks the
+download as quarantined and reports the app as "damaged". Clear the flag once, then open normally:
+
+```bash
+xattr -dr com.apple.quarantine /Applications/KeepAnything.app
+```
+
 ## Setup
 
 Requires macOS 13+ on Apple Silicon, Node 24 (`.nvmrc`) and pnpm 11 (`corepack enable`). No Xcode

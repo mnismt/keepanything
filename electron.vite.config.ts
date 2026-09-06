@@ -77,6 +77,10 @@ export default defineConfig({
     plugins: [stylex.vite({ useCSSLayers: true, devMode: 'full' }), react(), cspMetaPlugin()],
     build: {
       minify: 'esbuild',
+      // The bundle loads from disk, not over a network, so Rollup's 500 kB "consider code-splitting"
+      // advice costs a rebuild warning and buys nothing. Raised, not disabled: a jump past 1 MB is
+      // still worth a look.
+      chunkSizeWarningLimit: 1024,
       rollupOptions: { input: resolve(__dirname, 'src/renderer/index.html') }
     }
   }

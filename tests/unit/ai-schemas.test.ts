@@ -213,7 +213,7 @@ describe('prompt builders', () => {
     expect(a[0]).toEqual(b[0])
     expect(messageText(a[0] ?? { role: 'user', content: '' })).toBe(UNDERSTAND_SYSTEM_PROMPT)
     expect(ORGANIZE_SYSTEM_PROMPT).toContain(COLLECTION_RULES)
-    expect(COLLECTION_RULES).toMatch(/at least 3 members/)
+    expect(COLLECTION_RULES).toMatch(/at least 2 members/)
     expect(UNDERSTAND_SYSTEM_PROMPT).toContain(KINDS.join(' | '))
     expect(UNDERSTAND_SYSTEM_PROMPT).not.toMatch(/\d{4}-\d{2}-\d{2}/)
     expect(COMMAND_SYSTEM_PROMPT).not.toMatch(/\d{4}-\d{2}-\d{2}/)

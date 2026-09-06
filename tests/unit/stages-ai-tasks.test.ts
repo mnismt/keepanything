@@ -377,7 +377,7 @@ describe('organize_batch stage', () => {
     return items
   }
 
-  it('creates a collection only for ≥ 3 coherent members and prefers existing ones', async () => {
+  it('creates a collection only for ≥ 2 coherent members and prefers existing ones', async () => {
     const items = await batch()
     const [a, b, c, d] = items as [Item, Item, Item, Item]
     const existing = h.collections.create({
@@ -405,10 +405,7 @@ describe('organize_batch stage', () => {
           {
             name: 'Inference pricing notes',
             description: 'Pricing pages and notes on inference providers and what they charge per token.',
-            members: [
-              { itemId: c.id, reason: 'r' },
-              { itemId: d.id, reason: 'r' }
-            ],
+            members: [{ itemId: d.id, reason: 'r' }],
             confidence: 0.9
           },
           {

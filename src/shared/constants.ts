@@ -66,7 +66,7 @@ export const LIMITS = {
   /** Memberships and new-collection proposals below this confidence are rejected. */
   minCollectionConfidence: 0.7,
   /** Eligible members a proposed collection must have. */
-  minNewCollectionMembers: 3,
+  minNewCollectionMembers: 2,
   /** Agent-written descriptions shorter than this are rejected. */
   minCollectionDescriptionChars: 40,
   /** `nameSimilarity` at or above this folds a proposal into the existing collection. */
