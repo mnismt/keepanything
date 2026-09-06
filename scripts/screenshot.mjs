@@ -3,7 +3,7 @@
  * with macOS `screencapture` into `.artifacts/screenshot.png` (gitignored). The terminal may need
  * Screen Recording permission for window contents to appear.
  *
- * Usage: pnpm run screenshot [-- --theme dark|light] [--out <file>] [--reset] [--settings] [--page]
+ * Usage: pnpm run screenshot [-- --theme dark|light] [--out <file>] [--reset] [--settings] [--activity] [--page]
  *
  *   --theme   Force the appearance for the shot (default: dark). Sets `nativeTheme.themeSource`
  *             in the running app only; nothing is persisted.
@@ -84,6 +84,10 @@ const bounds = await app.evaluate(({ BrowserWindow }) => {
 })
 if (args.includes('--settings')) {
   await page.getByRole('button', { name: 'Settings' }).click()
+  await page.waitForTimeout(400)
+}
+if (args.includes('--activity')) {
+  await page.getByRole('button', { name: 'Activity' }).click()
   await page.waitForTimeout(400)
 }
 await page.waitForTimeout(600)

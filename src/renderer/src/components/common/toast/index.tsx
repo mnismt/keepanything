@@ -68,7 +68,7 @@ function ToastItem({ toast }: { toast: ToastModel }): React.JSX.Element {
   )
 }
 
-/** Toast entries (max 3). The StatusStack slot owns the fixed bottom-right container. */
+/** Toast entries (max 3). The StatusStack owns the fixed bottom-right container. */
 export function ToastStack(): React.JSX.Element | null {
   const toasts = useToasts((s) => s.toasts)
   if (toasts.length === 0) return null

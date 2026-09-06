@@ -1,5 +1,5 @@
 import * as stylex from '@stylexjs/stylex'
-import { Plus, Settings } from 'lucide-react'
+import { Activity, Plus, Settings } from 'lucide-react'
 import { useReducedMotion } from 'motion/react'
 import { type DragEvent, type ReactNode, useId, useState } from 'react'
 import { COPY } from '../../../../../shared/constants'
@@ -8,6 +8,7 @@ import { hasExternalPayload, isInternalDrag, readInternalDrag, snapshotDrop } fr
 import { count } from '../../../lib/format'
 import { getPathForFile, invoke } from '../../../lib/ipc-client'
 import { useCollections } from '../../../state/collections'
+import { useJobs } from '../../../state/jobs'
 import { useLibrary } from '../../../state/library'
 import { useSettings } from '../../../state/settings'
 import { useToasts } from '../../../state/toasts'
@@ -130,13 +131,14 @@ export function Sidebar(): React.JSX.Element {
   const setView = useLibrary((s) => s.setView)
   const collections = useCollections((s) => s.list)
   const stats = useSettings((s) => s.stats)
+  const inFlight = useJobs((s) => Object.values(s.byItem).filter((j) => j.jobStatus !== 'failed').length)
   const aiStatus: AiStatus = stats?.aiStatus ?? 'unconfigured'
   const statusLabel =
     aiStatus === 'connected' ? COPY.localConnected : aiStatus === 'offline' ? COPY.localOffline : COPY.localOnly
 
   const go = (next: Section, collectionId: string | null = null): void => {
     setSection(next, collectionId)
-    if (next !== 'collections') setView(next, collectionId)
+    if (next !== 'collections' && next !== 'activity') setView(next, collectionId)
   }
 
   const openCollectionMenu = async (e: React.MouseEvent, c: CollectionSummary): Promise<void> => {
@@ -206,6 +208,13 @@ export function Sidebar(): React.JSX.Element {
           onClick={() => go('collections')}
         />
         <Row icon="trash" label="Trash" current={section === 'trash'} onClick={() => go('trash')} />
+        <Row
+          icon={<Activity size={16} strokeWidth={1.5} />}
+          label="Activity"
+          count={inFlight}
+          current={section === 'activity'}
+          onClick={() => go('activity')}
+        />
 
         <div {...stylex.props(styles.group)}>
           <div {...stylex.props(styles.groupHead)}>

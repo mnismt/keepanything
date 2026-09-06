@@ -22,6 +22,7 @@ import type {
   AgentResult,
   AgentRunDetail,
   AgentRunStatus,
+  AgentRunSummary,
   AgentStep,
   AgentTask,
   CaptureDropSource,
@@ -79,6 +80,7 @@ export const IPC_CHANNELS = {
   agentCommand: 'agent:command',
   agentCancel: 'agent:cancel',
   agentRun: 'agent:run',
+  agentRuns: 'agent:runs',
   agentUndo: 'agent:undo',
   agentUndoRun: 'agent:undoRun',
   agentApplyProposals: 'agent:applyProposals',
@@ -244,6 +246,8 @@ export interface IpcRequestMap {
   'agent:command': AgentCommandRequest
   'agent:cancel': { runId: string }
   'agent:run': { id: string }
+  /** Newest first. `limit` defaults to 200. */
+  'agent:runs': { limit?: number }
   'agent:undo': { auditId: string }
   /** Revert every audited change of a run (newest first). */
   'agent:undoRun': { runId: string }
@@ -293,6 +297,7 @@ export interface IpcResponseMap {
   'agent:command': { runId: string }
   'agent:cancel': void
   'agent:run': AgentRunDetail
+  'agent:runs': AgentRunSummary[]
   'agent:undo': void
   'agent:undoRun': { undone: number }
   'agent:applyProposals': { applied: number; remaining: AgentProposal[] }

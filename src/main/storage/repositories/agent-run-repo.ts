@@ -54,6 +54,8 @@ export interface AgentRunRepo {
   get(id: string): AgentRunDetail | null
   latestForItem(itemId: string, limit: number): AgentRunSummary[]
   forBatch(batchId: string): AgentRunSummary[]
+  /** Newest first, across all items. */
+  recent(limit: number): AgentRunSummary[]
   /** Runs still marked `running` (crash recovery at boot). */
   running(): AgentRunDetail[]
 }
@@ -113,6 +115,13 @@ export function createAgentRunRepo(db: Db): AgentRunRepo {
         db
           .prepare(`SELECT ${RUN_COLUMNS} FROM agent_runs WHERE batch_id = ? ORDER BY started_at DESC`)
           .all(batchId) as Row[]
+      ).map((r) => toRunSummary(rowToRunDetail(r)))
+    },
+    recent(limit) {
+      return (
+        db
+          .prepare(`SELECT ${RUN_COLUMNS} FROM agent_runs ORDER BY started_at DESC LIMIT ?`)
+          .all(Math.max(1, limit)) as Row[]
       ).map((r) => toRunSummary(rowToRunDetail(r)))
     },
     running() {

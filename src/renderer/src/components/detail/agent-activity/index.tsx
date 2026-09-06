@@ -77,7 +77,24 @@ function SourceRow({
   )
 }
 
-function ActivityEntry({ entry, onOpenItem }: { entry: Entry; onOpenItem: (id: string) => void }): React.JSX.Element {
+function ItemLine({ itemId, onOpen }: { itemId: string; onOpen: (id: string) => void }): React.JSX.Element {
+  const title = useLibrary((s) => s.byId[itemId]?.title)
+  return (
+    <button type="button" {...stylex.props(styles.itemLine, shared.ellipsis)} onClick={() => onOpen(itemId)}>
+      {title ?? 'An item'}
+    </button>
+  )
+}
+
+function ActivityEntry({
+  entry,
+  onOpenItem,
+  showItem
+}: {
+  entry: Entry
+  onOpenItem: (id: string) => void
+  showItem: boolean
+}): React.JSX.Element {
   const [open, setOpen] = useState(entry.live?.status === 'running')
   const [fetched, setFetched] = useState<AgentRunDetail | null>(null)
   const [undone, setUndone] = useState(false)
@@ -115,6 +132,7 @@ function ActivityEntry({ entry, onOpenItem }: { entry: Entry; onOpenItem: (id: s
   const answer = result && result.task === 'command' ? result : null
   const outcome = runOutcome({ task, status, result, error })
   const note = runNote({ task, status, result, error })
+  const itemId = live?.itemId ?? entry.summary?.itemId ?? null
 
   return (
     <div {...stylex.props(styles.entry)}>
@@ -141,6 +159,7 @@ function ActivityEntry({ entry, onOpenItem }: { entry: Entry; onOpenItem: (id: s
             {ago(startedAt)}
           </span>
         </div>
+        {showItem && itemId ? <ItemLine itemId={itemId} onOpen={onOpenItem} /> : null}
         {outcome ? (
           <span {...stylex.props(styles.outcome, live ? styles.outcomeEnter : null)}>
             {undone ? 'Undone.' : outcome}
@@ -176,21 +195,24 @@ function ActivityEntry({ entry, onOpenItem }: { entry: Entry; onOpenItem: (id: s
 }
 
 /**
- * "Activity": the agent runs that touched an item, live ones from the runs store
- * merged with the persisted summaries from `items:get`. Steps are shown in product voice.
+ * "Activity": agent runs, live ones from the runs store merged with persisted summaries.
+ * With `itemId` only that item's runs; without it, every run (the Activity view, which then
+ * names the item on each entry). Steps are shown in product voice.
  */
 export function AgentActivity({
   itemId,
   latestRuns,
   onOpenItem
 }: {
-  itemId: string
+  itemId?: string
   latestRuns: AgentRunSummary[]
   onOpenItem: (id: string) => void
 }): React.JSX.Element {
   const live = useRuns(
     useShallow((s) =>
-      s.order.map((id) => s.runs[id]).filter((r): r is RunState => r !== undefined && r.itemId === itemId)
+      s.order
+        .map((id) => s.runs[id])
+        .filter((r): r is RunState => r !== undefined && (itemId === undefined || r.itemId === itemId))
     )
   )
 
@@ -212,7 +234,7 @@ export function AgentActivity({
   return (
     <div {...stylex.props(styles.list)}>
       {entries.map((e) => (
-        <ActivityEntry key={e.id} entry={e} onOpenItem={onOpenItem} />
+        <ActivityEntry key={e.id} entry={e} onOpenItem={onOpenItem} showItem={itemId === undefined} />
       ))}
     </div>
   )

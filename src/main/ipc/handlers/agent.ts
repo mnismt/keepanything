@@ -9,6 +9,7 @@ type AgentHandlers = Pick<
   | 'agent:command'
   | 'agent:cancel'
   | 'agent:run'
+  | 'agent:runs'
   | 'agent:undo'
   | 'agent:undoRun'
   | 'agent:applyProposals'
@@ -35,6 +36,7 @@ export function createAgentHandlers(deps: HandlerDeps): AgentHandlers {
       if (!run) throw new KaError('NOT_FOUND', "Couldn't find that run.")
       return run
     },
+    'agent:runs': ({ limit }) => deps.repos.agentRuns.recent(limit ?? 200),
     'agent:undo': ({ auditId }) => {
       // Undo is a core capability: it works with or without the agent slice.
       deps.audit.undo(auditId)

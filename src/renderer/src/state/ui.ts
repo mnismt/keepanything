@@ -8,7 +8,7 @@ import type { ItemsView, ResolvedTheme } from '../../../shared/types'
 export type Route = 'library' | 'shelf'
 
 /** Sidebar sections; `ItemsView` ones map straight to `items:list`. */
-export type Section = ItemsView | 'collections'
+export type Section = ItemsView | 'collections' | 'activity'
 
 export type Modal =
   | { kind: 'detail'; itemId: string; originId?: string }

@@ -16,7 +16,8 @@ const TITLES: Record<string, string> = {
   links: 'Links',
   files: 'Files',
   trash: 'Trash',
-  collections: 'Collections'
+  collections: 'Collections',
+  activity: 'Activity'
 }
 
 const TYPE_FILTERS: Array<{ value: ItemType | ''; label: string }> = [
@@ -58,7 +59,7 @@ export function Toolbar(): React.JSX.Element {
   const setDensity = useLibrary((s) => s.setDensity)
 
   const title = section === 'collection' ? (collection?.name ?? 'Collection') : (TITLES[section] ?? 'Library')
-  const showControls = section !== 'collections'
+  const showControls = section !== 'collections' && section !== 'activity'
 
   return (
     <header {...stylex.props(styles.toolbar, shared.drag)}>

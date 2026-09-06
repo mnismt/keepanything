@@ -1,6 +1,7 @@
 import * as stylex from '@stylexjs/stylex'
 import { useCallback, useRef } from 'react'
 import { useShallow } from 'zustand/react/shallow'
+import { ActivityView } from './components/activity'
 import { CollectionDialog, CollectionHeader, CollectionsGrid } from './components/collections'
 import { ItemDetail } from './components/detail'
 import { type EmptyKind, EmptyState, MasonryGrid, TrashHeader } from './components/library'
@@ -107,6 +108,8 @@ function LibraryApp(): React.JSX.Element {
           {section === 'collection' && collectionId ? <CollectionHeader collectionId={collectionId} /> : null}
           {section === 'collections' ? (
             <CollectionsGrid />
+          ) : section === 'activity' ? (
+            <ActivityView />
           ) : error ? (
             <div {...stylex.props(styles.error)}>
               <p>Couldn't load the library.</p>

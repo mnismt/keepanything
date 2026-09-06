@@ -89,5 +89,12 @@ export const styles = stylex.create({
     backgroundColor: { default: 'transparent', ':hover': colors.bgHover }
   },
   sourceThumb: { width: 24, height: 18, borderRadius: 3, overflow: 'hidden' },
+  itemLine: {
+    alignSelf: 'flex-start',
+    maxWidth: '100%',
+    fontSize: text.t12,
+    color: { default: colors.fg3, ':hover': colors.fg1 },
+    textAlign: 'left'
+  },
   empty: { fontSize: text.t12, color: colors.fg4 }
 })

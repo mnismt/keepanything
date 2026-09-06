@@ -663,6 +663,14 @@ export function createMockBridge(): KeepAnythingApi {
         const { question, itemIds, template } = p as IpcRequestMap['agent:command']
         return respond({ runId: startRun(question, itemIds, template) } as IpcResponseMap[C])
       }
+      case 'agent:runs': {
+        const { limit = 200 } = p as IpcRequestMap['agent:runs']
+        const list = [...state.runs.values()]
+          .sort((a, b) => Date.parse(b.startedAt) - Date.parse(a.startedAt))
+          .slice(0, limit)
+          .map(({ usage: _u, result: _r, ...summary }) => summary)
+        return respond(list as IpcResponseMap[C])
+      }
       case 'agent:cancel': {
         const { runId } = p as IpcRequestMap['agent:cancel']
         const run = state.runs.get(runId)

@@ -179,6 +179,9 @@ export const REQUEST_SCHEMAS = {
     .strict() satisfies z.ZodType<IpcRequest<'agent:command'>>,
   'agent:cancel': z.object({ runId: id }).strict() satisfies z.ZodType<IpcRequest<'agent:cancel'>>,
   'agent:run': z.object({ id }).strict() satisfies z.ZodType<IpcRequest<'agent:run'>>,
+  'agent:runs': z.object({ limit: z.number().int().positive().max(1000).optional() }).strict() satisfies z.ZodType<
+    IpcRequest<'agent:runs'>
+  >,
   'agent:undo': z.object({ auditId: id }).strict() satisfies z.ZodType<IpcRequest<'agent:undo'>>,
   'agent:undoRun': z.object({ runId: id }).strict() satisfies z.ZodType<IpcRequest<'agent:undoRun'>>,
   'agent:applyProposals': z.object({ runId: id }).strict() satisfies z.ZodType<IpcRequest<'agent:applyProposals'>>,
