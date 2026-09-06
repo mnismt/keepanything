@@ -1,6 +1,8 @@
-# KeepAnything
+<h1><img src="build/icon.png" width="40" align="top" alt=""> KeepAnything</h1>
 
 Keep anything. We'll figure out the rest.
+
+![KeepAnything library window](web/public/shots/hero.png)
 
 A local-first macOS library for files, folders, screenshots, PDFs, links and text. Originals are
 preserved; a reasoning agent (MiniMax-M3 via GMI Cloud) understands each item and groups it into
