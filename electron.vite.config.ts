@@ -37,6 +37,12 @@ export default defineConfig({
   main: {
     // `dependencies` (only @huggingface/transformers and its natives) stay external; devDependencies are bundled.
     plugins: [externalizeDepsPlugin()],
+    resolve: {
+      // linkedom lists `canvas` (native, unused by us) as an optional peer. Vite replaces a missing optional
+      // peer with a stub that throws at import time in dev and yields `{}` in prod, both outside linkedom's
+      // try/catch. Point it at linkedom's bundled no-op shim instead.
+      alias: { canvas: resolve(__dirname, 'node_modules/linkedom/commonjs/canvas-shim.cjs') }
+    },
     build: {
       rollupOptions: {
         // Two entries: the main process and the utility-process worker (out/main/index.js, out/main/worker.js).

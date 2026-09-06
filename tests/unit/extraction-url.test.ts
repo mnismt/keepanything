@@ -118,6 +118,14 @@ describe('page metadata + readability', () => {
     expect(readable?.text).toContain('iteration-level scheduling')
     expect(readable?.markdown).not.toContain('dataLayer')
   })
+
+  // linkedom's <canvas> element calls `createCanvas` from the optional `canvas` peer. Without the alias in
+  // electron.vite.config.ts the bundle gets `{}` instead of linkedom's shim and this constructor throws.
+  it('parses HTML containing a <canvas> element', async () => {
+    const html = ARTICLE.replace('</article>', '<canvas width="600" height="200"></canvas></article>')
+    const { readable } = await analyzeHtml(html, 'https://blog.example.com/posts/continuous-batching/')
+    expect(readable?.text).toContain('iteration-level scheduling')
+  })
 })
 
 describe('url adapters (stubbed network)', () => {
