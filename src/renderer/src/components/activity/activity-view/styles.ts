@@ -16,7 +16,7 @@ export const styles = stylex.create({
   job: { display: 'flex', alignItems: 'center', gap: space.s2, minWidth: 0, fontSize: text.t13, paddingBlock: 4 },
   jobTitle: { flexGrow: 1, minWidth: 0, color: colors.fg1 },
   jobStage: { color: colors.fg3, fontSize: text.t12, whiteSpace: 'nowrap' },
-  retry: {
+  action: {
     fontSize: text.t12,
     color: { default: colors.fg3, ':hover': colors.fg1 },
     whiteSpace: 'nowrap',

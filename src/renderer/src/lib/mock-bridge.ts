@@ -463,6 +463,17 @@ export function createMockBridge(): KeepAnythingApi {
       }
       case 'items:reprocessAll':
         return respond({ count: live().length } as IpcResponseMap[C])
+      case 'items:cancel': {
+        const { ids } = p as IpcRequestMap['items:cancel']
+        for (const id of ids) {
+          const item = state.items.get(id)
+          if (!item) continue
+          const stopped = { ...item, processingStatus: 'PARTIAL' as ProcessingStatus }
+          state.items.set(id, stopped)
+          emit('items:changed', { reason: 'updated', ids: [id], summaries: [stopped] })
+        }
+        return respond(undefined as IpcResponseMap[C])
+      }
       case 'items:openOriginal':
       case 'items:revealInFinder':
       case 'items:quickLook':

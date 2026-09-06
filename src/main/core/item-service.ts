@@ -1,12 +1,14 @@
 import type { ItemsListRequest, ItemUpdatePatch } from '../../shared/ipc'
 import { relationshipLabel } from '../../shared/kinds'
 import { toMediaUrl } from '../../shared/media'
+import { isTerminal } from '../../shared/status'
 import type {
   Item,
   ItemDetail,
   ItemDetailCollection,
   ItemDetailRelationship,
   ItemSummary,
+  Job,
   Stage,
   Understanding,
   UserOverridableField
@@ -22,7 +24,7 @@ import { type IdGenerator, uuid } from './ids'
 export interface ItemPipeline {
   enqueueInitial(item: Item): unknown
   enqueueFrom(item: Item, from?: Stage): unknown
-  cancelForItems(itemIds: readonly string[]): unknown
+  cancelForItems(itemIds: readonly string[]): Job[]
 }
 
 /** Everything optional except type and title. */
@@ -77,6 +79,8 @@ export interface ItemService {
   restore(ids: readonly string[]): void
   /** Hard delete. Returns the removed rows so the caller can purge managed files. */
   deleteForever(ids: readonly string[]): Item[]
+  /** Stop processing without deleting: cancels queued/running jobs and settles the items at `PARTIAL`. */
+  cancelProcessing(ids: readonly string[]): void
   reprocess(id: string, from?: Stage): void
   reprocessAll(from?: Stage): number
   /** Bump `last_kept_at`, audit `kept_again`. */
@@ -374,6 +378,32 @@ export function createItemService(deps: ItemServiceDeps): ItemService {
         items.deleteForever(targetIds)
         emit('item.deleted', targetIds)
         return existing
+      })
+    },
+    cancelProcessing(idList) {
+      db.transaction(() => {
+        const cancelled = pipeline.cancelForItems(idList)
+        const touched: string[] = []
+        for (const id of idList) {
+          const item = items.get(id)
+          // A settled item has nothing to stop; PARTIAL says "kept, we stopped short" without a new status.
+          if (!item || isTerminal(item.processingStatus)) continue
+          items.update(id, { processingStatus: 'PARTIAL', modifiedAt: clock.nowIso() })
+          touched.push(id)
+        }
+        db.afterCommit(() => {
+          for (const job of cancelled) {
+            events.emit('job.progress', {
+              itemId: job.itemId,
+              batchId: job.batchId,
+              processingStatus: 'PARTIAL',
+              stage: job.stage,
+              jobStatus: 'cancelled',
+              attempts: job.attempts
+            })
+          }
+        })
+        emit('item.updated', touched)
       })
     },
     reprocess(id, from) {

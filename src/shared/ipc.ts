@@ -56,6 +56,7 @@ export const IPC_CHANNELS = {
   itemsTrash: 'items:trash',
   itemsRestore: 'items:restore',
   itemsDeleteForever: 'items:deleteForever',
+  itemsCancel: 'items:cancel',
   itemsReprocess: 'items:reprocess',
   itemsReprocessAll: 'items:reprocessAll',
   itemsOpenOriginal: 'items:openOriginal',
@@ -222,6 +223,8 @@ export interface IpcRequestMap {
   'items:trash': { ids: string[] }
   'items:restore': { ids: string[] }
   'items:deleteForever': { ids: string[] }
+  /** Cancel every queued/running job of these items; the running stage's result is discarded. */
+  'items:cancel': { ids: string[] }
   'items:reprocess': { id: string; from?: Stage }
   'items:reprocessAll': { from?: Stage }
   'items:openOriginal': { id: string }
@@ -273,6 +276,7 @@ export interface IpcResponseMap {
   'items:trash': void
   'items:restore': void
   'items:deleteForever': void
+  'items:cancel': void
   'items:reprocess': void
   'items:reprocessAll': { count: number }
   'items:openOriginal': void

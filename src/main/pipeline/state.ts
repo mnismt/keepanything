@@ -254,6 +254,10 @@ export function createStateApplier(deps: StateDeps): StateApplier {
     },
     applyResult(job, patch) {
       return db.transaction(() => {
+        // Cancelled while the stage was still running: drop the result instead of writing status
+        // or unlocking the next stage.
+        // ponytail: the stage itself is left to finish; wire an AbortController per item if freeing the lane matters.
+        if (jobs.get(job.id)?.status === 'cancelled') return empty(job, 'cancelled', null, true)
         if (!job.itemId)
           return applyBatchTransition(
             job,

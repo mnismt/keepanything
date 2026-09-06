@@ -14,6 +14,7 @@ type ItemHandlers = Pick<
   | 'items:trash'
   | 'items:restore'
   | 'items:deleteForever'
+  | 'items:cancel'
   | 'items:reprocess'
   | 'items:reprocessAll'
   | 'items:openOriginal'
@@ -80,6 +81,9 @@ export function createItemHandlers(deps: HandlerDeps): ItemHandlers {
           .removeItem(item.id)
           .catch((error: unknown) => deps.logger.warn('could not purge objects', { id: item.id, error }))
       }
+    },
+    'items:cancel': ({ ids }) => {
+      items.cancelProcessing(ids)
     },
     'items:reprocess': ({ id, from }) => {
       items.reprocess(id, from)

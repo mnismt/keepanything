@@ -113,6 +113,15 @@ describe('item service', () => {
     expect(h.items.reprocessAll('index')).toBe(1)
   })
 
+  it('cancelProcessing stops active jobs and settles the item at PARTIAL', () => {
+    const item = h.item({ type: 'url', processingStatus: 'CAPTURED', url: 'https://a.b' })
+    h.queue.enqueueInitial(item)
+    h.items.cancelProcessing([item.id])
+    expect(h.repos.jobs.activeForItem(item.id)).toEqual([])
+    expect(h.repos.items.get(item.id)?.processingStatus).toBe('PARTIAL')
+    expect(h.eventsNamed('job.progress').map((p) => p.jobStatus)).toContain('cancelled')
+  })
+
   it('reprocess forgets finished downstream jobs so the graph runs them again', () => {
     const item = h.item({ type: 'url', processingStatus: 'READY', url: 'https://a.b' })
     const now = h.clock.nowIso()

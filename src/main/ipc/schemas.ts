@@ -109,6 +109,7 @@ export const REQUEST_SCHEMAS = {
   'items:trash': z.object({ ids }).strict() satisfies z.ZodType<IpcRequest<'items:trash'>>,
   'items:restore': z.object({ ids }).strict() satisfies z.ZodType<IpcRequest<'items:restore'>>,
   'items:deleteForever': z.object({ ids }).strict() satisfies z.ZodType<IpcRequest<'items:deleteForever'>>,
+  'items:cancel': z.object({ ids }).strict() satisfies z.ZodType<IpcRequest<'items:cancel'>>,
   'items:reprocess': z.object({ id, from: stage.optional() }).strict() satisfies z.ZodType<
     IpcRequest<'items:reprocess'>
   >,

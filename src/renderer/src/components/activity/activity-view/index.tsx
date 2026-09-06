@@ -16,8 +16,11 @@ import { styles } from './styles'
 function JobRow({ job }: { job: JobProgress }): React.JSX.Element {
   const title = useLibrary((s) => (job.itemId ? s.byId[job.itemId]?.title : undefined))
   const failed = job.jobStatus === 'failed'
-  const retry = async (): Promise<void> => {
-    if (job.itemId) await useLibrary.getState().reprocess(job.itemId)
+  const itemId = job.itemId
+  const act = async (): Promise<void> => {
+    if (!itemId) return
+    if (failed) await useLibrary.getState().reprocess(itemId)
+    else await invoke('items:cancel', { ids: [itemId] })
   }
   return (
     <div {...stylex.props(styles.job)}>
@@ -26,9 +29,9 @@ function JobRow({ job }: { job: JobProgress }): React.JSX.Element {
       <span {...stylex.props(styles.jobStage)} title={job.message}>
         {failed ? "Couldn't finish" : job.jobStatus === 'queued' ? 'Waiting' : STAGE_LABEL[job.stage]}
       </span>
-      {failed && job.itemId ? (
-        <button type="button" {...stylex.props(shared.hoverFade, styles.retry)} onClick={() => void retry()}>
-          Retry
+      {itemId ? (
+        <button type="button" {...stylex.props(shared.hoverFade, styles.action)} onClick={() => void act()}>
+          {failed ? 'Retry' : 'Stop'}
         </button>
       ) : null}
     </div>
