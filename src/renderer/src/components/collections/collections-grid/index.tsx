@@ -143,7 +143,7 @@ export function CollectionDialog({
         setView('collection', r.data.id)
       }
     } else if (mode === 'rename' && collectionId) {
-      await rename(collectionId, trimmed, description.trim() || undefined)
+      await rename(collectionId, trimmed, description.trim())
     }
     setBusy(false)
     pop()
@@ -183,17 +183,16 @@ export function CollectionDialog({
             </label>
             <label {...stylex.props(styles.field)}>
               <span {...stylex.props(styles.label)}>Description (optional)</span>
-              <input
-                {...stylex.props(styles.input)}
+              <textarea
+                {...stylex.props(styles.input, styles.textarea)}
+                rows={2}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="What this is for"
+                placeholder="What belongs here, and what does not"
               />
-              {mode === 'new' || mode === 'rename' ? (
-                <span {...stylex.props(styles.fieldHint)}>
-                  The AI reads this description, and what is already inside, to decide where new items go.
-                </span>
-              ) : null}
+              <span {...stylex.props(styles.fieldHint)}>
+                The AI reads this description, and what is already inside, to decide where new items go.
+              </span>
             </label>
           </>
         )}
