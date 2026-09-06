@@ -7,8 +7,7 @@ import { colors, fonts, space, text, weight } from '../styles/tokens.stylex'
 export const Route = createFileRoute('/')({ component: Home })
 
 const GITHUB = 'https://github.com/mnismt/keepanything'
-// The repo is private with no releases yet; repoint once the first build is published.
-const DOWNLOAD = `${GITHUB}/releases/latest`
+const DOWNLOAD = `${GITHUB}/releases/tag/v0.1.0`
 const AUTHOR = 'https://x.com/capythanh'
 const MOBILE = '@media (max-width: 800px)'
 
