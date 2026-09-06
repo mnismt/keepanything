@@ -3,3 +3,4 @@ allowBuilds:
   lightningcss: true
   "@stylexjs/babel-plugin": true
   "@stylexjs/shared": true
+  workerd: true
