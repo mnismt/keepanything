@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { EMBEDDING_DIMS, EMBEDDING_MODEL_ID } from '../../../shared/constants'
 import type { WorkerTaskRegistry } from '../../worker/rpc'
-import { loadMiniLm, type MiniLmExtractor } from './transformers'
+import { type LocalModelExtractor, loadLocalModel } from './transformers'
 
 const initPayload = z.object({ modelsDir: z.string().min(1), modelId: z.string().min(1).optional() })
 const textsPayload = z.object({ texts: z.array(z.string()) })
@@ -19,13 +19,13 @@ export interface EmbedInitResult extends EmbedStatus {
 }
 
 interface WorkerState {
-  extractor: MiniLmExtractor | null
+  extractor: LocalModelExtractor | null
   modelsDir: string | null
-  loading: Promise<MiniLmExtractor> | null
+  loading: Promise<LocalModelExtractor> | null
 }
 
 /** Build a registry with its own state (the worker uses `EMBEDDING_WORKER_TASKS`; tests build fresh ones). */
-export function createEmbeddingWorkerTasks(load: typeof loadMiniLm = loadMiniLm): WorkerTaskRegistry {
+export function createEmbeddingWorkerTasks(load: typeof loadLocalModel = loadLocalModel): WorkerTaskRegistry {
   const state: WorkerState = { extractor: null, modelsDir: null, loading: null }
 
   const status = (): EmbedStatus => ({

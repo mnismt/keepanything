@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { blobToVector, vectorToBlob } from '../../src/main/storage/repositories/embedding-repo'
 import type { Job } from '../../src/shared/types'
 import { createHarness, type Harness } from './helpers/harness'
 
@@ -347,5 +348,14 @@ describe('embedding, agent run, audit and suppression repositories', () => {
     expect(h.repos.suppressions.keys('relationship')).toEqual(new Set(['a:b']))
     h.repos.suppressions.remove('relationship', 'a:b')
     expect(h.repos.suppressions.has('relationship', 'a:b')).toBe(false)
+  })
+})
+
+describe('embedding blobs', () => {
+  it('decodes by BLOB length when the dims column is missing or 0', () => {
+    const blob = vectorToBlob(Float32Array.from([0.5, 0.25, 0.125]))
+    expect(Array.from(blobToVector(blob, 3))).toEqual([0.5, 0.25, 0.125])
+    expect(Array.from(blobToVector(blob, 0))).toEqual([0.5, 0.25, 0.125])
+    expect(Array.from(blobToVector(blob, 2))).toEqual([0.5, 0.25])
   })
 })

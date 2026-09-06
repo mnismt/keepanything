@@ -1,6 +1,6 @@
 /**
  * Utility-process worker entry (`out/main/worker.js`). Spawned lazily by `lib/worker-client.ts`
- * via `utilityProcess.fork`. Runs CPU-heavy work off the main thread: MiniLM inference, PDF text,
+ * via `utilityProcess.fork`. Runs CPU-heavy work off the main thread: embedding inference, PDF text,
  * readability -> markdown, sha256 of big files. Slices register their tasks in the registry below
  * (`extraction/worker-tasks.ts`, `ai/embeddings/worker-tasks.ts`); this scaffold answers `ping`.
  *

@@ -8,6 +8,7 @@ import {
   type RetrievalService,
   SNIPPET_OPEN
 } from '../../src/main/retrieval'
+import { EMBEDDING_DIMS, LIMITS } from '../../src/shared/constants'
 import { createHarness, type Harness } from './helpers/harness'
 
 let h: Harness
@@ -227,6 +228,35 @@ describe('retrieval', () => {
     expect(await retrieval.quickSearch('raycast')).toEqual([])
   })
 
+  it('drops the old-model chunk-0 summary when embedBody re-embeds under a new model', async () => {
+    const ids = await seed()
+    h.repos.embeddings.upsert([
+      {
+        itemId: ids.paged as string,
+        chunkIndex: 0,
+        role: 'summary',
+        content: 'old summary',
+        vector: new Float32Array(384),
+        model: 'Xenova/all-MiniLM-L6-v2',
+        dims: 384
+      }
+    ])
+    await retrieval.embedBody(ids.paged as string)
+    const rows = h.repos.embeddings.forItem(ids.paged as string)
+    expect(rows.some((r) => r.model === 'Xenova/all-MiniLM-L6-v2')).toBe(false)
+  })
+
+  it('treats rows with a wrong dims column as stale and re-embeds them', async () => {
+    const ids = await seed()
+    await retrieval.embedBody(ids.paged as string)
+    h.db.prepare('UPDATE embeddings SET dims = 0 WHERE item_id = ?').run(ids.paged as string)
+    expect(retrieval.staleEmbeddingItemIds()).toEqual([ids.paged as string])
+    const result = await retrieval.embedBody(ids.paged as string)
+    expect(result.unchanged).toBe(false)
+    expect(h.repos.embeddings.forItem(ids.paged as string).every((r) => r.dims === EMBEDDING_DIMS)).toBe(true)
+    expect(retrieval.staleEmbeddingItemIds()).toEqual([])
+  })
+
   it('assembles agent context cards within a token budget', async () => {
     const ids = await seed()
     const cards = retrieval.contextFor([ids.vllm as string, ids.paged as string, ids.raycast as string], 10_000)
@@ -239,10 +269,10 @@ describe('retrieval', () => {
 
 describe('bodyChunks', () => {
   it('splits on paragraph boundaries and caps the number of chunks', () => {
-    const text = Array.from({ length: 60 }, (_, i) => `Paragraph ${i} `.repeat(30)).join('\n\n')
+    const text = Array.from({ length: 60 }, (_, i) => `Paragraph ${i} `.repeat(60)).join('\n\n')
     const chunks = bodyChunks(text)
     expect(chunks.length).toBe(24)
-    expect(chunks.every((c) => c.length <= 900)).toBe(true)
+    expect(chunks.every((c) => c.length <= LIMITS.bodyChunkChars)).toBe(true)
     expect(bodyChunks('   ')).toEqual([])
     expect(bodyChunks(null)).toEqual([])
   })

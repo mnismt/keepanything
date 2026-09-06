@@ -1,10 +1,10 @@
-/** Uses exactly the options verified by `scripts/probe/embed-probe.mjs`: offline env, `feature-extraction`, `dtype: 'q8'`, `device: 'cpu'`, `local_files_only`, mean pooling + normalize. */
-import { EMBEDDING_DIMS, EMBEDDING_MODEL_ID } from '../../../shared/constants'
+/** Uses exactly the options verified by `scripts/probe/embed-probe.mjs`: offline env, `feature-extraction`, `dtype: 'q8'`, `device: 'cpu'`, `local_files_only`, normalize. Pooling is `cls`, the BAAI recommendation for bge. */
+import { EMBEDDING_MODEL_ID } from '../../../shared/constants'
 import { missingModelFiles } from './model-files'
 
 export const EMBED_BATCH_SIZE = 32
 
-export interface MiniLmExtractor {
+export interface LocalModelExtractor {
   readonly modelId: string
   readonly dims: number
   readonly loadMs: number
@@ -17,10 +17,15 @@ interface TensorLike {
   data: ArrayLike<number>
 }
 
-type Extractor = (texts: string[], opts: { pooling: 'mean'; normalize: boolean }) => Promise<TensorLike>
+type Pooling = 'cls' | 'mean'
+type Extractor = (texts: string[], opts: { pooling: Pooling; normalize: boolean }) => Promise<TensorLike>
 
-/** Load the model from `modelsDir` (the directory that contains `Xenova/all-MiniLM-L6-v2`). */
-export async function loadMiniLm(modelsDir: string, modelId: string = EMBEDDING_MODEL_ID): Promise<MiniLmExtractor> {
+/** Load the model from `modelsDir` (the directory that contains the `EMBEDDING_MODEL_ID` folder). */
+export async function loadLocalModel(
+  modelsDir: string,
+  modelId: string = EMBEDDING_MODEL_ID,
+  pooling: Pooling = 'cls'
+): Promise<LocalModelExtractor> {
   const missing = missingModelFiles(modelsDir, modelId)
   if (missing.length > 0) {
     throw new Error(`Embedding model files missing under ${modelsDir}: ${missing.join(', ')}`)
@@ -37,23 +42,28 @@ export async function loadMiniLm(modelsDir: string, modelId: string = EMBEDDING_
     device: 'cpu',
     local_files_only: true
   })) as unknown as Extractor
+  // One warm-up call: it fixes `dims` before any caller stores a row (rows are decoded with their
+  // `dims` column, so 0 would silently drop them from the index) and pays the ONNX session cost here.
+  const [, dims = 0] = (await extractor([' '], { pooling, normalize: true })).dims
+  if (dims <= 0) throw new Error(`Embedding model ${modelId} returned an empty vector`)
   const loadMs = Date.now() - started
 
   async function embed(texts: string[]): Promise<number[][]> {
     const out: number[][] = []
     for (let start = 0; start < texts.length; start += EMBED_BATCH_SIZE) {
       const batch = texts.slice(start, start + EMBED_BATCH_SIZE).map((t) => (t.trim().length > 0 ? t : ' '))
-      const tensor = await extractor(batch, { pooling: 'mean', normalize: true })
-      const [rows = 0, dims = EMBEDDING_DIMS] = tensor.dims
+      const tensor = await extractor(batch, { pooling, normalize: true })
+      const [rows = 0, d = 0] = tensor.dims
+      if (d !== dims) throw new Error(`Embedding model ${modelId} returned ${d}-d vectors, expected ${dims}`)
       for (let row = 0; row < rows; row++) {
-        const vector = new Array<number>(dims)
-        const offset = row * dims
-        for (let i = 0; i < dims; i++) vector[i] = Number(tensor.data[offset + i] ?? 0)
+        const vector = new Array<number>(d)
+        const offset = row * d
+        for (let i = 0; i < d; i++) vector[i] = Number(tensor.data[offset + i] ?? 0)
         out.push(vector)
       }
     }
     return out
   }
 
-  return { modelId, dims: EMBEDDING_DIMS, loadMs, embed }
+  return { modelId, dims, loadMs, embed }
 }

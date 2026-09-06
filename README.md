@@ -9,8 +9,8 @@ leaves the machine.
 
 Built for **MiniMax Week** (Reasoning track).
 
-Electron 44 · React 19 · TypeScript 5.9 strict · `node:sqlite` (FTS5) · MiniLM embeddings in a
-utility process · Vitest + Playwright · pnpm only.
+Electron 44 · React 19 · TypeScript 5.9 strict · `node:sqlite` (FTS5) · bge-small-en-v1.5 embeddings in
+a utility process · Vitest + Playwright · pnpm only.
 
 - [`docs/PRODUCT_BRIEF.md`](docs/PRODUCT_BRIEF.md) — product
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — architecture and the contract between layers
@@ -24,7 +24,7 @@ tools needed.
 
 ```bash
 pnpm install
-pnpm run models:fetch   # MiniLM into build/models (gitignored); needed before packaging
+pnpm run models:fetch   # bge-small-en-v1.5 into build/models (gitignored); needed before packaging
 pnpm run dev
 ```
 
@@ -122,5 +122,5 @@ here. A `.p12` can also be passed without installing it: `CSC_LINK=/path/cert.p1
   command line tools). Without it the shelf still opens from the menu-bar icon, ⌘⇧K and ⌘V.
 - Folders are captured as one item with a manifest (huge folders are sampled). Pages behind logins or
   bot protection are kept as links with a snapshot only.
-- `pnpm run dev` falls back to hashed embeddings unless MiniLM is copied into `<userData>/models`;
-  packaged builds bundle it.
+- `pnpm run dev` falls back to hashed embeddings unless bge-small-en-v1.5 is copied into
+  `<userData>/models`; packaged builds bundle it.

@@ -5,7 +5,7 @@
  * `.sql?raw` and extension-less modules, so the eval runs through vitest
  * (`tests/unit/retrieval-eval.test.ts`, skipped unless `KEEPANYTHING_EVAL=1`). Not part of `pnpm test`.
  *
- *   pnpm run eval:retrieval            # MiniLM from build/models when fetched, hash fallback otherwise
+ *   pnpm run eval:retrieval            # local model from build/models when fetched, hash fallback otherwise
  *   pnpm run eval:retrieval -- --hash  # force the hash fallback
  */
 

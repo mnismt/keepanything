@@ -5,7 +5,7 @@ import type { RetrievalService } from '../../retrieval'
  * `embed` stage (embed lane): body chunks (`chunk_index ≥ 1`, role `body`) of the item's
  * extracted text through the active embedding provider, stored with model id + dims. Idempotent:
  * unchanged text and model is a no-op; hash-fallback rows carry their own model id, so a later
- * MiniLM arrival re-embeds on the next run. Embeddings are not required to proceed: without a
+ * model arrival re-embeds on the next run. Embeddings are not required to proceed: without a
  * retrieval service the stage is a no-op.
  */
 export const embedStage: StageDefinition = {

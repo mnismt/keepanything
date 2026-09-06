@@ -1,12 +1,14 @@
 #!/usr/bin/env node
 
-// embed-probe.mjs — verify the local MiniLM embedding model loads and runs offline in Node with the
+// embed-probe.mjs — verify the local embedding model loads and runs offline in Node with the
 // installed @huggingface/transformers, using the files fetched by scripts/fetch-models.mjs.
 //
 //   node scripts/probe/embed-probe.mjs [--dtype q8|fp32] [--models <dir>] [--n 32]
+//                                       [--model <id>] [--pooling mean|cls]
 //
-// Prints: load time, dims, a cosine matrix over 3 sentences, ms per batch of N texts, and the exact
-// options that worked (copy them into src/main/worker for the `minilm` EmbeddingProvider).
+// Prints: load time, dims, a 5×5 cosine matrix (3 sentences + paraphrase + unrelated) so the
+// floor / near-dup thresholds can be read off, ms per batch of N texts, and the exact options that
+// worked (copy them into src/main/worker for the `local` EmbeddingProvider).
 
 import { existsSync } from 'node:fs'
 import path from 'node:path'
@@ -21,10 +23,15 @@ const arg = (name, def) => {
   const i = argv.indexOf(name)
   return i >= 0 && argv[i + 1] ? argv[i + 1] : def
 }
-const MODEL_ID = 'Xenova/all-MiniLM-L6-v2'
+const MODEL_ID = arg('--model', 'Xenova/bge-small-en-v1.5')
+const POOLING = arg('--pooling', 'cls')
 const MODELS_DIR = path.resolve(arg('--models', path.join(ROOT, 'build', 'models')))
 const DTYPE = arg('--dtype', 'q8') // q8 -> onnx/model_quantized.onnx ; fp32 -> onnx/model.onnx
 const N = Number(arg('--n', '32'))
+if (POOLING !== 'mean' && POOLING !== 'cls') {
+  console.error(`invalid --pooling: ${POOLING} (expected mean or cls)`)
+  process.exit(2)
+}
 
 for (const f of [
   'config.json',
@@ -48,12 +55,13 @@ env.useBrowserCache = false
 // Optional: env.backends.onnx.wasm is irrelevant in Node (onnxruntime-node is used).
 
 const PIPELINE_OPTIONS = { dtype: DTYPE, device: 'cpu', local_files_only: true }
-const CALL_OPTIONS = { pooling: 'mean', normalize: true }
+const CALL_OPTIONS = { pooling: POOLING, normalize: true }
 
 console.log(`transformers.js: ${env.version}`)
 console.log(`node: ${process.version} arch=${process.arch}`)
 console.log(`models dir: ${MODELS_DIR}`)
 console.log(`pipeline('feature-extraction', '${MODEL_ID}', ${JSON.stringify(PIPELINE_OPTIONS)})`)
+console.log(`pooling: ${POOLING}`)
 
 const t0 = performance.now()
 const extractor = await pipeline('feature-extraction', MODEL_ID, PIPELINE_OPTIONS)
@@ -65,9 +73,14 @@ const sentences = [
   'Continuous batching keeps the GPU busy by admitting new requests as soon as a slot frees up in the inference server.',
   'A recipe for sourdough bread with a long cold ferment and a very hot Dutch oven.'
 ]
+// Extra pairs used to read the cosine floor / near-duplicate threshold off the matrix.
+const paraphrase =
+  'The KV cache is split into fixed-size blocks by PagedAttention so vLLM can schedule requests without fragmenting GPU memory.'
+const unrelated = 'How to brew pour-over coffee at home with a gooseneck kettle and a paper filter.'
 
+const allTexts = [...sentences, paraphrase, unrelated]
 const t1 = performance.now()
-const out = await extractor(sentences, CALL_OPTIONS)
+const out = await extractor(allTexts, CALL_OPTIONS)
 const firstMs = Math.round(performance.now() - t1)
 const [rows, dims] = out.dims
 console.log(`embedded ${rows} sentences in ${firstMs} ms (first call, includes warm-up); dims=${dims}`)
@@ -82,17 +95,23 @@ const norm = (a) => Math.sqrt(dot(a, a))
 console.log(`norm of vector 0 (expect ~1.0 with normalize:true): ${norm(vec(0)).toFixed(4)}`)
 console.log('cosine matrix:')
 for (let i = 0; i < rows; i++) {
-  console.log(`  [${i}] ${sentences.map((_, j) => dot(vec(i), vec(j)).toFixed(3)).join('  ')}`)
+  console.log(`  [${i}] ${allTexts.map((_, j) => dot(vec(i), vec(j)).toFixed(3)).join('  ')}`)
 }
 console.log(
   `cos(0,1) [both inference]=${dot(vec(0), vec(1)).toFixed(3)}  cos(0,2) [inference vs bread]=${dot(vec(0), vec(2)).toFixed(3)}`
 )
+console.log(
+  `cos(0,3) [inference vs paraphrase]=${dot(vec(0), vec(3)).toFixed(3)}  cos(0,4) [inference vs coffee]=${dot(vec(0), vec(4)).toFixed(3)}`
+)
+console.log(
+  `cos(1,4) [inference vs coffee]=${dot(vec(1), vec(4)).toFixed(3)}  cos(2,4) [bread vs coffee]=${dot(vec(2), vec(4)).toFixed(3)}`
+)
 
-// Throughput: N realistic ~900-char chunks (the architecture's body chunk size; MiniLM truncates at 256 wordpieces).
+// Throughput: N realistic ~1800-char chunks (the architecture's body chunk size for bge-small-en-v1.5's 512-wordpiece window).
 const chunk = (i) =>
   `Chunk ${i}. ${sentences[i % 3]} The scheduler admits requests based on predicted output length and preempts by recompute or swap. ` +
   'Prefix caching shares system-prompt blocks across sequences. Time to first token stayed under 350 ms in the internal benchmark while throughput rose from 410 to 1,180 tokens per second on a single 80 GB card. '.repeat(
-    4
+    8
   )
 const texts = Array.from({ length: N }, (_, i) => chunk(i))
 console.log(`avg chunk length: ${Math.round(texts.reduce((a, t) => a + t.length, 0) / texts.length)} chars`)

@@ -302,12 +302,13 @@ export interface AIProvider {
   generateStructured<T>(schema: StructuredSchema<T>, req: ChatRequest): Promise<{ value: T; usage: Usage }>
 }
 
-/** Local embedding backend (`ai/embeddings/index.ts`): MiniLM in the worker or the hash fallback. */
+/** Local embedding backend (`ai/embeddings/index.ts`): the ONNX model in the worker or the hash fallback. */
 export interface EmbeddingProvider {
-  /** `minilm` | `local-hash`. */
+  /** `local` | `local-hash`. */
   readonly id: string
   /** Stored in `embeddings.model`; vectors are only compared within one model. */
   readonly model: string
+  /** Known once `ready()` resolves; `EMBEDDING_DIMS` before that. */
   readonly dims: number
   /** L2-normalized vectors, one per input, in order. */
   embed(texts: string[]): Promise<Float32Array[]>

@@ -16,8 +16,8 @@ export const LIMITS = {
   summaryUnderstandingMaxChars: 160,
   /** `items.excerpt` cap (chars). */
   excerptChars: 280,
-  /** Body chunk size for embeddings (MiniLM truncates around 256 wordpieces). */
-  bodyChunkChars: 900,
+  /** Body chunk size for embeddings (bge-small-en-v1.5 truncates at 512 wordpieces). */
+  bodyChunkChars: 1800,
   /** Maximum body chunks embedded per item. */
   maxBodyChunks: 24,
   /** Folder import: maximum files imported as children. */
@@ -52,12 +52,17 @@ export const LIMITS = {
   commandSteps: 12,
   /** Prompt-token ceiling per run; reaching it forces `finish`. */
   runPromptTokenCeiling: 60_000,
-  /** Vector-only hits below this cosine are dropped. */
-  cosineFloor: 0.3,
-  /** Same type and cosine at or above this = `duplicate_of` without a model call. */
-  nearDuplicateCosine: 0.92,
-  /** Collection name+description cosine above this = "too similar to an existing collection". */
-  collectionSimilarityCosine: 0.85,
+  /**
+   * Vector-only hits below this cosine are dropped. Model-specific: measured on the eval corpus with
+   * `EMBEDDING_MODEL_ID` (query vs memory document), relevant items p10 0.56 / p50 0.71, unrelated p50 0.53 /
+   * p90 0.62. Under the hash fallback cosines sit near 0.1, so vector-only hits never pass; FTS carries search.
+   */
+  cosineFloor: 0.5,
+  /**
+   * Same type and cosine at or above this = `duplicate_of` without a model call. Model-specific: the closest
+   * distinct pair in the eval corpus scores 0.84 with `EMBEDDING_MODEL_ID`; true duplicates score ~1.0.
+   */
+  nearDuplicateCosine: 0.95,
   /** Memberships and new-collection proposals below this confidence are rejected. */
   minCollectionConfidence: 0.7,
   /** Eligible members a proposed collection must have. */
@@ -132,7 +137,7 @@ export const AI_PROVIDER_DEFAULTS = {
 export const AI_PROVIDER_LABEL = { gmi: 'GMI', openrouter: 'OpenRouter' } as const
 
 /** Local embedding model id (Hugging Face hub layout under `models/`). */
-export const EMBEDDING_MODEL_ID = 'Xenova/all-MiniLM-L6-v2'
+export const EMBEDDING_MODEL_ID = 'Xenova/bge-small-en-v1.5'
 
 /** Embedding vector size for `EMBEDDING_MODEL_ID` and the hash fallback. */
 export const EMBEDDING_DIMS = 384

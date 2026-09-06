@@ -575,7 +575,7 @@ export const FIXTURE_SETTINGS: Settings = {
   importMode: 'copy',
   theme: 'system',
   libraryPath: '/Users/you/Library/Application Support/KeepAnything/dev',
-  embeddings: { provider: 'minilm', modelPresent: true, dims: 384 }
+  embeddings: { provider: 'local', modelPresent: true, dims: 384 }
 }
 
 export const FIXTURE_JOBS: JobProgress[] = [

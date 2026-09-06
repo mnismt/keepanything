@@ -1,7 +1,12 @@
 import * as stylex from '@stylexjs/stylex'
 import { Check, Copy, FolderOpen, KeyRound, PlugZap, RotateCw, Trash2, X } from 'lucide-react'
 import { type ReactNode, useEffect, useRef, useState } from 'react'
-import { AI_PROVIDER_DEFAULTS, DEFAULT_BASE_URL, DEFAULT_MODEL } from '../../../../../shared/constants'
+import {
+  AI_PROVIDER_DEFAULTS,
+  DEFAULT_BASE_URL,
+  DEFAULT_MODEL,
+  EMBEDDING_MODEL_ID
+} from '../../../../../shared/constants'
 import type { AiProviderId, CaptureMode, Theme } from '../../../../../shared/types'
 import { describeError, invoke } from '../../../lib/ipc-client'
 import { useSettings } from '../../../state/settings'
@@ -181,10 +186,9 @@ export function SettingsView(): React.JSX.Element {
           : { tone: null, text: 'Key saved' }
 
   const disableTest = testing || !hasKey
-
   const embeddings = settings
-    ? settings.embeddings.provider === 'minilm'
-      ? `Local MiniLM · ${settings.embeddings.dims}-d · ${settings.embeddings.modelPresent ? 'model present' : 'downloading'}`
+    ? settings.embeddings.provider === 'local'
+      ? `Local · ${EMBEDDING_MODEL_ID.split('/')[1]} · ${settings.embeddings.dims}-d · ${settings.embeddings.modelPresent ? 'model present' : 'downloading'}`
       : settings.embeddings.provider === 'local-hash'
         ? 'Local fallback (model missing) · full-text search still works'
         : 'Off'

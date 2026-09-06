@@ -8,7 +8,7 @@ KeepAnything: a local-first macOS Electron app. "Keep anything. We'll figure out
 files, folders, screenshots, PDFs, links and text into a library. Originals are preserved (copied into
 `objects/` or referenced in place). A reasoning agent (MiniMax-M3 via GMI Cloud, OpenAI-compatible
 chat completions with tool calling) understands each item, relates items to each other and creates
-conservative semantic collections. Search is local (SQLite FTS5 + local MiniLM embeddings);
+conservative semantic collections. Search is local (SQLite FTS5 + local bge-small-en-v1.5 embeddings);
 "Ask My Stuff" adds the agent on top of the same retrieval. Product spec: `docs/PRODUCT_BRIEF.md`.
 Design and implementation contract: `docs/ARCHITECTURE.md` (read it before changing anything).
 
@@ -21,8 +21,8 @@ Non-goals: cloud sync, accounts, telemetry, auto-update, Windows/Linux, scraping
 - AI: one OpenAI-compatible transport (`ai/openai-compatible.ts`) with two selectable providers: GMI Cloud
   (default, model `MiniMaxAI/MiniMax-M3`) and OpenRouter (default model `minimax/minimax-m3:free`). Structured
   output is fenced-JSON extraction + zod + one retry; `response_format` is not relied on. Notes in `docs/GMI_NOTES.md`.
-- Embeddings: `@huggingface/transformers` running `Xenova/all-MiniLM-L6-v2` (q8, 384-d) in a
-  `utilityProcess` worker; hashed TF-IDF fallback when the model is missing.
+- Embeddings: `@huggingface/transformers` running `Xenova/bge-small-en-v1.5` (q8, 384-d, cls pooling)
+  in a `utilityProcess` worker; hashed TF-IDF fallback when the model is missing.
 - UI: StyleX (`@stylexjs/stylex` + `@stylexjs/unplugin` in the renderer Vite config, before the React
   plugin). Tokens are `defineVars` in `styles/*.stylex.ts`; the only plain CSS is `global.css` (reset,
   `@font-face`). zustand stores, cmdk palette, Lucide icons, Instrument Serif (bundled in

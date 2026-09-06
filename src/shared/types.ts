@@ -651,7 +651,7 @@ export type Theme = 'system' | 'light' | 'dark'
 export type ResolvedTheme = 'light' | 'dark'
 
 /** Which embedding backend is active. */
-export type EmbeddingProviderId = 'minilm' | 'local-hash' | 'none'
+export type EmbeddingProviderId = 'local' | 'local-hash' | 'none'
 
 /** `settings:get` payload. Never contains the plain API key. */
 export interface Settings {

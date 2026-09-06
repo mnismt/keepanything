@@ -162,9 +162,9 @@ at the last `}`. Strip a leading `<think>…</think>` defensively even though no
 - Numbers: `confidence` came back as a JSON number every time; still coerce strings.
 - Empty content with `finish_reason: 'stop'` was never observed; treat as retryable anyway.
 
-## 7. Embeddings (local MiniLM, `scripts/probe/embed-probe.mjs`)
+## 7. Embeddings (local bge-small-en-v1.5, `scripts/probe/embed-probe.mjs`)
 
-Files: `build/models/Xenova/all-MiniLM-L6-v2/{config.json, tokenizer.json, tokenizer_config.json,
+Files: `build/models/Xenova/bge-small-en-v1.5/{config.json, tokenizer.json, tokenizer_config.json,
 special_tokens_map.json, onnx/model_quantized.onnx}` — fetched and hash-verified (git-sha1 / LFS sha256 against the
 hub tree listing) by `node scripts/fetch-models.mjs` (idempotent, resumable via `.part` + Range, `--verify`,
 `--force`). `@huggingface/transformers` 4.2.0, Node 24.18 arm64, `onnxruntime-node` CPU.
@@ -175,26 +175,31 @@ Options that worked (offline, no hub access):
 import { env, pipeline } from '@huggingface/transformers'
 env.allowRemoteModels = false
 env.allowLocalModels = true
-env.localModelPath = '<dir containing Xenova/all-MiniLM-L6-v2>'   // build/models in dev, <userData>/models packaged
+env.localModelPath = '<dir containing Xenova/bge-small-en-v1.5>'   // build/models in dev, <userData>/models packaged
 env.useBrowserCache = false
-const extractor = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2', { dtype: 'q8', device: 'cpu', local_files_only: true })
-const out = await extractor(texts, { pooling: 'mean', normalize: true })   // out.dims = [n, 384], out.data Float32Array
+const extractor = await pipeline('feature-extraction', 'Xenova/bge-small-en-v1.5', { dtype: 'q8', device: 'cpu', local_files_only: true })
+const out = await extractor(texts, { pooling: 'cls', normalize: true })   // out.dims = [n, 384], out.data Float32Array
 ```
 
 `dtype: 'q8'` maps to `onnx/model_quantized.onnx`. `normalize: true` gives unit vectors (norm 1.0000), so
-cosine = dot product, matching the in-memory matrix design.
+cosine = dot product, matching the in-memory matrix design. `pooling: 'cls'` is the BAAI recommendation;
+`'mean'` was within 0.002 on paraphrase but lost ~0.04 on inference-vs-inference.
 
 | Measurement | Value |
 | --- | --- |
-| Model load (cold process) | 89 ms |
-| First call, 3 sentences (includes warm-up) | 9 ms |
-| Batch of 32 × ~1 050-char chunks (truncated to 256 wordpieces) | 263–288 ms → **8.2 ms/text** |
-| Single ~1 050-char chunk | 10–11 ms |
-| Batch of 32 short sentences | 31 ms |
-| Sanity cosines | inference↔inference 0.341 · inference↔bread recipe 0.075 |
+| Model load (cold process) | 194 ms |
+| First call, 3 sentences (includes warm-up) | ~30 ms |
+| Batch of 16 × ~1 886-char chunks (truncated to 512 wordpieces) | 731 ms → **45.7 ms/text** |
+| Single ~1 886-char chunk | ~49 ms |
+| Sanity cosines (cls), short sentences | inference↔inference 0.680 · paraphrase 0.897 · unrelated 0.40–0.47 |
+| Eval corpus, query vs memory document | relevant p10 0.56 / p50 0.71 · unrelated p50 0.53 / p90 0.62 / max 0.77 |
+| Eval corpus, document vs document | closest distinct pair 0.84 · median 0.59 · min 0.43 |
 
-Implication: embedding a 24-chunk PDF costs ~200 ms; a 7-item drop is < 1 s of embed lane time. The 0.30 cosine
-floor is sane for MiniLM (related-but-different sentences land ~0.3–0.5; unrelated < 0.1).
+Implication: embedding a 24-chunk PDF costs ~1.1 s; a 7-item drop is ~3.5 s of embed lane time. bge cosines sit
+much higher than MiniLM's (unrelated ~0.5, not ~0.1), so the thresholds moved with the model: `cosineFloor` 0.50
+keeps ~95% of relevant vector-only hits while dropping half the noise; `nearDuplicateCosine` 0.95 leaves 0.1 of
+headroom above the closest distinct pair. Retrieval eval after the swap: recall@k 23/24, MRR 0.90 (MiniLM on the
+original 18 queries: 18/18, MRR 0.87).
 
 ## 8. Open items
 
@@ -207,7 +212,7 @@ floor is sane for MiniLM (related-but-different sentences land ~0.3–0.5; unrel
 
 ## 9. Measured in the app, 4 Sep 2026
 
-A driver script against the built app (`KEEPANYTHING_E2E=1 KEEPANYTHING_AI=gmi`, ai lane = 1, MiniLM
+A driver script against the built app (`KEEPANYTHING_E2E=1 KEEPANYTHING_AI=gmi`, ai lane = 1, bge-small-en-v1.5
 seeded), 21 fixture items dropped as two batches (7 + 14), then Ask and a four-item brief. The script
 (`scripts/demo/rehearse.mjs`) has since been removed along with the rest of the demo scaffolding; the
 numbers below are the measurements it produced and are kept verbatim. Latency is the app's own

@@ -1,5 +1,5 @@
 /**
- * Download the local embedding model (Xenova/all-MiniLM-L6-v2, q8) into build/models so it ships
+ * Download the local embedding model (Xenova/bge-small-en-v1.5, q8) into build/models so it ships
  * with the app (electron-builder `extraResources`) and is seeded into <userData>/models.
  *
  * Usage: `pnpm run models:fetch` (or `node scripts/fetch-models.mjs [--force] [--verify]`).
@@ -18,7 +18,7 @@ import { Readable } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
 import { fileURLToPath } from 'node:url'
 
-const MODEL_ID = 'Xenova/all-MiniLM-L6-v2'
+const MODEL_ID = 'Xenova/bge-small-en-v1.5'
 const FILES = [
   'config.json',
   'tokenizer.json',

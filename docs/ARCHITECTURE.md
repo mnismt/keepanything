@@ -20,7 +20,7 @@ The reasoning behind these, one file per decision: `docs/decisions/` (see its RE
 | Desktop shell | **Electron 44** with the existing toolchain (electron-vite 5, React 19, TS 5.9 strict, Vitest, Playwright, electron-builder) | Working pipeline in repo; Tauri = Rust rewrite with no product upside. |
 | Database | **`node:sqlite`** `DatabaseSync` (SQLite 3.53, FTS5 + JSON1) | Verified inside Electron 44 (Node 24.19). Zero native deps. Unit tests run on system Node ≥ 24. |
 | Reasoning model | **`MiniMaxAI/MiniMax-M3`** via GMI Cloud (default), OpenAI-compatible `POST https://api.gmi-serving.com/v1/chat/completions`. Same transport also targets **OpenRouter** (`https://openrouter.ai/api/v1`, default model `minimax/minimax-m3:free`, native `tool_choice`, errors embedded in HTTP 200 handled, 402 = credits). Per-provider key + profile in `config.json` v2 (`settings.providers.{gmi,openrouter}`), one `ai: on\|off` switch and one `provider` selection. | Free tier. Verified: tool calling works, vision works (`image_url` data URIs), 1M ctx. `response_format: json_schema` is **not enforced** (fenced JSON comes back) → extract + zod + retry. |
-| Embeddings | **Local** `@huggingface/transformers` `Xenova/all-MiniLM-L6-v2` (q8, 384-d) running in a **utilityProcess worker**. Model files shipped with the app (`build/models`, fetched by a script) and seeded into `<userData>/models`; remote download only as fallback. Deterministic hashed TF-IDF vector (`local-hash`, 384-d) as a last-resort fallback. | GMI has no embeddings endpoint. MiniLM verified in Electron. |
+| Embeddings | **Local** `@huggingface/transformers` `Xenova/bge-small-en-v1.5` (q8, 384-d, cls pooling) running in a **utilityProcess worker**. Model files shipped with the app (`build/models`, fetched by a script) and seeded into `<userData>/models`. Deterministic hashed TF-IDF vector (`local-hash`, 384-d) as a last-resort fallback. | GMI has no embeddings endpoint. bge-small-en-v1.5 verified in Electron. |
 | Vector search | In-memory normalized `Float32Array` matrix in main (loaded from `embeddings` BLOBs at startup, appended on upsert); dot products per query; filtered by `model` | ~23 MB at 15k×384; sub-10 ms queries. |
 | Full-text search | SQLite **FTS5**, normal content-storing table `items_fts` with `item_id UNINDEXED`, `tokenize='porter unicode61 remove_diacritics 2'`, `prefix='2 3'`, synced explicitly by the item repository (DELETE+INSERT in the same transaction) | Contentless/external-content variants break DELETE / snippet / rowid stability. |
 | Thumbnails | `/usr/bin/qlmanage -t -s 800 -o <dir> <file>` (aspect-preserving, all QuickLook types, ~80 ms) for PDFs, video, HEIC, docs, unknown; `nativeImage.createFromPath().resize()` for PNG/JPEG/GIF/WebP; `createThumbnailFromPath` only with a known aspect ratio (it stretches to the requested size) | Verified on Electron 44. |
@@ -29,7 +29,7 @@ The reasoning behind these, one file per decision: `docs/decisions/` (see its RE
 | Dependencies | `dependencies` = only what must exist at runtime unbundled: `@huggingface/transformers` (pulls `onnxruntime-node`, `sharp`). Everything else (zod, linkedom, @mozilla/readability, turndown, unpdf, mime, zustand, cmdk, lucide-react, react…) stays in `devDependencies` and is bundled by Vite/rollup. `asarUnpack` for onnxruntime-node/sharp/@img. | Smaller app, fewer resolution surprises. |
 | Secrets | `.env` (gitignored) → `KEEPANYTHING_GMI_API_KEY` etc. Runtime key stored with `safeStorage` in `<userData>/config.json` (loaded only after `app.whenReady()`; decrypt failure = "no key", never a crash). Dev uses `<userData>/dev` so dev and packaged builds never share a library. | No secrets in git; Keychain identity differs between dev and packaged. |
 | Global "Yoink" drag interception | **Not visible to Electron**, which only sees drags that enter its own windows. A ~70-line Swift sidecar (`native/drag-watch`, built by `pnpm run native`, shipped via `extraResources`) polls `NSEvent.pressedMouseButtons` and, while a button is held, `NSPasteboard(name: .drag).changeCount`: every drag session writes its payload to that pasteboard as it begins, so a bump means a drag is in flight. Only the change count and type *names* are read, never the data, so no entitlement and no permission prompt. It emits NDJSON on stdout; main turns that into `armShelf` / `disarmShelf`. Fallbacks when the binary is absent: tray `drag-enter`, tray click, ⌘⇧K, ⌘V, whole-window drop overlay. | Measured idle cost 0.075% of one core, 10 MB RSS. |
-| Threading | CPU-heavy work (MiniLM inference, PDF text via unpdf, readability→markdown, sha256 of big files) runs in a `utilityProcess` worker (`out/main/worker.js`, lazily spawned, idle-terminated, restarted on crash with the job re-queued). Main keeps SQLite (single writer), IPC, windows, thumbnails (qlmanage/nativeImage), snapshots. | Never freeze the UI thread. |
+| Threading | CPU-heavy work (embedding inference, PDF text via unpdf, readability→markdown, sha256 of big files) runs in a `utilityProcess` worker (`out/main/worker.js`, lazily spawned, idle-terminated, restarted on crash with the job re-queued). Main keeps SQLite (single writer), IPC, windows, thumbnails (qlmanage/nativeImage), snapshots. | Never freeze the UI thread. |
 
 ---
 
@@ -278,10 +278,10 @@ Zero dependencies in preload (sandboxed).
 
 Index content:
 - **FTS** columns, weights `bm25(items_fts, 0, 8, 6, 4, 4, 3, 3, 3, 2, 1, 2, 2)` (title 8, retrieval_hints 6, topics/entities 4, understanding/why_useful/vision 3, meta 2, text 1, domain 2, kind 2). `meta_text` = flattened metadata (og description, repo description/language/topics, site name, filename).
-- **Embeddings, two phases.** Phase 1 (`embed` stage, offline): body chunks ~900 chars (MiniLM truncates at 256 wordpieces), ≤24 chunks/item, `chunk_index ≥ 1`, `role='body'`; skipped for children of folders with > 50 files. Phase 2 (`index` stage, after understanding and after any indexed-field edit): the **memory document** = title + kind + domain + understanding + whyUseful + topics + entities + visionText + retrievalHints → `chunk_index 0`, `role='summary'`. Vector hits are max-pooled per item; summary weight 1.0, body 0.8. Item-to-item candidates use chunk 0 only. Always filter by `model`.
+- **Embeddings, two phases.** Phase 1 (`embed` stage, offline): body chunks ~1800 chars (bge-small-en-v1.5 truncates at 512 wordpieces), ≤24 chunks/item, `chunk_index ≥ 1`, `role='body'`; skipped for children of folders with > 50 files. Phase 2 (`index` stage, after understanding and after any indexed-field edit): the **memory document** = title + kind + domain + understanding + whyUseful + topics + entities + visionText + retrievalHints → `chunk_index 0`, `role='summary'`. Vector hits are max-pooled per item; summary weight 1.0, body 0.8. Item-to-item candidates use chunk 0 only. Always filter by `model`.
 - Query building (`query.ts`). Never forward raw text to MATCH: tokenize on non-alphanumerics; extract cues (time phrases → soft window on `captured_at`; type cues via table: website/site/page→type url, pdf→pdf, repo/github→subtype github_repo, screenshot→subtype screenshot, app/mac app/tool→kinds [macos_app, cli_tool, saas_product], video/youtube→type video|subtype youtube; small synonym expansion app↔application, mac↔macos, repo↔repository, pic/photo↔image); strip stopwords/cue words; quote every token; AND first, fall back to OR when < N hits; `*` prefix on the last token for the instant path; own grammar for `"phrase"`, `type:`, `since:`.
-- Fusion (`hybrid.ts`): weighted RRF (≤2 content tokens → FTS 1.0 / vector 0.4; else 1.0/1.0); cosine floor 0.30 for vector-only entries; top-tier boost on exact title/domain/entity match; time-cue plateau boost ×1.5 inside window decaying to ×1.0 over an equal margin; mild recency `×(1 + 0.25·e^(−ageDays/60))` only when no time cue; type cues = soft boosts unless `strict`. Hits carry component evidence. Notes excluded from default retrieval unless a note cue is present; folder children collapsed under the parent (≤3 shown, "in folder X").
-- Evaluation harness: `pnpm run eval:retrieval` runs the brief's example queries against a fixture library (`tests/fixtures/corpus` + real MiniLM) and prints hit ranks; not part of `pnpm test`.
+- Fusion (`hybrid.ts`): weighted RRF (≤2 content tokens → FTS 1.0 / vector 0.4; else 1.0/1.0); cosine floor `LIMITS.cosineFloor` (0.50, measured per model) for vector-only entries; top-tier boost on exact title/domain/entity match; time-cue plateau boost ×1.5 inside window decaying to ×1.0 over an equal margin; mild recency `×(1 + 0.25·e^(−ageDays/60))` only when no time cue; type cues = soft boosts unless `strict`. Hits carry component evidence. Notes excluded from default retrieval unless a note cue is present; folder children collapsed under the parent (≤3 shown, "in folder X").
+- Evaluation harness: `pnpm run eval:retrieval` runs the brief's example queries against a fixture library (`tests/fixtures/corpus` + real bge) and prints hit ranks; not part of `pnpm test`.
 
 Dedupe (slice 3): files by sha256; URLs by table-driven canonicalization (strip utm_*/fbclid/ref/gclid, lowercase host, drop www./m./mobile., drop fragment, youtu.be→youtube.com/watch?v=, x.com→twitter.com, trailing slash, keep meaningful query keys). Duplicate capture creates no item: bumps `last_kept_at`, writes audit `kept_again`, returns `status:'duplicate'` → UI shows "Already kept · 3 weeks ago" and rings the existing card.
 
@@ -395,7 +395,7 @@ tool-only preconditions listed above.
   from union of chunk-0 cosine top-10, FTS OR-query from topics+entities+title top-10, deterministic signals (same domain /
   GitHub owner / parent folder / same hour); `collectionCandidates` via centroid cosine + 3 nearest members; user-confirmed
   context (user collections/relationships) as ground truth. Deterministic near-duplicate rule first: same type and
-  cosine ≥ 0.92 or same canonical title+domain → `duplicate_of` 0.9 without an LLM call.
+  cosine ≥ `LIMITS.nearDuplicateCosine` (0.95) or same canonical title+domain → `duplicate_of` 0.9 without an LLM call.
 - **consolidate** (when the ai lane drains and ≥3 items were organized since last sweep): all items' one-liners+topics
   (pre-cluster by cosine above 200 items), tools incl. `rename_collection`; conservative, audited, reversible.
 - **folder**: structure + samples + children one-liners → folder understanding; optional collection.
@@ -554,7 +554,7 @@ has something to lay out.
 | MiniMax ignores json_schema; thinking tokens | Extraction + zod + retry; truncation handling; tool calls verified; measure sampling params day 1. |
 | Free-tier limits / latency | ai lane = 1, batch organize (one run per drop), step caps, token ceiling, persisted jobs, UI never blocks. |
 | Sites block fetch / JS-rendered | DOM fallback via offscreen window; URL item always kept ("link is safe"); snapshot + vision cover landing pages. |
-| MiniLM missing offline | Shipped model files; hash fallback (FTS-only search when active); re-embed job when model arrives. |
+| bge-small-en-v1.5 missing offline | Shipped model files; hash fallback (FTS-only search when active); re-embed job when model arrives. |
 | Huge folders / PDFs | Limits, sampling, worker process, timeouts. |
 | Missing originals | `is_missing` cache; graceful detail; "Locate…" later. |
 | Duplicate imports | sha256 + canonical URL; "Already kept". |
@@ -609,9 +609,9 @@ design; when they disagree with this list, this list describes what ships.
 
 **Embeddings**
 
-- Unpackaged runs (`pnpm run dev`, E2E, scripts) only seed MiniLM from `<resources>/models`, which does not exist
-  outside a packaged app, so they fall back to `local-hash` unless `build/models/Xenova/all-MiniLM-L6-v2` is copied
-  into `<userData>/models`. Packaged builds seed from `extraResources` as designed.
+- Unpackaged runs (`pnpm run dev`, E2E, scripts) only seed from `<resources>/models`, which does not exist
+  outside a packaged app, so they fall back to `local-hash` unless `build/models/Xenova/bge-small-en-v1.5`
+  is copied into `<userData>/models`. Packaged builds seed from `extraResources` as designed.
 
 **Shell**
 

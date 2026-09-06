@@ -12,11 +12,12 @@ export function vectorToBlob(vector: Float32Array): Uint8Array {
   return new Uint8Array(vector.buffer, vector.byteOffset, vector.byteLength)
 }
 
-/** Decode a BLOB into a Float32Array (copies to guarantee alignment). */
+/** Decode a BLOB into a Float32Array (copies to guarantee alignment). The BLOB length is the source of truth; `dims` only caps it. */
 export function blobToVector(blob: Uint8Array, dims: number): Float32Array {
   const copy = new Uint8Array(blob.byteLength)
   copy.set(blob)
-  return new Float32Array(copy.buffer, 0, Math.min(dims, Math.floor(copy.byteLength / 4)))
+  const stored = Math.floor(copy.byteLength / 4)
+  return new Float32Array(copy.buffer, 0, dims > 0 ? Math.min(dims, stored) : stored)
 }
 
 function rowToEmbedding(row: Row): EmbeddingRow {

@@ -11,7 +11,7 @@ import {
   modelFilesPresent,
   tokenize
 } from '../../src/main/ai/embeddings'
-import { loadMiniLm } from '../../src/main/ai/embeddings/transformers'
+import { loadLocalModel } from '../../src/main/ai/embeddings/transformers'
 import type { Logger, WorkerClient } from '../../src/main/ports'
 import { EMBEDDING_DIMS, EMBEDDING_MODEL_ID } from '../../src/shared/constants'
 
@@ -23,7 +23,6 @@ const logger: Logger = {
   error: (msg) => logs.push({ level: 'error', msg }),
   child: () => logger
 }
-
 const norm = (v: Float32Array): number => Math.sqrt(v.reduce((s, x) => s + x * x, 0))
 const dot = (a: Float32Array, b: Float32Array): number => a.reduce((s, x, i) => s + x * (b[i] ?? 0), 0)
 
@@ -56,18 +55,18 @@ describe('embedding worker tasks', () => {
     const calls: string[][] = []
     const tasks = createEmbeddingWorkerTasks(async () => ({
       modelId: EMBEDDING_MODEL_ID,
-      dims: 384,
+      dims: EMBEDDING_DIMS,
       loadMs: 1,
       embed: async (texts) => {
         calls.push(texts)
-        return texts.map((_, i) => Array.from({ length: 384 }, (_x, j) => (j === i ? 1 : 0)))
+        return texts.map((_, i) => Array.from({ length: EMBEDDING_DIMS }, (_x, j) => (j === i ? 1 : 0)))
       }
     }))
     const signal = new AbortController().signal
     expect(await tasks['embed.status']?.({}, signal)).toMatchObject({ loaded: false, modelsDir: null })
     await expect(tasks['embed.texts']?.({ texts: ['x'] }, signal)).rejects.toThrow(/embed.init/)
     const init = await tasks['embed.init']?.({ modelsDir: '/tmp/models' }, signal)
-    expect(init).toMatchObject({ loaded: true, dims: 384, modelsDir: '/tmp/models' })
+    expect(init).toMatchObject({ loaded: true, dims: EMBEDDING_DIMS, modelsDir: '/tmp/models' })
     const vectors = (await tasks['embed.texts']?.({ texts: ['a', 'b'] }, signal)) as number[][]
     expect(vectors).toHaveLength(2)
     expect(vectors[1]?.[1]).toBe(1)
@@ -104,9 +103,10 @@ describe('createEmbeddingProvider', () => {
     const worker: WorkerClient = {
       call: async <T>(task: string, payload: unknown) => {
         calls.push({ task, payload })
-        if (task === 'embed.init') return { loaded: true, modelId: EMBEDDING_MODEL_ID, dims: 384, loadMs: 5 } as T
+        if (task === 'embed.init')
+          return { loaded: true, modelId: EMBEDDING_MODEL_ID, dims: EMBEDDING_DIMS, loadMs: 5 } as T
         const { texts } = payload as { texts: string[] }
-        return texts.map(() => Array.from({ length: 384 }, () => 0.05)) as T
+        return texts.map(() => Array.from({ length: EMBEDDING_DIMS }, () => 0.05)) as T
       },
       terminate() {}
     }
@@ -116,7 +116,7 @@ describe('createEmbeddingProvider', () => {
     if (!modelFilesPresent(modelsDir)) return
     const provider = createEmbeddingProvider({ worker, modelsDir, logger })
     await provider.ready()
-    expect(provider.id).toBe('minilm')
+    expect(provider.id).toBe('local')
     expect(provider.model).toBe(EMBEDDING_MODEL_ID)
     const vectors = await provider.embed(Array.from({ length: 70 }, (_, i) => `text ${i}`))
     expect(vectors).toHaveLength(70)
@@ -133,10 +133,11 @@ describe('createEmbeddingProvider', () => {
     const worker: WorkerClient = {
       call: async <T>(task: string, payload: unknown) => {
         tasks.push(task)
-        if (task === 'embed.init') return { loaded: true, modelId: EMBEDDING_MODEL_ID, dims: 384, loadMs: 5 } as T
+        if (task === 'embed.init')
+          return { loaded: true, modelId: EMBEDDING_MODEL_ID, dims: EMBEDDING_DIMS, loadMs: 5 } as T
         textCalls++
         if (textCalls === 1) throw new Error('worker crashed')
-        return (payload as { texts: string[] }).texts.map(() => new Array<number>(384).fill(0)) as T
+        return (payload as { texts: string[] }).texts.map(() => new Array<number>(EMBEDDING_DIMS).fill(0)) as T
       },
       terminate() {}
     }
@@ -147,20 +148,22 @@ describe('createEmbeddingProvider', () => {
   })
 })
 
-describe('MiniLM (real model, only when build/models is fetched)', () => {
+describe('bge-small-en-v1.5 (real model, only when build/models is fetched)', () => {
   const modelsDir = fileURLToPath(new URL('../../build/models', import.meta.url))
   const present = MODEL_FILES.every((f) => existsSync(`${modelsDir}/${EMBEDDING_MODEL_ID}/${f}`))
 
   it.skipIf(!present)(
     'loads offline and returns normalized 384-d vectors',
     async () => {
-      const extractor = await loadMiniLm(modelsDir)
+      const extractor = await loadLocalModel(modelsDir)
+      // Rows are decoded by their stored `dims`; a 0 here silently empties the vector index.
+      expect(extractor.dims).toBe(EMBEDDING_DIMS)
       const [a, b, c] = await extractor.embed([
         'PagedAttention manages the KV cache in fixed-size blocks so vLLM can serve many requests.',
         'Continuous batching keeps the GPU busy by admitting new requests as soon as a slot frees up.',
         'A recipe for sourdough bread with a long cold ferment and a very hot Dutch oven.'
       ])
-      expect(a).toHaveLength(384)
+      expect(a).toHaveLength(EMBEDDING_DIMS)
       const fa = Float32Array.from(a ?? [])
       const fb = Float32Array.from(b ?? [])
       const fc = Float32Array.from(c ?? [])

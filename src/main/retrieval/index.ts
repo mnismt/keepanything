@@ -340,7 +340,7 @@ export function createRetrieval(deps: RetrievalDeps): RetrievalService {
     await embeddings.ready()
     const model = embeddings.model
     const existing = repos.embeddings.forItem(itemId).find((r) => r.chunkIndex === 0)
-    if (existing && existing.model === model && existing.content === doc) {
+    if (existing && existing.model === model && existing.dims === embeddings.dims && existing.content === doc) {
       reloadItem(itemId)
       return
     }
@@ -370,16 +370,19 @@ export function createRetrieval(deps: RetrievalDeps): RetrievalService {
     const rows = repos.embeddings.forItem(itemId)
     const body = rows.filter((r) => r.chunkIndex >= 1)
     const unchanged =
-      body.length === chunks.length && body.every((r, i) => r.model === model && r.content === chunks[i])
+      body.length === chunks.length &&
+      body.every((r, i) => r.model === model && r.dims === embeddings.dims && r.content === chunks[i])
     if (unchanged) {
       reloadItem(itemId)
       return { chunks: chunks.length, model, skipped: false, unchanged: true }
     }
     const vectors = chunks.length > 0 ? await embeddings.embed(chunks) : []
+    // An old-model summary is dropped here rather than carried; the index stage that follows rewrites chunk 0.
     const summary = rows.find((r) => r.chunkIndex === 0)
+    const carriedSummary = summary && summary.model === model && summary.dims === embeddings.dims ? [summary] : []
     db.transaction(() => {
       repos.embeddings.replaceForItem(itemId, [
-        ...(summary ? [summary] : []),
+        ...carriedSummary,
         ...chunks.map((content, i) => ({
           itemId,
           chunkIndex: i + 1,
@@ -551,15 +554,16 @@ export function createRetrieval(deps: RetrievalDeps): RetrievalService {
     parse: (query, filters = {}) => parseQuery(query, clock.now(), filters)
   }
 
+  // Rows from another model or with a wrong `dims` (a bad build once wrote 0) are both re-embedded.
   function staleEmbeddingItemIds(): string[] {
     const model = embeddings?.model
     if (!model) return []
     const rows = db
       .prepare(
         `SELECT DISTINCT e.item_id AS id FROM embeddings e JOIN items i ON i.id = e.item_id
-         WHERE e.model != ? AND i.deleted_at IS NULL ORDER BY e.item_id`
+         WHERE (e.model != ? OR e.dims != ?) AND i.deleted_at IS NULL ORDER BY e.item_id`
       )
-      .all(model) as Row[]
+      .all(model, embeddings.dims) as Row[]
     return rows.map((r) => String(r.id))
   }
 }

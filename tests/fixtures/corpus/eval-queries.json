@@ -132,6 +132,49 @@
       "style": "natural",
       "expected": ["url-docs-sqlite-fts5"],
       "acceptable": ["png-error-dialog"]
+    },
+    {
+      "id": "par-globe",
+      "query": "the rotating planet on the homepage of that design site",
+      "style": "natural",
+      "expected": ["md-mnismt-design"],
+      "note": "Paraphrase of nl-globe; same target."
+    },
+    {
+      "id": "par-karpathy-llms",
+      "query": "Andrej Karpathy's talk on large language models",
+      "style": "natural",
+      "cues": { "kinds": ["video"] },
+      "expected": ["url-yt-karpathy-llms"]
+    },
+    {
+      "id": "par-paged-kv-cache",
+      "query": "paper on paging the KV cache to serve LLMs without wasting GPU memory",
+      "style": "natural",
+      "expected": ["pdf-paged-attention"],
+      "acceptable": ["url-gh-vllm"],
+      "note": "Paraphrase of type-pdf-attention without the type cue."
+    },
+    {
+      "id": "par-weekly-notes",
+      "query": "what I wrote down at the end of last week",
+      "style": "natural",
+      "cues": { "timeframe": { "label": "last week", "sinceDaysAgo": 14 }, "kinds": ["note"] },
+      "expected": ["md-weekly-review"]
+    },
+    {
+      "id": "par-resend",
+      "query": "notes I kept on cheaper options to Resend for transactional email",
+      "style": "natural",
+      "expected": ["txt-resend-alternatives"]
+    },
+    {
+      "id": "par-cheap-inference",
+      "query": "comparison of low-cost LLM inference providers",
+      "style": "natural",
+      "k": 4,
+      "expected": ["md-inference-providers", "png-pricing-page"],
+      "acceptable": ["url-docs-gmi-llm-api"]
     }
   ]
 }

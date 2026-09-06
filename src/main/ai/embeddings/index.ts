@@ -23,7 +23,7 @@ export {
 } from './worker-tasks'
 
 /** Provider id when the model runs. */
-export const MINILM_EMBEDDING_ID = 'minilm'
+export const LOCAL_EMBEDDING_ID = 'local'
 
 export interface CreateEmbeddingProviderOptions {
   /** Worker client; absent -> fallback only. */
@@ -42,7 +42,7 @@ export interface CreateEmbeddingProviderOptions {
 
 /** `EmbeddingProvider` with introspection for the Settings screen. */
 export interface LocalEmbeddingProvider extends EmbeddingProvider {
-  backend(): 'minilm' | 'local-hash'
+  backend(): 'local' | 'local-hash'
   /** True when the model files exist under `modelsDir`. */
   modelPresent(): boolean
 }
@@ -78,8 +78,9 @@ export function createEmbeddingProvider(opts: CreateEmbeddingProviderOptions): L
   const fallback = createHashEmbeddingProvider(EMBEDDING_DIMS)
   const initTimeoutMs = opts.initTimeoutMs ?? 60_000
   const embedTimeoutMs = opts.embedTimeoutMs ?? 60_000
-  let backend: 'minilm' | 'local-hash' = 'local-hash'
+  let backend: 'local' | 'local-hash' = 'local-hash'
   let readyPromise: Promise<boolean> | null = null
+  let activeDims = EMBEDDING_DIMS
 
   async function init(): Promise<boolean> {
     if (!opts.worker) {
@@ -100,7 +101,8 @@ export function createEmbeddingProvider(opts: CreateEmbeddingProviderOptions): L
         { modelsDir: opts.modelsDir, modelId },
         { timeoutMs: initTimeoutMs }
       )
-      backend = 'minilm'
+      backend = 'local'
+      activeDims = result.dims
       logger.info('embeddings.ready', { backend, modelId: result.modelId, dims: result.dims, loadMs: result.loadMs })
     } catch (error) {
       backend = 'local-hash'
@@ -141,19 +143,21 @@ export function createEmbeddingProvider(opts: CreateEmbeddingProviderOptions): L
 
   return {
     get id() {
-      return backend === 'minilm' ? MINILM_EMBEDDING_ID : HASH_EMBEDDING_ID
+      return backend === 'local' ? LOCAL_EMBEDDING_ID : HASH_EMBEDDING_ID
     },
     get model() {
-      return backend === 'minilm' ? modelId : HASH_EMBEDDING_MODEL
+      return backend === 'local' ? modelId : HASH_EMBEDDING_MODEL
     },
-    dims: EMBEDDING_DIMS,
+    get dims() {
+      return activeDims
+    },
     ready,
     backend: () => backend,
     modelPresent: () => modelFilesPresent(opts.modelsDir, modelId),
     async embed(texts) {
       await ready()
       if (texts.length === 0) return []
-      if (backend === 'minilm') return embedWithWorker(texts)
+      if (backend === 'local') return embedWithWorker(texts)
       return fallback.embed(texts)
     }
   }
