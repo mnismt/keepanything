@@ -89,9 +89,14 @@ export async function runToolLoop(opts: ToolLoopOptions): Promise<ToolLoopResult
   let lengthRetried = false
   let finishRetried = false
   let forceNext = false
+  // Model wall time not yet shown on a step. A tool call costs the wait that produced it, so the
+  // round's latency lands on the first step recorded after it; rounds that retry without recording
+  // anything carry it forward, keeping the visible times a partition of the run's elapsed time.
+  let unbilled = 0
 
   const record = (draft: StepDraft, durationMs: number): AgentStep => {
-    const step: AgentStep = { ...draft, n: steps.length + 1, durationMs }
+    const step: AgentStep = { ...draft, n: steps.length + 1, durationMs: durationMs + unbilled }
+    unbilled = 0
     steps.push(step)
     opts.onStep(step)
     return step
@@ -115,6 +120,7 @@ export async function runToolLoop(opts: ToolLoopOptions): Promise<ToolLoopResult
     }
     const started = Date.now()
     const response = await opts.provider.chat(req)
+    unbilled += Date.now() - started
     usage.calls += 1
     usage.promptTokens += response.usage.promptTokens
     usage.completionTokens += response.usage.completionTokens
@@ -174,7 +180,7 @@ export async function runToolLoop(opts: ToolLoopOptions): Promise<ToolLoopResult
               itemIds: finish.sources.map((s) => s.itemId),
               status: 'ok'
             },
-            Date.now() - started
+            0
           )
           return { finish, usage, steps }
         } catch (error) {
@@ -189,7 +195,7 @@ export async function runToolLoop(opts: ToolLoopOptions): Promise<ToolLoopResult
           status: 'rejected',
           rejectReason: problem
         },
-        Date.now() - started
+        0
       )
       messages.push(
         toolMessage(

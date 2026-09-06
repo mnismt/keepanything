@@ -215,6 +215,35 @@ describe('agent command loop', () => {
     expect(JSON.stringify(last?.messages)).toMatch(/Call finish now/)
   })
 
+  it('charges the model wait to the step it produced, carrying rounds that recorded nothing', async () => {
+    await seed()
+    const scripted = createScriptedProvider([
+      textResponse('Here is my answer in prose.'),
+      toolCallResponse([{ name: 'search_library', args: { query: 'vllm' } }]),
+      toolCallResponse([
+        { name: 'finish', args: { kind: 'answer', answer: 'Done.', sources: [], cues: {}, confidence: 0.4 } }
+      ])
+    ])
+    const wait = 15
+    const provider: ScriptedProvider = {
+      ...scripted,
+      chat: async (req) => {
+        await new Promise((r) => setTimeout(r, wait))
+        return scripted.chat(req)
+      }
+    }
+    const agent = agentWith(provider)
+    await agent.command({ question: 'what did I save about vllm?' })
+    await settled(agent)
+    const steps = events()
+      .map((e) => e.step)
+      .filter((s) => s !== undefined)
+    expect(steps.map((s) => s.tool)).toEqual(['search_library', 'finish'])
+    // The nudged round recorded no step, so its wait carries into the search step.
+    expect(steps[0]?.durationMs).toBeGreaterThanOrEqual(wait * 2)
+    expect(steps[1]?.durationMs).toBeGreaterThanOrEqual(wait)
+  })
+
   it('fails cleanly when finish is invalid twice and when the provider is not configured', async () => {
     await seed()
     const bad = toolCallResponse([{ name: 'finish', args: { kind: 'answer', sources: [] } }])
