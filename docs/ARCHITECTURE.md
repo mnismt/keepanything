@@ -60,7 +60,7 @@ src/
     storage/
       paths.ts                 userData layout: library.db, objects/, thumbs/, snapshots/, content/, models/, logs/, url-cache/
       db.ts                    openDatabase(path), PRAGMAs (WAL, foreign_keys, busy_timeout), migrate(), `transaction(fn)` (BEGIN IMMEDIATE / SAVEPOINT nesting; NO await inside)
-      migrations/001-init.sql  full schema (§2), versioned in schema_migrations
+      migrations/              001-init.sql (frozen once shipped) + NNN-*.sql, versioned in schema_migrations; never edit an applied file, append a new one
       repositories/            item-repo (incl. FTS sync + summaries), collection-repo, relationship-repo, embedding-repo, agent-run-repo, job-repo, audit-repo, suppression-repo
       object-store.ts          managed copies objects/<itemId>/<safe-name>; streaming sha256 (worker for >8 MB); exists/missing checks
     capture/                   [slice 3]
@@ -144,7 +144,9 @@ retrieval hints) → embeddings/FTS → relationships → collections (one shape
 
 ---
 
-## 2. Data model (`storage/migrations/001-init.sql`)
+## 2. Data model (`storage/migrations/`)
+
+The schema below is the result of applying every migration. `001-init.sql` shipped and is frozen: changes go in a new `NNN-*.sql`, since existing libraries only run files with a version above theirs.
 
 ISO-8601 UTC timestamps; UUID v4 ids. JSON columns hold JSON text.
 

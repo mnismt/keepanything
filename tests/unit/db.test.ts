@@ -47,6 +47,32 @@ describe('openDatabase + migrate', () => {
     expect(db.raw.prepare('SELECT count(*) AS n FROM schema_migrations').get()).toEqual({ n: MIGRATIONS.length })
   })
 
+  it('upgrades a library that stopped at version 1', () => {
+    const file = tempFile()
+    const v1 = openDatabase(file)
+    v1.raw.exec('CREATE TABLE IF NOT EXISTS schema_migrations (version INTEGER PRIMARY KEY, applied_at TEXT NOT NULL)')
+    v1.raw.exec(MIGRATIONS[0]!.sql)
+    v1.raw.prepare('INSERT INTO schema_migrations (version, applied_at) VALUES (1, ?)').run('2026-01-01T00:00:00.000Z')
+    v1.close()
+
+    const db = open(file)
+    db.migrate()
+    expect(db.schemaVersion()).toBe(MIGRATIONS.length)
+    const columns = db.raw
+      .prepare('PRAGMA table_info(collections)')
+      .all()
+      .map((r) => (r as { name: string }).name)
+    expect(columns).not.toContain('type')
+    expect(() =>
+      db.raw
+        .prepare(
+          `INSERT INTO collections (id, name, name_key, description, created_by, color, pinned, created_at, updated_at)
+           VALUES ('c1', 'Tax 2026', 'tax 2026', NULL, 'user', NULL, 0, '2026-01-01', '2026-01-01')`
+        )
+        .run()
+    ).not.toThrow()
+  })
+
   it('uses WAL, foreign keys and a busy timeout', () => {
     const db = open(tempFile())
     expect(db.raw.prepare('PRAGMA journal_mode').get()).toEqual({ journal_mode: 'wal' })

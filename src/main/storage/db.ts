@@ -1,5 +1,6 @@
 import { DatabaseSync, type SQLInputValue, type StatementSync } from 'node:sqlite'
 import INIT_SQL from './migrations/001-init.sql?raw'
+import ONE_SHAPE_SQL from './migrations/002-one-collection-shape.sql?raw'
 
 /**
  * Thin wrapper over `node:sqlite` `DatabaseSync`: PRAGMAs, versioned migrations and a nesting
@@ -34,7 +35,10 @@ export interface Migration {
 }
 
 /** Every migration, ascending. New ones are appended here and as `migrations/NNN_name.sql`. */
-export const MIGRATIONS: readonly Migration[] = [{ version: 1, name: '001-init', sql: INIT_SQL }]
+export const MIGRATIONS: readonly Migration[] = [
+  { version: 1, name: '001-init', sql: INIT_SQL },
+  { version: 2, name: '002-one-collection-shape', sql: ONE_SHAPE_SQL }
+]
 
 export interface OpenDatabaseOptions {
   /** Milliseconds to wait on a locked database (default 5000). */

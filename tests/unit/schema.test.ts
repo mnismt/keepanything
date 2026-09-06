@@ -3,10 +3,10 @@ import { DatabaseSync } from 'node:sqlite'
 import { fileURLToPath } from 'node:url'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
-const SQL = readFileSync(
-  fileURLToPath(new URL('../../src/main/storage/migrations/001-init.sql', import.meta.url)),
-  'utf8'
-)
+const MIGRATIONS_DIR = new URL('../../src/main/storage/migrations/', import.meta.url)
+const SQL = ['001-init.sql', '002-one-collection-shape.sql']
+  .map((name) => readFileSync(fileURLToPath(new URL(name, MIGRATIONS_DIR)), 'utf8'))
+  .join('\n')
 
 const NOW = '2026-09-03T10:00:00.000Z'
 
@@ -40,7 +40,7 @@ function insert(db: DatabaseSync, table: string, row: Record<string, unknown>): 
   db.prepare(sql).run(params)
 }
 
-describe('001-init.sql', () => {
+describe('migrations', () => {
   let db: DatabaseSync
 
   beforeEach(() => {
@@ -53,7 +53,7 @@ describe('001-init.sql', () => {
     db.close()
   })
 
-  it('creates every table and the FTS index, and is idempotent', () => {
+  it('creates every table and the FTS index', () => {
     const names = db
       .prepare("SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name")
       .all()
@@ -73,7 +73,6 @@ describe('001-init.sql', () => {
     ]) {
       expect(names).toContain(table)
     }
-    expect(() => db.exec(SQL)).not.toThrow()
   })
 
   it('accepts one row in every table', () => {
