@@ -1,3 +1,4 @@
+export { BrandMark } from './brand-mark'
 export type { ButtonProps, ButtonVariant } from './button'
 export { Button } from './button'
 export type { DotTone } from './dot'

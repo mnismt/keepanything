@@ -19,6 +19,7 @@ export const styles = stylex.create({
     animationDuration: motion.slow,
     animationTimingFunction: motion.easeOut
   },
+  brand: { display: 'flex', marginBottom: space.s5 },
   hero: {
     fontFamily: fonts.serif,
     fontSize: text.hero,

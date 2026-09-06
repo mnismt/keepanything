@@ -3,13 +3,14 @@
  * with macOS `screencapture` into `.artifacts/screenshot.png` (gitignored). The terminal may need
  * Screen Recording permission for window contents to appear.
  *
- * Usage: pnpm run screenshot [-- --theme dark|light] [--out <file>] [--reset] [--settings] [--activity] [--page]
+ * Usage: pnpm run screenshot [-- --theme dark|light] [--out <file>] [--reset] [--empty] [--settings] [--activity] [--page]
  *
  *   --theme   Force the appearance for the shot (default: dark). Sets `nativeTheme.themeSource`
  *             in the running app only; nothing is persisted.
  *   --out     Output file (default `.artifacts/screenshot.png`; light defaults to
  *             `.artifacts/screenshot-light.png`).
  *   --reset   Wipe the E2E profile first. Without it the existing profile is reused.
+ *   --empty   Skip seeding, so the empty state is what gets captured.
  *
  * Either way an empty library is filled with `scripts/seed-library.mjs` placeholder content, so the
  * masonry always has something to lay out; a profile that already has items is left alone.
@@ -69,8 +70,9 @@ if (stray.length > 0) {
   console.log(`Removed ${stray.length} item(s) captured from the launch command line`)
 }
 
-// An empty library screenshots as an empty state, which is useless for layout review.
-await seedLibrary(page, { log: (m) => console.log(m) })
+// An empty library screenshots as an empty state, which is useless for layout review --
+// unless the empty state is what you came to look at (`--empty`).
+if (!args.includes('--empty')) await seedLibrary(page, { log: (m) => console.log(m) })
 
 // Let the first paint, the initial IPC round-trip and lazy thumbnails settle.
 await page.waitForTimeout(1500)

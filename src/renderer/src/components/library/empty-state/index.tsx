@@ -4,7 +4,7 @@ import { useLibrary } from '../../../state/library'
 import { useSettings } from '../../../state/settings'
 import { useUi } from '../../../state/ui'
 import { shared } from '../../../styles/shared'
-import { Kbd } from '../../common'
+import { BrandMark, Kbd } from '../../common'
 import { styles } from './styles'
 
 export type EmptyKind = 'library' | 'collection' | 'trash' | 'filtered' | 'links' | 'files'
@@ -45,6 +45,9 @@ export function EmptyState({ kind }: { kind: EmptyKind }): React.JSX.Element {
   if (kind === 'library') {
     return (
       <section {...stylex.props(styles.empty)} aria-label="Empty library">
+        <span {...stylex.props(styles.brand)}>
+          <BrandMark size={52} />
+        </span>
         <h2 {...stylex.props(styles.hero)}>
           {COPY.tagline}
           <br />
