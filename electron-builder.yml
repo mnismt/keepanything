@@ -36,6 +36,8 @@ mac:
     - target: dmg
       arch: [arm64]
   hardenedRuntime: true
+  # Without this a missing identity is a warning, not an error, and the .dmg ships unsigned.
+  forceCodeSigning: true
   # `spctl --assess` runs right after signing, before notarization, so it would always fail here.
   gatekeeperAssess: false
   darkModeSupport: true
