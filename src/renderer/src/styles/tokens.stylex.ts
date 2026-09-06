@@ -16,7 +16,7 @@ export const colors = stylex.defineVars({
   bg2: { default: 'rgba(44, 40, 36, 0.6)', [LIGHT]: 'rgba(235, 230, 221, 0.6)' },
   bg3: { default: 'rgba(58, 52, 47, 0.65)', [LIGHT]: 'rgba(255, 255, 255, 0.7)' },
   /** Translucent window tint over the native vibrancy material (App root). */
-  glass: { default: 'rgba(20, 18, 16, 0.42)', [LIGHT]: 'rgba(247, 244, 238, 0.42)' },
+  glass: { default: 'rgba(20, 18, 16, 0.42)', [LIGHT]: 'rgba(247, 244, 238, 0.78)' },
   /** Sidebar tint over `glass`; barely there so the material reads through. */
   glassSide: { default: 'rgba(255, 255, 255, 0.03)', [LIGHT]: 'rgba(20, 18, 16, 0.03)' },
   bgHover: { default: 'rgba(255, 255, 255, 0.04)', [LIGHT]: 'rgba(20, 18, 16, 0.04)' },

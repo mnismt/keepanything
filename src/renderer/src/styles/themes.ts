@@ -11,7 +11,7 @@ export const lightColors = stylex.createTheme(colors, {
   bg1: '#f0ece4',
   bg2: 'rgba(235, 230, 221, 0.6)',
   bg3: 'rgba(255, 255, 255, 0.7)',
-  glass: 'rgba(247, 244, 238, 0.42)',
+  glass: 'rgba(247, 244, 238, 0.78)',
   glassSide: 'rgba(20, 18, 16, 0.03)',
   bgHover: 'rgba(20, 18, 16, 0.04)',
   bgActive: 'rgba(20, 18, 16, 0.08)',

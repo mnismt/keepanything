@@ -71,7 +71,7 @@ export const styles = stylex.create({
   // window and native vibrancy would fill the whole rectangle, not the notch.
   shapeFill: {
     fill: colors.bg1,
-    fillOpacity: 0.95,
+    fillOpacity: 1,
     transitionProperty: 'fill',
     transitionDuration: motion.slow,
     transitionTimingFunction: motion.easeOut
