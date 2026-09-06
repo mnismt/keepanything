@@ -637,7 +637,6 @@ export function ItemDetail({ itemId }: { itemId: string }): React.JSX.Element {
                     <Eye size={14} strokeWidth={1.75} aria-hidden />
                     Quick Look
                   </span>
-                  <span {...stylex.props(styles.actionMeta)}>Space</span>
                 </button>
               </>
             ) : null}

@@ -32,6 +32,12 @@ describe('keyboard map scoping', () => {
     expect(matchBinding({ key: 'Escape' }, 'input', SHELL_BINDINGS)).toBeNull()
   })
 
+  it('Space triggers Quick Look only in the grid (not in detail or text fields)', () => {
+    expect(matchBinding({ key: ' ' }, 'grid', SHELL_BINDINGS)).toBe('grid.quickLook')
+    expect(matchBinding({ key: ' ' }, 'sheet', SHELL_BINDINGS)).toBeNull()
+    expect(matchBinding({ key: ' ' }, 'input', SHELL_BINDINGS)).toBeNull()
+  })
+
   it('uses Ctrl as the command key on other platforms', () => {
     expect(matchBinding({ key: 'k', ctrlKey: true }, 'grid', SHELL_BINDINGS, 'other')).toBe('palette.toggle')
     expect(matchBinding({ key: 'k', metaKey: true }, 'grid', SHELL_BINDINGS, 'other')).toBeNull()
