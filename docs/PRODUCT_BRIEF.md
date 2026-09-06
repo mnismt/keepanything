@@ -40,7 +40,7 @@ reference to the original or a controlled local copy inside the managed object s
 Semantic organisation exists inside KeepAnything: one PDF may belong to AI Research, MiniMax, Hackathon, Things to
 Read, Agent Architecture without duplication. Internal architecture must make this explicit:
 Physical object → KeepAnything object record → extracted content → AI understanding → semantic relationships →
-dynamic collections/views.
+collections.
 
 ## 5. Main capture interaction
 When the user begins dragging something on macOS, KeepAnything should be able to expose a small floating drop target /
@@ -183,7 +183,7 @@ User corrections take precedence over future automatic organisation.
 Polished vertical slice: app launches; beautiful library UI; drag/drop files; drag URLs; local persistence;
 thumbnails/previews; extraction pipeline; MiniMax understanding; semantic relationships; automatic collections;
 natural-language search; item detail; multi-item compare/summarise. Later: global floating drag shelf, Share
-extensions, browser extension, complex dynamic collections, advanced parsers. Core product must work even if
+extensions, browser extension, saved searches, advanced parsers. Core product must work even if
 macOS-level drag interception is technically expensive.
 
 ## 29. Demo scenario

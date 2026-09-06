@@ -54,7 +54,7 @@ src/
       errors.ts                KaError(code: IpcErrorCode, message, details?)
       events.ts                typed in-process EventBus (item.created/updated/trashed…, job.progress, agent.run, collections.changed)
       item-service.ts          create/patch/trash/restore/deleteForever; applyUnderstanding() honours user_overrides; indexed-field writes → FTS sync + `index` job; missing-file cache
-      collection-service.ts    CRUD, membership (confidence/reason/actor), dynamic collection materialization hook, suppression on user removal (two keys), rename
+      collection-service.ts    CRUD, membership (confidence/reason/actor), suppression on user removal (two keys), rename
       relationship-service.ts  create/remove (symmetric types stored source<target), suppression (unordered pair), inverse labels
       audit.ts                 audit_log writes; undo(auditId) applies `before`, sets undone_at, writes suppression for agent facts
     storage/
@@ -140,7 +140,7 @@ Testability rule: no module under `core/ capture/ extraction/ retrieval/ agent/ 
 `lib/config.ts`, `storage/paths.ts`, `worker/index.ts` and is injected via `ports.ts` deps.
 
 Conceptual layering: physical object → Item row → extracted text/metadata → understanding (+vision text,
-retrieval hints) → embeddings/FTS → relationships → collections (manual | ai | dynamic).
+retrieval hints) → embeddings/FTS → relationships → collections (one shape; see §6 Collections).
 
 ---
 
@@ -181,10 +181,9 @@ items (
 items_fts USING fts5(item_id UNINDEXED, title, retrieval_hints, topics, entities, understanding, why_useful,
                      vision_text, meta_text, extracted_text, domain, kind,
                      tokenize='porter unicode61 remove_diacritics 2', prefix='2 3');
-collections (id PK, name TEXT NOT NULL, name_key TEXT NOT NULL UNIQUE /* normalized */, description TEXT, type 'manual'|'ai'|'dynamic',
-             query TEXT /* dynamic: {text, filters, minCosine} */, created_by 'user'|'agent', color TEXT, pinned INTEGER DEFAULT 0,
-             created_at, updated_at);
-collection_items (collection_id, item_id, confidence REAL, reason TEXT, added_by 'user'|'agent'|'dynamic', agent_run_id TEXT, added_at, PK(collection_id,item_id));
+collections (id PK, name TEXT NOT NULL, name_key TEXT NOT NULL UNIQUE /* normalized */, description TEXT /* the rule the agent reads, §6 */,
+             created_by 'user'|'agent', color TEXT, pinned INTEGER DEFAULT 0, created_at, updated_at);
+collection_items (collection_id, item_id, confidence REAL, reason TEXT, added_by 'user'|'agent', agent_run_id TEXT, added_at, PK(collection_id,item_id));
 relationships (id PK, source_item_id, target_item_id, type, description, confidence REAL, evidence TEXT /* JSON {itemId, quote} */,
                created_by 'user'|'agent'|'system', agent_run_id TEXT, created_at, UNIQUE(source_item_id,target_item_id,type));
   -- symmetric types (related_to, same_project, alternative_to, contradicts, duplicate_of) stored with source_id < target_id
@@ -194,10 +193,10 @@ agent_runs (id PK, item_id NULL, batch_id NULL, task TEXT, status 'running'|'suc
 jobs (id PK, item_id NULL, batch_id NULL, stage TEXT, lane 'io'|'embed'|'ai', priority INTEGER DEFAULT 0,
       status 'queued'|'running'|'done'|'failed'|'cancelled', attempts INTEGER DEFAULT 0, run_after TEXT, last_error TEXT, created_at, updated_at);
   CREATE UNIQUE INDEX jobs_active ON jobs(item_id, stage) WHERE status IN ('queued','running') AND item_id IS NOT NULL;
-audit_log (id PK, actor 'user'|'agent'|'system'|'dynamic', action TEXT, entity TEXT, entity_id TEXT, before TEXT JSON, after TEXT JSON,
+audit_log (id PK, actor 'user'|'agent'|'system', action TEXT, entity TEXT, entity_id TEXT, before TEXT JSON, after TEXT JSON,
            agent_run_id TEXT, created_at, undone_at TEXT);
 suppressions (kind TEXT, key TEXT, created_at, PK(kind,key));
-  -- 'relationship' key '<minId>:<maxId>' (any type) ; 'collection_member' keys '<collectionId>:<itemId>' AND 'name:<name_key>:<itemId>' ; 'dynamic_member' '<collectionId>:<itemId>'
+  -- 'relationship' key '<minId>:<maxId>' (any type) ; 'collection_member' keys '<collectionId>:<itemId>' AND 'name:<name_key>:<itemId>'
 schema_migrations (version INTEGER PK, applied_at);
 ```
 
@@ -231,8 +230,8 @@ capture:url       { url } → CaptureResult          capture:text { text, title?
 capture:blob      { name, mimeType, bytes: ArrayBuffer } → CaptureResult       // clipboard images, Files without a disk path
 capture:drop      { files: string[], uriList?: string, text?: string, html?: string, source: 'library'|'shelf', collectionId? } → CaptureResult
                   // renderer sends the raw dataTransfer snapshot and does ZERO classification; intake owns precedence rules (§5)
-collections:list  () → CollectionSummary[]  (count, 4 cover thumbnail urls, description, type)
-collections:create { name, description? } → Collection      collections:createDynamic { name, description?, query: DynamicQuery } → Collection
+collections:list  () → CollectionSummary[]  (count, 4 cover thumbnail urls, description)
+collections:create { name, description? } → Collection
 collections:rename { id, name, description? }   collections:delete { id }   collections:addItems { id, itemIds }   collections:removeItem { id, itemId }
 relationships:create { sourceId, targetId, type, description? }     relationships:remove { id }
 search:quick      { query, limit? } → SearchHit[]           // FTS + vector fusion, no LLM, < 50 ms
@@ -266,7 +265,7 @@ Key shared types (full definitions in `shared/types.ts`):
 - `AgentStep = { n, tool, kind: 'search'|'read'|'inspect'|'compare'|'write'|'finish', label, itemIds?, status: 'ok'|'rejected', rejectReason?, durationMs }`: product-voice `label` produced by per-tool formatters in the orchestrator; never contains model reasoning.
 - `AgentResult` discriminated by task: `{ task:'command', kind:'answer'|'note', answer?, noteId?, sources:[{itemId, role:'primary'|'supporting', why}], cues:{topics[], types[], timeframe?}, confidence, proposals?: AgentProposal[], appliedCount? } | { task:'understand', … } | { task:'organize', relationshipIds, collectionIds, summary } | { task:'consolidate', … }`.
 - `SearchHit / Candidate = { id, title, type, subtype, kind, domain, capturedAt, capturedAgo, understanding (≤140), snippet?, evidence: { bm25Norm?, cosine?, matchedFields[] }, score }`.
-- `DynamicQuery = { text, filters: SearchFilters, minCosine }`; `SearchFilters = { types?, subtypes?, kinds?, domains?, since?, until?, strict?: boolean }` (dates on `captured_at`).
+- `SearchFilters = { types?, subtypes?, kinds?, domains?, since?, until?, strict?: boolean }` (dates on `captured_at`); used by search and agent retrieval tools.
 
 Preload exposes `window.keepAnything = { invoke(channel, payload), on(event, listener) → unsubscribe, getPathForFile(file), platform }`.
 Zero dependencies in preload (sandboxed).
@@ -280,7 +279,6 @@ Index content:
 - **Embeddings, two phases.** Phase 1 (`embed` stage, offline): body chunks ~900 chars (MiniLM truncates at 256 wordpieces), ≤24 chunks/item, `chunk_index ≥ 1`, `role='body'`; skipped for children of folders with > 50 files. Phase 2 (`index` stage, after understanding and after any indexed-field edit): the **memory document** = title + kind + domain + understanding + whyUseful + topics + entities + visionText + retrievalHints → `chunk_index 0`, `role='summary'`. Vector hits are max-pooled per item; summary weight 1.0, body 0.8. Item-to-item candidates use chunk 0 only. Always filter by `model`.
 - Query building (`query.ts`). Never forward raw text to MATCH: tokenize on non-alphanumerics; extract cues (time phrases → soft window on `captured_at`; type cues via table: website/site/page→type url, pdf→pdf, repo/github→subtype github_repo, screenshot→subtype screenshot, app/mac app/tool→kinds [macos_app, cli_tool, saas_product], video/youtube→type video|subtype youtube; small synonym expansion app↔application, mac↔macos, repo↔repository, pic/photo↔image); strip stopwords/cue words; quote every token; AND first, fall back to OR when < N hits; `*` prefix on the last token for the instant path; own grammar for `"phrase"`, `type:`, `since:`.
 - Fusion (`hybrid.ts`): weighted RRF (≤2 content tokens → FTS 1.0 / vector 0.4; else 1.0/1.0); cosine floor 0.30 for vector-only entries; top-tier boost on exact title/domain/entity match; time-cue plateau boost ×1.5 inside window decaying to ×1.0 over an equal margin; mild recency `×(1 + 0.25·e^(−ageDays/60))` only when no time cue; type cues = soft boosts unless `strict`. Hits carry component evidence. Notes excluded from default retrieval unless a note cue is present; folder children collapsed under the parent (≤3 shown, "in folder X").
-- Dynamic collections: `query` stored as `DynamicQuery`; membership materialized into `collection_items` (`added_by='dynamic'`) on item READY/indexed events and on creation (rule: cosine(chunk0, queryVec) ≥ minCosine OR FTS match with filters); user pin/exclude via suppressions `dynamic_member`; query embedding cached.
 - Evaluation harness: `pnpm run eval:retrieval` runs the brief's example queries against a fixture library (`tests/fixtures/corpus` + real MiniLM) and prints hit ranks; not part of `pnpm test`.
 
 Dedupe (slice 3): files by sha256; URLs by table-driven canonicalization (strip utm_*/fbclid/ref/gclid, lowercase host, drop www./m./mobile., drop fragment, youtu.be→youtube.com/watch?v=, x.com→twitter.com, trailing slash, keep meaningful query keys). Duplicate capture creates no item: bumps `last_kept_at`, writes audit `kept_again`, returns `status:'duplicate'` → UI shows "Already kept · 3 weeks ago" and rings the existing card.
@@ -321,11 +319,68 @@ Write: `create_collection(name, description, itemIds, reasons)`, `add_to_collect
 Handler rules: zod-validated args; unknown tool → rejected step; typed relationships other than `related_to` require the
 target to be `inspected` or `read` in this run (else structured error telling the model what to do); optional `evidence.quote`
 verified against the target's text; `create_collection` requires `list_collections` called this run and ≥1 member `read`,
-name ≥ 2 words and not a single topic word, description ≥ 60 chars, per-member reason, similarity check vs existing
-(token overlap / cosine on name+description > 0.85 → error suggesting add/rename); ≥ 3 members, OR 2 members sharing a
-named entity with a `same_project` link ≥ 0.85; suppressed facts refused; symmetric relationships normalized;
+collection quality rules as in §6 Collections (name, description length, member count, similarity fold); suppressed facts refused; symmetric relationships normalized;
 `create_note` sources must all be in `read`, markdown must contain `[n]` markers mapping to sources. Every step (ok or
 rejected) is recorded as an `AgentStep` (payload summaries ≤ 500 chars) and emitted as `agent:run`. Per-task tool subsets.
+
+### Collections
+
+One shape. A collection is a named, described group of items; `created_by` records whether a person or the agent
+made it and nothing else distinguishes them. There is no type column, no stored query and no display-time
+recompute (the earlier `manual | ai | dynamic` split and `DynamicQuery` were removed: the materialization hook was
+never wired to an event, so a dynamic collection could not fill itself). "Saved search" is not a collection; if it is
+ever wanted it is a separate feature.
+
+**The description is the rule.** Every collection's description is sent to the model in `collectionContexts`
+(`agent/tasks/organize.ts`) together with its name, member count, creator and, when the retrieval port is present,
+its centroid cosine to the items being organized and its 3 nearest members. A person who creates a collection writes
+what belongs and what does not; the agent writes the same when it creates one. On an empty collection the
+description is the only signal. Once members exist the nearest-member titles carry equal weight, so a thin
+description still works after a few additions. The create/rename dialog says this in one line under the field:
+"The AI reads this description, and what is already inside, to decide where new items go." No toggle, no separate
+rule field.
+
+**Membership is stored**, never derived. `collection_items` rows carry `added_by 'user' | 'agent'`, `confidence`,
+`reason` and `agent_run_id`. A person adding an item writes `added_by='user'` and clears any suppression for that
+pair; the agent never removes a user row and never renames a user-created collection. A person removing an
+agent-added item writes suppression `collection_member` under two keys, `<collectionId>:<itemId>` and
+`name:<name_key>:<itemId>`, so the agent will not re-add the pair to that collection or to a re-created collection
+of the same name.
+
+**When the agent decides.** Only after the item has an understanding and a chunk-0 embedding (stage `index` done):
+
+| Capture | Job | Gate |
+| --- | --- | --- |
+| One item | `relate` for that item | immediately |
+| ≥ 2 items in one drop (`capture_batch_id`) | one `organize_batch` for the batch | all siblings indexed, or `LIMITS.batchGateMs` (90 s) after the first, whichever is first |
+| Sibling indexed after the batch already ran | `relate` for that item alone | immediately |
+
+Nothing re-evaluates existing items later except `consolidate`, which merges near-duplicate collections after the
+`ai` lane drains. With `KEEPANYTHING_AI=off` no routing happens; manual membership still works.
+
+**What the model is told** (`ai/prompts/voice.ts` `COLLECTION_RULES`): collections are ongoing contexts, not
+categories ("Local LLM inference research", never "Technology" or "Links"); a new one needs ≥ 3 members sharing a
+project, question or purpose, or 2 that name the same project or entity; prefer adding to an existing collection,
+prefer doing nothing over something vague; names ≥ 2 words; descriptions say what belongs and what does not; every
+membership has a one-sentence reason a person would agree with; user-made collections and relationships are ground
+truth.
+
+**What the code enforces** regardless of the model's answer. The plan is applied in `applyOrganizePlan`; each
+rejected proposal is recorded as a rejected `AgentStep` with the reason. Thresholds live in `LIMITS`
+(`shared/constants.ts`) and are the single source for the prompt text and this table:
+
+| Proposal | Rejected unless |
+| --- | --- |
+| add item to collection | collection exists, item is a subject or candidate of this run, `confidence ≥ LIMITS.minCollectionConfidence` (0.7), pair not suppressed |
+| new collection: name | ≥ 2 words after `normalizeName`, not in `BAD_COLLECTION_NAMES` |
+| new collection: similar name | `normalizeName` equal or `nameSimilarity ≥ LIMITS.collectionNameFold` (0.6) to an existing collection → members are added there instead, proposal logged as folded |
+| new collection: description | `≥ LIMITS.minCollectionDescriptionChars` (40) |
+| new collection: confidence | `≥ LIMITS.minCollectionConfidence` (0.7) |
+| new collection: members | after dropping unknown, deleted and suppressed items, `≥ LIMITS.minNewCollectionMembers` (3) |
+
+Accepted writes go through `collection-service` with `actor: 'agent'` and the run id, so each one has an audit row
+and is undoable (§ Tools). The tool path (`create_collection`, `add_to_collection`) applies the same table plus the
+tool-only preconditions listed above.
 
 ### Tasks
 - **understand** (1 structured call): inputs = title, type/subtype, metadata, capped text (~12k chars), and for images /
@@ -448,7 +503,7 @@ Multi-item: `SelectionBar` "3 selected · Compare · What do these have in commo
 → `agent:command` with template + itemIds; on `note` result open the note (or toast "Created … · Show").
 
 **StatusStack** (bottom-right): "Saved." is frame one of the same entry; >1 in flight collapses to "Keeping 7 items · 3 understood";
-final line only from real results ("Found 4 related things · Added to Doan Labs" + Undo). `toasts` store: max 3, 6 s unless hovered,
+final line only from real results ("Found 4 related things · Added to mnismt" + Undo). `toasts` store: max 3, 6 s unless hovered,
 actions Undo/Show/Retry, ⌘Z → newest undoable.
 
 **Settings** (sheet): GMI key (masked, encrypted at rest, "Test connection"), model, import mode, theme, library location + Reveal,
