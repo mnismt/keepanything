@@ -30,7 +30,7 @@ Non-goals: cloud sync, accounts, telemetry, auto-update, Windows/Linux, scraping
   that change in place (live counters, statuses); it renders each glyph in its own span, so only short
   labels, never prose. Static text stays plain.
 - Tests: Vitest (unit), Playwright `_electron` (smoke). Packaging: electron-builder, arm64, Developer ID
-  signed + notarized (`APPLE_KEYCHAIN_PROFILE`; see README).
+  optionally signed + notarized via `APPLE_KEYCHAIN_PROFILE`.
 - Package manager: pnpm only. Never npm or yarn. Commit `pnpm-lock.yaml`.
 
 ## Commands
