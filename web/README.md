@@ -24,6 +24,17 @@ dev. The root route reads it server-side and hands it to the browser in a `posth
 autocapture, no session replay, no feature flags. `$pageview` and `$pageleave` are the only events;
 the desktop app sends nothing and has no analytics.
 
+`src/server.ts` wraps the TanStack Start handler with two things the platform will not do for us:
+a 301 to `https://keepanything.app` for any other host or scheme, and a first-party proxy from
+`/ingest/*` to PostHog so ad blockers cannot drop the events. `localhost` is exempt from the
+redirect. After a deploy, these three should hold:
+
+```bash
+curl -sSo /dev/null -w '%{http_code} %{redirect_url}\n' http://keepanything.app/   # 301 https://keepanything.app/
+curl -sS -X POST https://keepanything.app/ingest/i/v0/e/ -d '{}'                   # {"status":"Ok"}
+curl -sS https://keepanything.app/ | grep -c 'meta name="posthog-key"'             # 1
+```
+
 Routes are files under `src/routes/`; `src/routeTree.gen.ts` is generated, do not edit it.
 Formatting comes from the repo root `biome.json` (`pnpm run format` at the root).
 Deploy with the host's root directory set to `web/`. To target a specific host, add the adapter:

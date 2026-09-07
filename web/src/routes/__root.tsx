@@ -6,8 +6,8 @@ import appCss from '../styles/global.css?url'
 
 const TITLE = 'KeepAnything'
 const DESCRIPTION = "Keep anything. We'll figure out the rest. A local-first library for your Mac."
-// Set to the deployed origin (no trailing slash) once the worker is live; Facebook needs og:image absolute.
-const SITE = ''
+// The deployed origin (no trailing slash); Facebook needs og:image absolute.
+const SITE = 'https://keepanything.app'
 const OG_IMAGE = `${SITE}/og.png`
 
 // PostHog project key, set on the worker with `wrangler secret put POSTHOG_KEY`. It is public
@@ -68,7 +68,8 @@ function Analytics() {
     const key = document.querySelector<HTMLMetaElement>(`meta[name="${POSTHOG_META}"]`)?.content
     if (!key) return
     posthog.init(key, {
-      api_host: 'https://us.i.posthog.com',
+      // First-party path, proxied to PostHog by `src/server.ts`, so ad blockers cannot drop it.
+      api_host: '/ingest',
       ui_host: 'https://us.posthog.com',
       capture_pageview: true,
       capture_pageleave: true,

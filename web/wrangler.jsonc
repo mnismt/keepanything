@@ -1,7 +1,12 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "keepanything",
-  "main": "@tanstack/react-start/server-entry",
+  // Wraps the TanStack Start handler with the canonical-host redirect and the PostHog proxy.
+  "main": "./src/server.ts",
+  "routes": [{ "pattern": "keepanything.app", "custom_domain": true }],
+  // One origin only. A live workers.dev subdomain serves the same site from a second cookie jar,
+  // which splits analytics identity. Declaring routes already defaults this off; be explicit.
+  "workers_dev": false,
   "compatibility_date": "2026-09-01",
   "compatibility_flags": ["nodejs_compat"],
   "observability": { "enabled": true }
