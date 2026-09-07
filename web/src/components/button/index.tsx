@@ -3,9 +3,9 @@ import type { ReactNode } from 'react'
 import { Icon, type IconName } from '../icon'
 import { styles } from './styles'
 
-type Props = { href: string; children: ReactNode; kind?: 'primary' | 'quiet'; icon?: IconName }
+type Props = { href: string; children: ReactNode; kind?: 'primary' | 'quiet'; icon?: IconName; badge?: ReactNode }
 
-export function Button({ href, children, kind = 'quiet', icon }: Props) {
+export function Button({ href, children, kind = 'quiet', icon, badge }: Props) {
   return (
     <a
       href={href}
@@ -15,6 +15,7 @@ export function Button({ href, children, kind = 'quiet', icon }: Props) {
     >
       {icon ? <Icon name={icon} /> : null}
       {children}
+      {badge}
     </a>
   )
 }

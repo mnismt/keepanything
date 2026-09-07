@@ -3,6 +3,7 @@ import { colors, motion, radii, space, text, weight } from '../../styles/tokens.
 
 export const styles = stylex.create({
   root: {
+    position: 'relative',
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',

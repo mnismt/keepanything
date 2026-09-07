@@ -1,6 +1,7 @@
 import * as stylex from '@stylexjs/stylex'
 import { createFileRoute } from '@tanstack/react-router'
-import { Brand, Button, Icon, MiniMaxWeek, Shot } from '../components'
+import { useEffect, useState } from 'react'
+import { ARCH_LABEL, ArchBadge, Brand, Button, Icon, type MacArch, MiniMaxWeek, Shot } from '../components'
 import type { IconName } from '../components/icon'
 import { shared } from '../styles/shared'
 import { colors, fonts, radii, space, text, weight } from '../styles/tokens.stylex'
@@ -9,6 +10,40 @@ export const Route = createFileRoute('/')({ component: Home })
 
 const GITHUB = 'https://github.com/mnismt/keepanything'
 const DOWNLOAD = `${GITHUB}/releases/tag/v0.1.0`
+
+const dmg = (arch: MacArch) => `${GITHUB}/releases/download/v0.1.0/KeepAnything-0.1.0-${arch}.dmg`
+
+// Safari reports an Intel UA on Apple Silicon, so the UA string alone cannot tell the two apart.
+// Chromium exposes the CPU via userAgentData; elsewhere the unmasked WebGL renderer names the GPU vendor.
+async function detectMacArch(): Promise<MacArch | null> {
+  if (!/Mac/.test(navigator.platform)) return null
+  const uaData = (
+    navigator as Navigator & {
+      userAgentData?: { getHighEntropyValues(h: string[]): Promise<{ architecture?: string }> }
+    }
+  ).userAgentData
+  if (uaData) {
+    const { architecture } = await uaData
+      .getHighEntropyValues(['architecture'])
+      .catch(() => ({ architecture: undefined }))
+    if (architecture === 'arm') return 'arm64'
+    if (architecture === 'x86') return 'x64'
+  }
+  const gl = document.createElement('canvas').getContext('webgl')
+  const ext = gl?.getExtension('WEBGL_debug_renderer_info')
+  const renderer = ext ? String(gl?.getParameter(ext.UNMASKED_RENDERER_WEBGL)) : ''
+  if (/Apple/.test(renderer)) return 'arm64'
+  if (/Intel|AMD|Radeon/.test(renderer)) return 'x64'
+  return null
+}
+
+function useMacArch() {
+  const [arch, setArch] = useState<MacArch | null>(null)
+  useEffect(() => {
+    detectMacArch().then(setArch, () => {})
+  }, [])
+  return arch
+}
 const AUTHOR = 'https://x.com/capythanh'
 const MOBILE = '@media (max-width: 800px)'
 const TABLET = '@media (max-width: 1000px)'
@@ -125,12 +160,26 @@ const styles = stylex.create({
     rowGap: space.s3,
     marginBlockStart: space.s6
   },
+  // The button's flex gap already separates "for" from this span; 3px keeps the mark reading as
+  // part of the word rather than a second icon.
+  mac: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    columnGap: 3,
+    marginInlineStart: -3
+  },
   navQuiet: {
     display: { default: 'inline-flex', [MOBILE]: 'none' }
   },
   meta: {
     fontSize: text.t12,
     color: colors.fg4
+  },
+  metaLink: {
+    color: { default: colors.fg3, ':hover': colors.fg1 },
+    textDecorationLine: 'underline',
+    textDecorationColor: colors.hairlineStrong,
+    textUnderlineOffset: 3
   },
   gatekeeper: {
     marginBlockStart: space.s5,
@@ -295,6 +344,9 @@ function Card({ icon, title, body, shot, src, ratio, span }: (typeof FEATURES)[n
 }
 
 function Home() {
+  const arch = useMacArch()
+  const other: MacArch | null = arch === 'arm64' ? 'x64' : arch === 'x64' ? 'arm64' : null
+  const href = arch ? dmg(arch) : DOWNLOAD
   return (
     <>
       <header {...stylex.props(styles.wrap, styles.nav)}>
@@ -310,7 +362,7 @@ function Home() {
               GitHub
             </Button>
           </span>
-          <Button href={DOWNLOAD} kind="primary" icon="download">
+          <Button href={href} kind="primary" icon="download" badge={arch && <ArchBadge arch={arch} />}>
             Download
           </Button>
         </nav>
@@ -323,10 +375,23 @@ function Home() {
             <em {...stylex.props(styles.h1Rest)}>We'll figure out the rest.</em>
           </h1>
           <div {...stylex.props(styles.actions)}>
-            <Button href={DOWNLOAD} kind="primary" icon="download">
-              Download for macOS
+            <Button href={href} kind="primary" icon="download" badge={arch && <ArchBadge arch={arch} />}>
+              Download for
+              <span {...stylex.props(styles.mac)}>
+                <Icon name="apple" size={14} />
+                macOS
+              </span>
             </Button>
-            <span {...stylex.props(styles.meta)}>Apple Silicon or Intel · macOS 13+ · Free</span>
+            <span {...stylex.props(styles.meta)}>
+              {other ? (
+                <a href={dmg(other)} {...stylex.props(shared.hoverFade, styles.metaLink)}>
+                  Also for {ARCH_LABEL[other]}
+                </a>
+              ) : (
+                'Apple Silicon or Intel'
+              )}
+              {' · macOS 13+ · Free'}
+            </span>
           </div>
           <p {...stylex.props(styles.meta, styles.gatekeeper)}>
             Open the .dmg and drag KeepAnything into Applications. Unsigned build: if macOS says the app is damaged, run

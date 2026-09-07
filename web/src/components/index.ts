@@ -1,3 +1,4 @@
+export { ARCH_LABEL, ArchBadge, type MacArch } from './arch-badge'
 export { Brand } from './brand'
 export { Button } from './button'
 export { Icon } from './icon'
