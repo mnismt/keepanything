@@ -49,7 +49,7 @@ Non-goals: cloud sync, accounts, telemetry, auto-update, Windows/Linux, scraping
 | Retrieval eval over `tests/fixtures/corpus/eval-queries.json` | `pnpm run eval:retrieval` |
 | Fill an empty dev library with placeholder content | `pnpm run seed:library` |
 | Comment hygiene metrics (`--list` ranks docs that only restate the identifier) | `pnpm run audit:comments` |
-| Package `.app` (arm64 + x64) to `release/` | `pnpm run package:mac` |
+| Unsigned `.dmg` (arm64 + x64, drag-to-Applications window) to `release/` | `pnpm run package:mac` |
 | Signed + notarized `.dmg` | `APPLE_KEYCHAIN_PROFILE=keepanything pnpm run package:mac:dmg` |
 
 Before finishing any change: `pnpm run typecheck && pnpm run test`. Run the screenshot script when

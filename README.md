@@ -40,7 +40,7 @@ pnpm run dev
 | --- | --- |
 | Type-check + unit tests | `pnpm run typecheck && pnpm run test` |
 | Electron smoke test | `pnpm run test:e2e` |
-| Package `.app` / `.dmg` (arm64 + x64) | `pnpm run package:mac` / `pnpm run package:mac:dmg` |
+| Unsigned / signed `.dmg` (arm64 + x64) | `pnpm run package:mac` / `pnpm run package:mac:dmg` |
 | Seed an empty dev library | `pnpm run seed:library` |
 
 Keys can also go in a gitignored `.env` (see `.env.example`): `KEEPANYTHING_GMI_API_KEY`,
