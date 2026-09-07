@@ -3,7 +3,12 @@
   "name": "keepanything",
   // Wraps the TanStack Start handler with the canonical-host redirect and the PostHog proxy.
   "main": "./src/server.ts",
-  "routes": [{ "pattern": "keepanything.app", "custom_domain": true }],
+  // The vanity host is here only so the worker's canonical-host redirect answers it; attaching it
+  // as a custom domain is also what creates its proxied DNS record in the mnismt.com zone.
+  "routes": [
+    { "pattern": "keepanything.app", "custom_domain": true },
+    { "pattern": "keepanything.mnismt.com", "custom_domain": true }
+  ],
   // One origin only. A live workers.dev subdomain serves the same site from a second cookie jar,
   // which splits analytics identity. Declaring routes already defaults this off; be explicit.
   "workers_dev": false,
