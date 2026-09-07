@@ -18,6 +18,12 @@ carry their own ratio in the `FEATURES` array (4:3, 16:10 and 21:9). Each card's
 the card's bottom edge, so keep the important part of the picture near the top. The hero caption is
 rendered by the site on a dark plate and stays readable over any image; leave it out of the PNG.
 
+Analytics: page views only, off unless the worker has a `POSTHOG_KEY`
+(`npx wrangler secret put POSTHOG_KEY`). Put the same line in a local `.dev.vars` to exercise it in
+dev. The root route reads it server-side and hands it to the browser in a `posthog-key` meta tag; no
+autocapture, no session replay, no feature flags. `$pageview` and `$pageleave` are the only events;
+the desktop app sends nothing and has no analytics.
+
 Routes are files under `src/routes/`; `src/routeTree.gen.ts` is generated, do not edit it.
 Formatting comes from the repo root `biome.json` (`pnpm run format` at the root).
 Deploy with the host's root directory set to `web/`. To target a specific host, add the adapter:

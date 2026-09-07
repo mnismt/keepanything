@@ -1,4 +1,6 @@
 allowBuilds:
+  # core-js postinstall only prints its funding banner.
+  core-js: false
   esbuild: true
   lightningcss: true
   "@stylexjs/babel-plugin": true

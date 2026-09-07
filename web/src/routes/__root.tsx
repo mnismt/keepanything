@@ -1,6 +1,7 @@
 import { createRootRoute, HeadContent, Scripts } from '@tanstack/react-router'
 import { ReactLenis } from 'lenis/react'
-import type { ReactNode } from 'react'
+import posthog from 'posthog-js'
+import { type ReactNode, useEffect } from 'react'
 import appCss from '../styles/global.css?url'
 
 const TITLE = 'KeepAnything'
@@ -9,9 +10,15 @@ const DESCRIPTION = "Keep anything. We'll figure out the rest. A local-first lib
 const SITE = ''
 const OG_IMAGE = `${SITE}/og.png`
 
+// PostHog project key, set on the worker with `wrangler secret put POSTHOG_KEY`. It is public
+// ingestion config, so it rides to the browser in a meta tag; `process` only exists on the server.
+const POSTHOG_META = 'posthog-key'
+
 export const Route = createRootRoute({
-  head: () => ({
+  loader: () => ({ posthogKey: typeof process === 'undefined' ? '' : (process.env.POSTHOG_KEY ?? '') }),
+  head: ({ loaderData }) => ({
     meta: [
+      { name: POSTHOG_META, content: loaderData?.posthogKey ?? '' },
       { charSet: 'utf-8' },
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
       { name: 'color-scheme', content: 'light dark' },
@@ -48,8 +55,28 @@ function RootDocument({ children }: { children: ReactNode }) {
       </head>
       <body>
         <ReactLenis root>{children}</ReactLenis>
+        <Analytics />
         <Scripts />
       </body>
     </html>
   )
+}
+
+/** Page views only: no autocapture, no session replay, no feature flags. Inert without a key. */
+function Analytics() {
+  useEffect(() => {
+    const key = document.querySelector<HTMLMetaElement>(`meta[name="${POSTHOG_META}"]`)?.content
+    if (!key) return
+    posthog.init(key, {
+      api_host: 'https://us.i.posthog.com',
+      ui_host: 'https://us.posthog.com',
+      capture_pageview: true,
+      capture_pageleave: true,
+      autocapture: false,
+      disable_session_recording: true,
+      advanced_disable_flags: true,
+      person_profiles: 'identified_only'
+    })
+  }, [])
+  return null
 }
