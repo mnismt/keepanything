@@ -31,9 +31,14 @@ redirect. After a deploy, these three should hold:
 
 ```bash
 curl -sSo /dev/null -w '%{http_code} %{redirect_url}\n' http://keepanything.app/   # 301 https://keepanything.app/
-curl -sS -X POST https://keepanything.app/ingest/i/v0/e/ -d '{}'                   # {"status":"Ok"}
 curl -sS https://keepanything.app/ | grep -c 'meta name="posthog-key"'             # 1
+curl -sS -X POST https://keepanything.app/ingest/i/v0/e/ -d '{}'                   # see below
 ```
+
+The third one is meant to fail, with PostHog's own complaint that the body has no event name.
+An error in that wording is the proof: it came from PostHog, so the proxy reached it. A 404 or an
+HTML error page means the proxy is broken. `api_host` must stay relative for this to hold, and
+`ui_host` must stay absolute, because PostHog derives the dashboard host from `api_host` otherwise.
 
 Routes are files under `src/routes/`; `src/routeTree.gen.ts` is generated, do not edit it.
 Formatting comes from the repo root `biome.json` (`pnpm run format` at the root).
