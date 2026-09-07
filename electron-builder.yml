@@ -1,4 +1,4 @@
-# Electron Builder configuration (macOS, Apple Silicon only).
+# Electron Builder configuration (macOS, one DMG each for Apple Silicon and Intel).
 # Signed with the Developer ID in the login keychain and notarized when APPLE_KEYCHAIN_PROFILE
 # (or APPLE_ID + APPLE_APP_SPECIFIC_PASSWORD + APPLE_TEAM_ID) is set. See README for setup.
 appId: com.mnismt.keepanything
@@ -31,10 +31,12 @@ npmRebuild: false
 mac:
   category: public.app-category.productivity
   icon: build/icon.icns
-  # Apple Silicon only (the npm scripts pass --arm64). No universal builds.
+  # Separate DMGs, not a universal build: the model and onnxruntime would double a fat bundle's size.
+  # ponytail: both archs' sharp/onnxruntime binaries ship in each DMG (~30 MB); per-arch `files` excludes if it matters.
   target:
     - target: dmg
-      arch: [arm64]
+      arch: [arm64, x64]
+  artifactName: ${productName}-${version}-${arch}.${ext}
   hardenedRuntime: true
   # Without this a missing identity is a warning, not an error, and the .dmg ships unsigned.
   forceCodeSigning: true

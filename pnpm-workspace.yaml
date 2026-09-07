@@ -17,3 +17,11 @@ allowBuilds:
 # Added by pnpm: lucide-react 1.40.0 is newer than the default minimum release age.
 minimumReleaseAgeExclude:
   - lucide-react@1.40.0
+# ONNX Runtime 1.24 dropped the macOS x64 prebuilt; 1.23.2 is the last release with both darwin archs.
+# Drop this override once Intel Macs are no longer a target.
+overrides:
+  onnxruntime-node: 1.23.2
+# Install the sharp and onnxruntime binaries for both Mac archs so one node_modules can package both DMGs.
+supportedArchitectures:
+  os: [darwin]
+  cpu: [arm64, x64]

@@ -326,7 +326,7 @@ function Home() {
             <Button href={DOWNLOAD} kind="primary" icon="download">
               Download for macOS
             </Button>
-            <span {...stylex.props(styles.meta)}>Apple Silicon · macOS 13+ · Free</span>
+            <span {...stylex.props(styles.meta)}>Apple Silicon or Intel · macOS 13+ · Free</span>
           </div>
           <p {...stylex.props(styles.meta, styles.gatekeeper)}>
             Unsigned build. If macOS says the app is damaged, run this once in Terminal, then open it:

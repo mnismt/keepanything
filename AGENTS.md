@@ -29,7 +29,7 @@ Non-goals: cloud sync, accounts, telemetry, auto-update, Windows/Linux, scraping
   `assets/fonts/`) for editorial headlines only. `@scritto/react` (`<Scritto value=... />`) for values
   that change in place (live counters, statuses); it renders each glyph in its own span, so only short
   labels, never prose. Static text stays plain.
-- Tests: Vitest (unit), Playwright `_electron` (smoke). Packaging: electron-builder, arm64, Developer ID
+- Tests: Vitest (unit), Playwright `_electron` (smoke). Packaging: electron-builder, arm64 + x64 DMGs, Developer ID
   optionally signed + notarized via `APPLE_KEYCHAIN_PROFILE`.
 - Package manager: pnpm only. Never npm or yarn. Commit `pnpm-lock.yaml`.
 
@@ -49,7 +49,7 @@ Non-goals: cloud sync, accounts, telemetry, auto-update, Windows/Linux, scraping
 | Retrieval eval over `tests/fixtures/corpus/eval-queries.json` | `pnpm run eval:retrieval` |
 | Fill an empty dev library with placeholder content | `pnpm run seed:library` |
 | Comment hygiene metrics (`--list` ranks docs that only restate the identifier) | `pnpm run audit:comments` |
-| Package signed arm64 `.app` to `release/` | `pnpm run package:mac` |
+| Package `.app` (arm64 + x64) to `release/` | `pnpm run package:mac` |
 | Signed + notarized `.dmg` | `APPLE_KEYCHAIN_PROFILE=keepanything pnpm run package:mac:dmg` |
 
 Before finishing any change: `pnpm run typecheck && pnpm run test`. Run the screenshot script when

@@ -7,7 +7,7 @@
  * Recompiles only when the source is newer than the binary, so `pnpm run dev` stays fast.
  */
 import { spawnSync } from 'node:child_process'
-import { mkdirSync, statSync } from 'node:fs'
+import { mkdirSync, rmSync, statSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -16,8 +16,8 @@ const source = join(root, 'native/drag-watch/main.swift')
 const outDir = join(root, 'build/native')
 const binary = join(outDir, 'ka-drag-watch')
 
-/** Oldest macOS the binary must run on; matches what Electron 44 supports. */
-const DEPLOYMENT_TARGET = 'arm64-apple-macos13.0'
+/** Oldest macOS the binary must run on; matches what Electron 44 supports. One slice per Mac arch, merged with lipo. */
+const TARGETS = ['arm64-apple-macos13.0', 'x86_64-apple-macos13.0']
 
 const mtime = (path) => {
   try {
@@ -40,13 +40,21 @@ if (swiftc.status !== 0) {
 }
 
 mkdirSync(outDir, { recursive: true })
-const result = spawnSync(
-  'swiftc',
-  ['-O', '-whole-module-optimization', '-target', DEPLOYMENT_TARGET, '-o', binary, source],
-  { stdio: 'inherit' }
-)
-if (result.status !== 0) {
+const slices = TARGETS.map((target) => {
+  const out = `${binary}.${target.split('-')[0]}`
+  const result = spawnSync('swiftc', ['-O', '-whole-module-optimization', '-target', target, '-o', out, source], {
+    stdio: 'inherit'
+  })
+  return result.status === 0 ? out : null
+})
+if (slices.some((slice) => slice === null)) {
   console.warn('native: could not build the drag watcher; continuing without it.')
   process.exit(0)
 }
-console.log(`native: built ${binary}`)
+const lipo = spawnSync('lipo', ['-create', ...slices, '-output', binary], { stdio: 'inherit' })
+for (const slice of slices) rmSync(slice, { force: true })
+if (lipo.status !== 0) {
+  console.warn('native: lipo failed; continuing without the drag watcher.')
+  process.exit(0)
+}
+console.log(`native: built universal ${binary}`)

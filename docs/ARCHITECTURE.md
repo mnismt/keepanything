@@ -533,7 +533,7 @@ has something to lay out.
 ## 10. Implementation order
 
 1. **Contracts** (one agent): `shared/*`, `ports.ts`, `core/errors.ts`, `001-init.sql`, deps manifest + hoisted reinstall + lockfile,
-   `engines.node ≥ 24`, `.nvmrc`, `electron-builder.yml` (asarUnpack, extraResources models, no universal), `scripts/fetch-models.mjs`, fonts.
+   `engines.node ≥ 24`, `.nvmrc`, `electron-builder.yml` (asarUnpack, extraResources models, per-arch DMGs, no universal), `scripts/fetch-models.mjs`, fonts.
 2. **Foundation A — main** (one agent): storage, core, lib, worker scaffold, pipeline (scheduler/graph/state + stage stubs),
    ipc (router/schemas/all handlers), desktop (windows/tray/menu/protocol/activation/context menus), `index.ts`,
    unit tests, e2e smoke updated.
@@ -561,7 +561,7 @@ has something to lay out.
 | Duplicate imports | sha256 + canonical URL; "Already kept". |
 | AI corrupting state | Services + audit + suppressions + user overrides; undo per audit row; notes skip understand/relate. |
 | Main-thread freezes | Worker for CPU work; in-memory vector matrix; SQLite fast paths measured (FTS 2.5 ms @5k). |
-| Packaging natives | asarUnpack; packaged smoke test before slices finish; arm64 only. |
+| Packaging natives | asarUnpack; packaged smoke test before slices finish; arm64 + x64 DMGs (onnxruntime-node pinned to 1.23.2, the last darwin/x64 release). |
 
 ---
 
