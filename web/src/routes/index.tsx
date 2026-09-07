@@ -46,6 +46,7 @@ const FEATURES: {
     title: 'Things find each other',
     body: 'Collections form when the connection is real. Nothing is filed on a keyword match.',
     shot: 'Collection',
+    src: '/shots/collection.png',
     ratio: '4 / 3',
     span: 2
   },
@@ -334,7 +335,7 @@ function Home() {
         </section>
 
         <div {...stylex.props(styles.wrap)}>
-          <Shot alt="Library window" src="/shots/hero.png" ratio="1208 / 802" shadow="sheet" />
+          <Shot alt="Library window" src="/shots/hero.png" ratio="1165 / 876" shadow="sheet" />
         </div>
 
         <section {...stylex.props(styles.wrap, styles.section)}>
