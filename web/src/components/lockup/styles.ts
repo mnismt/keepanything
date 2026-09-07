@@ -49,7 +49,6 @@ export const styles = stylex.create({
     animationDelay: { default: '900ms', [REDUCED]: '0ms' },
     animationTimingFunction: motion.easeOut,
     animationFillMode: 'both',
-    // The plate alone carries the credit once the footer wraps.
     display: { default: 'inline', [MOBILE]: 'none' },
     fontSize: text.t12,
     color: colors.fg4
@@ -64,7 +63,7 @@ export const styles = stylex.create({
     color: colors.fg4
   },
   group: {
-    display: 'inline-flex',
+    display: { default: 'inline-flex', [MOBILE]: 'contents' },
     alignItems: 'center',
     columnGap: space.s3
   }

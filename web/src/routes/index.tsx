@@ -1,8 +1,9 @@
 import * as stylex from '@stylexjs/stylex'
 import { createFileRoute } from '@tanstack/react-router'
 import { Brand, Button, Icon, MiniMaxWeek, Shot } from '../components'
+import type { IconName } from '../components/icon'
 import { shared } from '../styles/shared'
-import { colors, fonts, space, text, weight } from '../styles/tokens.stylex'
+import { colors, fonts, radii, space, text, weight } from '../styles/tokens.stylex'
 
 export const Route = createFileRoute('/')({ component: Home })
 
@@ -10,6 +11,72 @@ const GITHUB = 'https://github.com/mnismt/keepanything'
 const DOWNLOAD = `${GITHUB}/releases/tag/v0.1.0`
 const AUTHOR = 'https://x.com/capythanh'
 const MOBILE = '@media (max-width: 800px)'
+const TABLET = '@media (max-width: 1000px)'
+
+// `span` is in columns of the 6-column grid; it collapses to one card per row below 1000px.
+const FEATURES: {
+  icon: IconName
+  title: string
+  body: string
+  shot: string
+  src?: string
+  ratio: string
+  span: 2 | 3 | 6
+}[] = [
+  {
+    icon: 'inbox',
+    title: 'Drop, do not file',
+    body: 'The shelf, the menu bar, or ⌘⇧K. Files, folders, links, text and screenshots all land the same way.',
+    shot: 'Shelf',
+    src: '/shots/shelf.png',
+    ratio: '4 / 3',
+    span: 2
+  },
+  {
+    icon: 'file',
+    title: 'Understood on arrival',
+    body: 'Each item gets a real title, a summary and its kind. You never name a folder again.',
+    shot: 'Item detail',
+    src: '/shots/detail.png',
+    ratio: '4 / 3',
+    span: 2
+  },
+  {
+    icon: 'waypoints',
+    title: 'Things find each other',
+    body: 'Collections form when the connection is real. Nothing is filed on a keyword match.',
+    shot: 'Collection',
+    ratio: '4 / 3',
+    span: 2
+  },
+  {
+    icon: 'ask',
+    title: 'Ask your stuff',
+    body: '⌘K, in plain words. Every answer arrives with the items it was built from.',
+    shot: 'Ask My Stuff',
+    src: '/shots/ask.png',
+    ratio: '16 / 10',
+    span: 3
+  },
+  {
+    icon: 'search',
+    title: 'Search stays home',
+    body: 'Full text and meaning, both on device. Works with the network off, and without an account.',
+    shot: 'Search results',
+    src: '/shots/search.png',
+    ratio: '16 / 10',
+    span: 3
+  },
+  {
+    icon: 'undo',
+    title: 'Nothing is lost',
+    body: 'Originals are preserved, never rewritten. Every action is undoable, and the removals you make stick.',
+    shot: 'Activity',
+    src: '/shots/activity.png',
+    ratio: '21 / 9',
+    span: 6
+  }
+]
 
 const styles = stylex.create({
   wrap: {
@@ -74,38 +141,105 @@ const styles = stylex.create({
     color: colors.fg2,
     userSelect: 'all'
   },
+  section: {
+    paddingBlockStart: { default: 128, [MOBILE]: 80 }
+  },
+  h2: {
+    fontFamily: fonts.serif,
+    fontWeight: weight.regular,
+    fontSize: { default: 40, [MOBILE]: text.t28 },
+    lineHeight: 1.1,
+    letterSpacing: '-0.01em',
+    color: colors.fg1
+  },
+  h2Rest: {
+    display: 'block',
+    color: colors.fg3
+  },
+  cards: {
+    display: 'grid',
+    gridTemplateColumns: { default: 'repeat(6, minmax(0, 1fr))', [TABLET]: 'minmax(0, 1fr)' },
+    gap: space.s4,
+    marginBlockStart: space.s10
+  },
+  card: {
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden',
+    paddingInline: { default: space.s6, [MOBILE]: space.s5 },
+    paddingBlockStart: { default: space.s6, [MOBILE]: space.s5 },
+    borderRadius: radii.r3,
+    backgroundColor: colors.bg1,
+    boxShadow: `inset 0 0 0 1px ${colors.hairline}`
+  },
+  span2: { gridColumn: { default: 'span 2', [TABLET]: 'auto' } },
+  span3: { gridColumn: { default: 'span 3', [TABLET]: 'auto' } },
+  span6: { gridColumn: { default: 'span 6', [TABLET]: 'auto' } },
+  media: {
+    marginBlockStart: 'auto',
+    marginBlockEnd: -48,
+    paddingBlockStart: { default: space.s8, [MOBILE]: space.s6 }
+  },
+  chip: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: colors.bg2,
+    boxShadow: `inset 0 0 0 1px ${colors.hairline}`,
+    color: colors.fg3
+  },
+  cardTitle: {
+    marginBlockStart: space.s5,
+    fontSize: text.t20,
+    fontWeight: weight.medium,
+    letterSpacing: '-0.01em',
+    color: colors.fg1
+  },
+  cardBody: {
+    marginBlockStart: space.s2,
+    fontSize: text.t13,
+    lineHeight: 1.55,
+    color: colors.fg3,
+    maxInlineSize: '46ch'
+  },
   footer: {
     position: 'relative',
     display: 'flex',
     flexWrap: 'wrap',
-    alignItems: 'center',
     justifyContent: 'space-between',
     columnGap: space.s6,
-    rowGap: space.s4,
+    rowGap: { default: space.s4, [MOBILE]: space.s8 },
     marginBlockStart: { default: 128, [MOBILE]: 80 },
     paddingBlock: space.s10,
     borderTopWidth: 1,
     borderTopStyle: 'solid',
     borderTopColor: colors.hairline,
     fontSize: text.t13,
-    color: colors.fg4
+    color: colors.fg4,
+    flexDirection: { default: 'row', [MOBILE]: 'column' },
+    alignItems: { default: 'center', [MOBILE]: 'flex-start' }
   },
   footerSide: {
     display: 'inline-flex',
     alignItems: 'center',
-    columnGap: space.s4
+    columnGap: space.s4,
+    justifyContent: { default: 'flex-start', [MOBILE]: 'space-between' },
+    inlineSize: { default: 'auto', [MOBILE]: '100%' }
   },
   authorCenter: {
-    position: 'absolute',
-    insetBlockStart: '50%',
-    insetInlineStart: '50%',
-    transform: 'translate(-50%, -50%)',
     display: 'inline-flex',
     alignItems: 'center',
     columnGap: space.s3,
     fontSize: text.t13,
     color: { default: colors.fg4, ':hover': colors.fg1 },
-    textDecoration: 'none'
+    textDecoration: 'none',
+    position: { default: 'absolute', [MOBILE]: 'static' },
+    insetBlockStart: { default: '50%', [MOBILE]: 'auto' },
+    insetInlineStart: { default: '50%', [MOBILE]: 'auto' },
+    transform: { default: 'translate(-50%, -50%)', [MOBILE]: 'none' }
   },
   authorAvatar: {
     width: 28,
@@ -131,8 +265,33 @@ const styles = stylex.create({
     display: 'inline-flex',
     alignItems: 'center',
     columnGap: space.s4
+  },
+  footerTail: {
+    display: { default: 'contents', [MOBILE]: 'flex' },
+    flexDirection: { default: 'row', [MOBILE]: 'row' },
+    alignItems: { default: 'center', [MOBILE]: 'center' },
+    justifyContent: { default: 'flex-start', [MOBILE]: 'space-between' },
+    columnGap: { default: space.s6, [MOBILE]: space.s10 },
+    inlineSize: { default: 'auto', [MOBILE]: '100%' }
   }
 })
+
+const SPANS = { 2: styles.span2, 3: styles.span3, 6: styles.span6 }
+
+function Card({ icon, title, body, shot, src, ratio, span }: (typeof FEATURES)[number]) {
+  return (
+    <li {...stylex.props(styles.card, SPANS[span])}>
+      <span {...stylex.props(styles.chip)}>
+        <Icon name={icon} size={17} />
+      </span>
+      <h3 {...stylex.props(styles.cardTitle)}>{title}</h3>
+      <p {...stylex.props(styles.cardBody)}>{body}</p>
+      <div {...stylex.props(styles.media)}>
+        <Shot alt={shot} src={src} ratio={ratio} />
+      </div>
+    </li>
+  )
+}
 
 function Home() {
   return (
@@ -177,31 +336,40 @@ function Home() {
         <div {...stylex.props(styles.wrap)}>
           <Shot alt="Library window" src="/shots/hero.png" ratio="1208 / 802" shadow="sheet" />
         </div>
+
+        <section {...stylex.props(styles.wrap, styles.section)}>
+          <h2 {...stylex.props(styles.h2)}>
+            Everything it does
+            <span {...stylex.props(styles.h2Rest)}>while you keep working.</span>
+          </h2>
+          <ul {...stylex.props(styles.cards)}>
+            {FEATURES.map((feature) => (
+              <Card key={feature.title} {...feature} />
+            ))}
+          </ul>
+        </section>
       </main>
       <footer {...stylex.props(styles.wrap, styles.footer)}>
         <span {...stylex.props(styles.footerSide)}>
           <Brand />
           <MiniMaxWeek />
         </span>
-        <a
-          href={AUTHOR}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="@capythanh on X"
-          {...stylex.props(shared.hoverFade, styles.authorCenter)}
-        >
-          <img {...stylex.props(styles.authorAvatar)} src="/avatars/capythanh.jpg" alt="" />
-          <strong {...stylex.props(styles.authorHandle)}>@capythanh</strong>
-        </a>
-        <a
-          href={GITHUB}
-          target="_blank"
-          rel="noopener noreferrer"
-          {...stylex.props(shared.hoverFade, styles.link, styles.footerSide)}
-        >
-          <Icon name="github" size={14} />
-          GitHub
-        </a>
+        <span {...stylex.props(styles.footerTail)}>
+          <a
+            href={AUTHOR}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="@capythanh on X"
+            {...stylex.props(shared.hoverFade, styles.authorCenter)}
+          >
+            <img {...stylex.props(styles.authorAvatar)} src="/avatars/capythanh.jpg" alt="" />
+            <strong {...stylex.props(styles.authorHandle)}>@capythanh</strong>
+          </a>
+          <a href={GITHUB} target="_blank" rel="noopener noreferrer" {...stylex.props(shared.hoverFade, styles.link)}>
+            <Icon name="github" size={14} />
+            GitHub
+          </a>
+        </span>
       </footer>
     </>
   )
