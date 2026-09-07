@@ -335,7 +335,7 @@ function Home() {
         </section>
 
         <div {...stylex.props(styles.wrap)}>
-          <Shot alt="Library window" src="/shots/hero.png" ratio="1165 / 876" shadow="sheet" />
+          <Shot alt="Library window" src="/shots/hero.png" ratio="1202 / 859" shadow="sheet" />
         </div>
 
         <section {...stylex.props(styles.wrap, styles.section)}>
