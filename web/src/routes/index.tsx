@@ -185,12 +185,6 @@ const styles = stylex.create({
     marginBlockStart: space.s5,
     marginBlockEnd: space.s2
   },
-  code: {
-    fontFamily: fonts.mono,
-    fontSize: text.t12,
-    color: colors.fg2,
-    userSelect: 'all'
-  },
   section: {
     paddingBlockStart: { default: 128, [MOBILE]: 80 }
   },
@@ -394,10 +388,8 @@ function Home() {
             </span>
           </div>
           <p {...stylex.props(styles.meta, styles.gatekeeper)}>
-            Open the .dmg and drag KeepAnything into Applications. Unsigned build: if macOS says the app is damaged, run
-            this once in Terminal, then open it:
+            Open the .dmg and drag KeepAnything into Applications.
           </p>
-          <code {...stylex.props(styles.code)}>xattr -dr com.apple.quarantine /Applications/KeepAnything.app</code>
         </section>
 
         <div {...stylex.props(styles.wrap)}>
